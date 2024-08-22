@@ -1,0 +1,12 @@
+drop table if exists "revinfo" cascade;
+drop table if exists "finapp_attachments_aud" cascade;
+drop table if exists "fin_application_aud" cascade;
+drop table if exists "attachment_aud" cascade;
+drop table if exists "applicant_aud" cascade;
+drop table if exists "message" cascade;
+drop table if exists "fin_application" cascade;
+drop table if exists "applicant" cascade;
+drop table if exists "finapp_attachments" cascade;
+drop table if exists "attachment" cascade;
+drop table if exists "attachment_proxy" cascade;
+drop table if exists "attachment_proxy_aud" cascade;
