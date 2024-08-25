@@ -29,6 +29,7 @@ import com.azrul.smefinancing.repository.ApplicantRepository;
 import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
+import jakarta.persistence.criteria.Join;
 import java.util.stream.Stream;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,7 +52,7 @@ public class FinApplicationService {
         this.contantPersonRepo = contantPersonRepo;
     }
 
-    public FetchCallback<FinApplication, Void> getApplicationsByUsername(String username) {
+    public FetchCallback<FinApplication, Void> getApplicationsByUsernameOrEmail(String username, String email) {
         return query -> {
             var vaadinSortOrders = query.getSortOrders();
             var springSortOrders = new ArrayList<Sort.Order>();
@@ -62,7 +63,8 @@ public class FinApplicationService {
                 }
             }
             return finAppRepo.findAll(
-                    whereUsernameEquals(username),
+                    //whereUsernameEquals(username),
+                    whereUsernameEqualsOrApplicantEmailEquals(username,email),
                     PageRequest.of(
                             query.getPage(),
                             query.getPageSize(),
@@ -129,13 +131,16 @@ public class FinApplicationService {
 
     @Transactional
     public FinApplication save(FinApplication app, String username) {
-            app.setUsername(username);
+            if (app.getUsername()==null){
+                app.setUsername(username);
+            }
             for (Applicant a:app.getApplicants()){
                 a.setFinApplication(app);
             }
             return finAppRepo.save(app);
     }
     
+   
 
     
     @Transactional
@@ -154,8 +159,17 @@ public class FinApplicationService {
 
     private static Specification<FinApplication> whereUsernameEquals(String username) {
         return (finApp, cq, cb) -> {
-            return cb.equal(finApp.get("username"), username)
-            ;
+            return cb.equal(finApp.get("username"), username);
+        };
+    }
+    
+    private static Specification<FinApplication> whereUsernameEqualsOrApplicantEmailEquals(String username, String applicantEmail) {
+        return (finApp, cq, cb) -> {
+            Join<Applicant, FinApplication> applicants = finApp.join("applicants");
+            return cb.or(
+                    cb.equal(finApp.get("username"), username),
+                    cb.equal(applicants.get("email"),applicantEmail)
+            );
         };
     }
 }

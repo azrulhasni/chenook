@@ -115,7 +115,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                 return card;
             });
             grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
-            grid.setItems(finappService.getApplicationsByUsername(oidcUser.getPreferredUsername()));
+            grid.setItems(finappService.getApplicationsByUsernameOrEmail(oidcUser.getPreferredUsername(), oidcUser.getEmail()));
         }
     }
 

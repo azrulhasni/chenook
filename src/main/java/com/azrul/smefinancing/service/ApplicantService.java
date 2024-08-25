@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -76,10 +77,26 @@ public class ApplicantService {
         };
     }
     
+    public Set<String> getApplicantsEmail(FinApplication finapp){
+         List<Applicant> applicants =  this.applicantRepo.findAll(whereApplicationEquals(finapp));
+         return applicants.stream().map(a->a.getEmail()).collect(Collectors.toSet());
+    }
+    
+    public Set<Applicant> getApplicants(FinApplication finapp){
+         List<Applicant> applicants =  this.applicantRepo.findAll(whereApplicationEquals(finapp));
+         return applicants.stream().collect(Collectors.toSet());
+    }
+    
+    public Long countApplicants(FinApplication finapp){
+         return this.applicantRepo.count(whereApplicationEquals(finapp));
+    }
+    
      private static Specification<Applicant> whereApplicationEquals(FinApplication application) {
         return (applicant, cq, cb) -> {
             return cb.equal(applicant.get("finApplication"), application)
             ;
         };
     }
+     
+     
 }

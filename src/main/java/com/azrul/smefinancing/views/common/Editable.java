@@ -9,5 +9,5 @@ package com.azrul.smefinancing.views.common;
  * @author azrul
  */
 public enum Editable {
-    YES,NO_DUE_TO_STATUS,NO_DUE_TO_USER
+    YES,YES_AS_ADMIN,YES_AS_APPLICANT,NO_DUE_TO_STATUS,NO_DUE_TO_USER
 }

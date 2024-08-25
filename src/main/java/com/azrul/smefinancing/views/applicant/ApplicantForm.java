@@ -83,6 +83,29 @@ public class ApplicantForm extends Dialog {
             binder.setBean(a);
         }
 
+        
+
+        Button btnSave = new Button("Save", e1 -> {
+            Applicant appli = getApplicant();
+            Set<String> errors = validateApplicant();
+            appli.setErrors(errors);
+            applicantService.save(appli, finapp);
+            signPanel.save(appli.getId(), "SME_FIN");
+            onPostSave.accept(appli);
+            this.close();
+            
+//            else {
+//                Notification notif = new Notification();
+//                StringBuilder errors = new StringBuilder();
+//                for (String err:appli.getErrors()){
+//                    errors.append(err);
+//                    errors.append("\n");
+//                }
+//                notif.setText(errors.toString());
+//                notif.open();
+//            }
+
+        });
         if (editable != Editable.YES) {
             tfFullName.setReadOnly(true);
             tfICNumber.setReadOnly(true);
@@ -90,38 +113,16 @@ public class ApplicantForm extends Dialog {
             tfPhone.setReadOnly(true);
             tfEmail.setReadOnly(true);
             cbType.setReadOnly(true);
+            btnSave.setEnabled(false);
+            signPanel.setEnabled(false); //disable first, then calculate
             
-            signPanel.setEnabled(false); //disable fiirst, then calculate
-            if (editable == Editable.NO_DUE_TO_USER){
+            if (editable == Editable.YES_AS_APPLICANT){
                 Applicant a = binder.getBean();
                 if (StringUtils.equals(user.getEmail(),a.getEmail())){
                     signPanel.setEnabled(true); //the user is not the creator but he is one of the applicant
+                    btnSave.setEnabled(true);
                 }
             }
-        }
-
-        Button btnSave = new Button("Save", e1 -> {
-            Applicant appli = getApplicant();
-            if (appli.getErrors().isEmpty()) {
-
-                applicantService.save(appli, finapp);
-                signPanel.save(appli.getId(), "SME_FIN");
-                onPostSave.accept(appli);
-                this.close();
-            } else {
-                Notification notif = new Notification();
-                StringBuilder errors = new StringBuilder();
-                for (String err:appli.getErrors()){
-                    errors.append(err);
-                    errors.append("\n");
-                }
-                notif.setText(errors.toString());
-                notif.open();
-            }
-
-        });
-        if (editable != Editable.YES) {
-            btnSave.setEnabled(false);
         }
         this.getFooter().add(btnSave);
         this.getFooter().add(new Button("Cancel", e1 -> {
@@ -132,6 +133,11 @@ public class ApplicantForm extends Dialog {
 
     private Applicant getApplicant() {
         Applicant app = binder.getBean();
+        
+        return app;
+    }
+
+    private Set<String> validateApplicant() {
         Set<String> errors = new HashSet<>();
         for (ValidationResult err : binder.validate().getValidationErrors()) {
             errors.add(err.getErrorMessage());
@@ -139,7 +145,6 @@ public class ApplicantForm extends Dialog {
         if (!signPanel.isSignaturePresent()) {
             errors.add("Signature not present");
         }
-        app.setErrors(errors);
-        return app;
+        return errors;
     }
 }

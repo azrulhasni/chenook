@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Set;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import java.util.function.Consumer;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
@@ -70,11 +71,11 @@ public class ApplicationForm extends Dialog {
             return; // if finapp is null, this will not work
         }
 
-        Editable editable = isEditable(finapp, user);
+        Editable editable = isEditable(finapp, applicantService,user);
         Binder<FinApplication> binder = new Binder<>(FinApplication.class);
         binder.setBean(finapp);
 
-        FormLayout form = createForm(binder, badgeUtils, editable == Editable.YES);
+        FormLayout form = createForm(binder, badgeUtils, editable);
         MessageButton msgBtn = new MessageButton(finapp.getId(), "SME_FIN", user, msgService);
         this.add(msgBtn);
         this.add(form);
@@ -98,63 +99,106 @@ public class ApplicationForm extends Dialog {
                 a -> {});
         this.add(attachmentsPanel);
 
-        configureButtons(binder, user, editable, finappService, onPostSave, onPostRemove, onPostCancel);
+        configureButtons(
+                binder, 
+                user, 
+                editable, 
+                finappService,
+                applicantService, 
+                onPostSave, 
+                onPostRemove, 
+                onPostCancel);
     }
 
-    private Editable isEditable(FinApplication finapp, OidcUser oidcUser) {
+    private Editable isEditable(
+            FinApplication finapp,
+            ApplicantService applicantService, 
+            OidcUser oidcUser
+    ) {
+        Set<String> applicantsEmail = applicantService.getApplicantsEmail(finapp);
+        
         int state = 0;
-        if (oidcUser.getPreferredUsername().equals(finapp.getUsername())) {
+        if (oidcUser.getAuthorities().stream().anyMatch(sga->StringUtils.equals(sga.getAuthority(),"ROLE_FINAPP_ADMIN"))){ // admin
             state = 1;
-        } else {
+        }else if (applicantsEmail.contains(oidcUser.getEmail())){ // applicant
+            state = 2;
+        }else if (StringUtils.equals(oidcUser.getPreferredUsername(),finapp.getUsername())){
+            state = 3;
+        }else{
             state = 4;
         }
-
-        if (state == 1 && (finapp.getStatus() == Status.DRAFT
+        
+        if (state==2){
+            if (finapp.getStatus() == Status.DRAFT
                 || finapp.getStatus() == Status.NEED_MORE_INFO
-                || finapp.getStatus() == Status.NEWLY_CREATED)) {
-            state = 2;
-        } else {
-            state = 3;
+                || finapp.getStatus() == Status.NEWLY_CREATED){
+                state = 6;
+            }else{
+                state = 8;
+            }
+        }else if (state == 3){
+            if (finapp.getStatus() == Status.DRAFT
+                || finapp.getStatus() == Status.NEED_MORE_INFO
+                || finapp.getStatus() == Status.NEWLY_CREATED){
+                state = 5;
+            }else{
+                state = 7;
+            }
         }
-
-        if (state == 3) {
-            return Editable.NO_DUE_TO_STATUS;
-        } else if (state == 4) {
-            return Editable.NO_DUE_TO_USER;
-        } else {
-            return Editable.YES;
+        
+        switch (state) {
+            case 4:
+                return Editable.NO_DUE_TO_USER;
+            case 7:
+            case 8:
+                return Editable.NO_DUE_TO_STATUS;
+            case 6:
+                return Editable.YES_AS_APPLICANT;
+            case 5:
+                return Editable.YES;
+            case 1:
+                return Editable.YES_AS_ADMIN;
+            default:
+                return Editable.NO_DUE_TO_USER;
         }
-
+        
     }
+        
+        
+        
+        
 
     private FormLayout createForm(
             Binder<FinApplication> binder, 
             BadgeUtils badgeUtils, 
-            boolean editable
+            Editable editable
     ) {
         FormLayout form = new FormLayout();
         form.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("500px", 2)
         );
+        
+        Boolean enabled = (editable==Editable.YES);
+        Boolean enabledForStatus = (editable==Editable.YES_AS_ADMIN);
 
-        TextField tfID = createTextField(APPLICATION_ID_LABEL, editable, false);
+        TextField tfID = createTextField(APPLICATION_ID_LABEL, enabled, false);
         binder.forField(tfID).bindReadOnly(fa -> fa.getId().toString());
         form.add(tfID);
 
-        TextField tfName = createTextField(BUSINESS_NAME_LABEL, editable, true);
+        TextField tfName = createTextField(BUSINESS_NAME_LABEL, enabled, true);
         binder.forField(tfName).asRequired().bind(FinApplication::getName, FinApplication::setName);
         form.add(tfName);
 
-        TextArea tfAddress = createTextArea(ADDRESS_LABEL, editable);
+        TextArea tfAddress = createTextArea(ADDRESS_LABEL, enabled);
         binder.bind(tfAddress, FinApplication::getAddress, FinApplication::setAddress);
         form.add(tfAddress);
 
-        TextField tfPostalCode = createTextField(POSTAL_CODE_LABEL, editable, true);
+        TextField tfPostalCode = createTextField(POSTAL_CODE_LABEL, enabled, true);
         binder.bind(tfPostalCode, FinApplication::getPostalCode, FinApplication::setPostalCode);
         form.add(tfPostalCode);
 
-        ComboBox<String> cbState = createComboBox(STATE_LABEL, editable);
+        ComboBox<String> cbState = createComboBox(STATE_LABEL, enabled);
         cbState.setItems(List.of(
                 "Johor",
                 "Kedah",
@@ -180,30 +224,22 @@ public class ApplicationForm extends Dialog {
         binder.bind(dtpApplicationDate, FinApplication::getApplicationDate, FinApplication::setApplicationDate);
         form.add(dtpApplicationDate);
 
-        TextField tfBizRegNumber = createTextField(SSM_REGISTRATION_LABEL, editable, true);
+        TextField tfBizRegNumber = createTextField(SSM_REGISTRATION_LABEL, enabled, true);
         binder.bind(tfBizRegNumber, FinApplication::getSsmRegistrationNumber, FinApplication::setSsmRegistrationNumber);
         form.add(tfBizRegNumber);
 
         
-        Select<Status> cbStatus = createSelect(STATUS_LABEL, editable);
+        Select<Status> cbStatus = createSelect(STATUS_LABEL,enabledForStatus);
         cbStatus.setItems(Status.values());
         cbStatus.setRenderer(badgeUtils.createStatusBadgeRenderer());
-//        cbStatus.setRenderer(new ComponentRenderer<>(st->{
-//            Span span = new Span();
-//            span.getElement().getThemeList().add("badge primary");
-//            span.add(new Button());
-//            return span;
-//        }));
-        //cbStatus.setItemLabelGenerator(st -> st.getHumanReadableText());
         binder.bind(cbStatus, FinApplication::getStatus,FinApplication::setStatus);
-        
         form.add(cbStatus);
 
-        BigDecimalField tfFinRequested = createBigDecimalField(FINANCING_APPLIED_LABEL, editable);
+        BigDecimalField tfFinRequested = createBigDecimalField(FINANCING_APPLIED_LABEL, enabled);
         binder.bind(tfFinRequested, FinApplication::getFinancingRequested, FinApplication::setFinancingRequested);
         form.add(tfFinRequested);
 
-        TextArea taReasonForFinancing = createTextArea(REASON_FOR_FINANCING_LABEL, editable);
+        TextArea taReasonForFinancing = createTextArea(REASON_FOR_FINANCING_LABEL, enabled);
         binder.bind(taReasonForFinancing, FinApplication::getReasonForFinancing, FinApplication::setReasonForFinancing);
         form.add(taReasonForFinancing);
 
@@ -318,26 +354,48 @@ public class ApplicationForm extends Dialog {
             Binder<FinApplication> binder, 
             DefaultOidcUser user, 
             Editable editable, 
-            FinApplicationService finappService, 
+            FinApplicationService finappService,
+            ApplicantService applicantService,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel) {
-        Button btnSaveFinApp = createSaveAndSubmitButton(binder, finappService, user, onPostSave);
-
+        
+        Button btnSaveAndSubmitApp = createSaveAndSubmitButton(binder, finappService, applicantService, user, onPostSave);
         Button btnSaveDraft = createSaveDraftButton(binder, finappService, user, onPostSave);
+        Button btnSave = createSaveButton(binder, finappService,applicantService, onPostSave);
+        
+        Button btnCancel = createCancelButton(binder, finappService, onPostCancel);
+        Button btnRemove = createRemoveButton(binder, editable, finappService, onPostRemove);
 
         HorizontalLayout buttonLayout = new HorizontalLayout(
-                btnSaveFinApp, 
+                btnSaveAndSubmitApp, 
                 btnSaveDraft, 
-                createCancelButton(binder, finappService, onPostCancel), 
-                createRemoveButton(binder, editable, finappService, onPostRemove)
+                btnSave,
+                btnCancel,
+                btnRemove
         );
         buttonLayout.setSpacing(true);
         this.getFooter().add(buttonLayout);
 
-        if (editable != Editable.YES) {
-            btnSaveFinApp.setEnabled(false);
-            btnSaveDraft.setEnabled(false);
+        btnSaveAndSubmitApp.setEnabled(false);
+        btnSaveDraft.setEnabled(false);
+        btnRemove.setEnabled(false);
+        btnCancel.setEnabled(false);
+        btnSave.setEnabled(false);
+        
+        if (editable == Editable.YES) {
+            btnSaveAndSubmitApp.setEnabled(true);
+            btnSaveDraft.setEnabled(true);
+            btnRemove.setEnabled(true);
+            btnCancel.setEnabled(true);
+        }else if (editable == Editable.YES_AS_APPLICANT){
+            btnSaveDraft.setEnabled(true);
+            btnCancel.setEnabled(true);
+        }else if (editable == Editable.YES_AS_ADMIN) {
+            btnSave.setEnabled(true);
+            btnCancel.setEnabled(true);
+        }else{
+            btnCancel.setEnabled(true);    
         }
     }
 
@@ -352,13 +410,42 @@ public class ApplicationForm extends Dialog {
         return btnSaveDraft;
     }
 
-    private Button createSaveAndSubmitButton(Binder<FinApplication> binder, FinApplicationService finappService, DefaultOidcUser user, Consumer<FinApplication> onPostSave) {
+    private Button createSaveAndSubmitButton(
+            Binder<FinApplication> binder, 
+            FinApplicationService finappService,
+            ApplicantService applicantService,
+            DefaultOidcUser user, 
+            Consumer<FinApplication> onPostSave) {
         Button btnSaveFinApp = new Button("Save and submit", e1 -> {
-            Set<String> errors = validateApplication(binder);
+            Set<String> errors = validateApplication(applicantService, binder);
             if (errors.isEmpty()) {
                 FinApplication finapp = binder.getBean();
                 finapp.setStatus(Status.IN_PROGRESS);
                 finappService.save(finapp, user.getPreferredUsername());
+                onPostSave.accept(finapp);
+                this.close();
+            } else {
+                StringBuilder errMsg = new StringBuilder();
+                for (String err : errors) {
+                    errMsg.append(err);
+                    errMsg.append("\n");
+                }
+                Notification.show(errMsg.toString());
+            }
+        });
+        return btnSaveFinApp;
+    }
+    
+    private Button createSaveButton(
+            Binder<FinApplication> binder, 
+            FinApplicationService finappService,
+            ApplicantService applicantService,
+            Consumer<FinApplication> onPostSave) {
+        Button btnSaveFinApp = new Button("Save", e1 -> {
+            Set<String> errors = validateApplication(applicantService, binder);
+            if (errors.isEmpty()) {
+                FinApplication finapp = binder.getBean();
+                finappService.save(finapp);
                 onPostSave.accept(finapp);
                 this.close();
             } else {
@@ -400,11 +487,10 @@ public class ApplicationForm extends Dialog {
                 FinApplication finapp = binder.getBean();
                 finappService.remove(finapp);
                 onPostRemove.accept(binder.getBean());
-           
                 dialog.close();
                 this.close();
             });
-           
+            dialog.open();
         });
         if (editable != Editable.YES) {
             btnRemove.setEnabled(false);
@@ -413,15 +499,16 @@ public class ApplicationForm extends Dialog {
         return btnRemove;
     }
 
-    private Set<String> validateApplication(Binder<FinApplication> binder) {
+    private Set<String> validateApplication(ApplicantService applicantService, Binder<FinApplication> binder) {
         Set<String> errors = new HashSet<>();
         binder.validate().getValidationErrors().stream().forEach(e -> errors.add(e.getErrorMessage()));
 
         FinApplication finapp = binder.getBean();
-        if (finapp.getApplicants().isEmpty()) {
+        
+        if (applicantService.countApplicants(finapp)<=0) {
             errors.add("No applicant");
         }
-        finapp.getApplicants().stream().forEach(applicant -> {
+        applicantService.getApplicants(finapp).forEach(applicant -> {
             for (String err : applicant.getErrors()) {
                 errors.add("[" + applicant.getFullName() + "] " + err);
             }
