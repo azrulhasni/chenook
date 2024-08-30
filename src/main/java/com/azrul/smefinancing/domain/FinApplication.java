@@ -4,6 +4,7 @@
  */
 package com.azrul.smefinancing.domain;
 
+import com.azrul.chenook.domain.Status;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;

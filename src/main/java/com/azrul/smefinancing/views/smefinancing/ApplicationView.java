@@ -4,10 +4,10 @@
  */
 package com.azrul.smefinancing.views.smefinancing;
 
+import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.views.MainLayout;
 import com.azrul.chenook.views.common.Card;
 import com.azrul.smefinancing.domain.FinApplication;
-import com.azrul.smefinancing.domain.Status;
 import com.azrul.smefinancing.service.ApplicantService;
 import com.azrul.chenook.service.MessageService;
 import com.azrul.smefinancing.service.FinApplicationService;

@@ -2,7 +2,8 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.azrul.smefinancing.domain;
+package com.azrul.chenook.domain;
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +14,7 @@ public enum Status {
     IN_PROGRESS("#000000", "#FFFF00", "In Progress"),   
     IN_REVIEW("#000000", "#FFA500", "In Review"),       
     NEED_MORE_INFO("#FFFFFF", "#FF4500", "Need More Info"),
-    DISBOURSED("#FFFFFF", "#008000", "Disbursed"),      
+    DONE("#FFFFFF", "#008000", "Disbursed"),      
     DENIED("#FFFFFF", "#FF0000", "Denied"),             
     CANCELLED("#FFFFFF", "#A52A2A", "Cancelled");       
 

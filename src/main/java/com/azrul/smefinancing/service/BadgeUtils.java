@@ -4,7 +4,7 @@
  */
 package com.azrul.smefinancing.service;
 
-import com.azrul.smefinancing.domain.Status;
+import com.azrul.chenook.domain.Status;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.renderer.Renderer;

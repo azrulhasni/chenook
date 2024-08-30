@@ -1,8 +1,8 @@
 package com.azrul.smefinancing.views.application;
 
+import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.service.MessageService;
 import com.azrul.chenook.views.attachments.AttachmentsPanel;
-import com.azrul.smefinancing.domain.Status;
 import com.azrul.chenook.views.common.Card;
 import com.azrul.chenook.views.message.MessageButton;
 import com.azrul.smefinancing.domain.Applicant;
