@@ -3,12 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.azrul.chenook.workflow2.config;
+package com.azrul.chenook.config;
 
-import com.azrul.chenook.workflow.Workflow;
 import com.azrul.chenook.workflow.model.Activity;
 import com.azrul.chenook.workflow.model.BizProcess;
-import com.azrul.chenook.workflow.WorkflowImpl;
+import com.azrul.chenook.service.WorkflowService;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Unmarshaller;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,9 +21,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.XMLConstants;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -38,13 +37,13 @@ import org.xml.sax.SAXException;
 @Configuration
 public class WorkflowConfig {
 
-    @Value("${application.lgWorkflowAbsLocation}")
+    @Value("${chenook.lgWorkflowAbsLocation}")
     String workflowLocation;
 
-    @Value("${application.lgWorkflowFile}")
+    @Value("${chenook.lgWorkflowFile}")
     String workflowFile;
     
-    @Value("${application.lgWorkflowXsdUrl}")
+    @Value("${chenook.lgWorkflowXsdUrl}")
     String workflowXsdUrl;
 
 //    @Value("${application.lgRefMgmtWorkflowAbsLocation}")
@@ -68,12 +67,12 @@ public class WorkflowConfig {
         return activities;
     }
 
-    @Bean
-    @Primary
-    @Qualifier("RootWorkflow")
-    public Workflow workflow(BizProcess rootBizProcess) {
-        return new WorkflowImpl(rootBizProcess);
-    }
+//    @Bean
+//    @Primary
+//    @Qualifier("RootWorkflow")
+//    public Workflow workflow(BizProcess rootBizProcess) {
+//        return new WorkflowImpl(rootBizProcess);
+//    }
 
 //    @Bean
 //    @Qualifier("RefWorkflow")

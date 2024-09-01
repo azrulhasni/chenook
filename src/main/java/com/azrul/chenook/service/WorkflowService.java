@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.azrul.chenook.workflow;
+package com.azrul.chenook.service;
 
 import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.domain.Approval;
@@ -43,6 +43,8 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import java.util.Collection;
+import java.util.HashMap;
+import org.springframework.stereotype.Service;
 
 
 /**
@@ -50,18 +52,16 @@ import java.util.Collection;
  * @author azrul
  * @param <T>
  */
-public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
+@Service
+public class WorkflowService<T> {
 
-    private BizProcess bizProcess;
 
     @Autowired
     private Scripting scripting;
 
-//    @Autowired
-//    private DataAccessObject dao;
-    @Autowired
-    private Map<String, Activity> activities;
-//
+    //@Autowired
+    //private Map<String, Activity> activities;
+
     @Autowired(required = false)
     private List<ApproverLookup<T>> approverLookups;
     
@@ -70,31 +70,13 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
     
     @Autowired
     BizUserService bizUserService;
-//
-//    @Autowired
-//    private UserRetrievalService userRetrievalService;
-//
-//    @Autowired
-//    private UserIdentifierLookup userIdentifierLookup;
-//
+
     @Autowired
     private Expression<Boolean, T> expr;
-//
-//    @Autowired
-//    @Qualifier("IsSupervisorApprovalNeeded")
-//    private PojoRule isSupervisorApprovalNeeded;
-//
-//    @Autowired
-//    UserIdentifierLookup userNameLookup;
 
-    public WorkflowImpl(BizProcess bizProcess) {
-        ApplicationContextHolder.autowireBean(this);
-        this.bizProcess = bizProcess;
-    }
-
-    @Override
-    public Map<String, List<HumanActivity>> getRoleActivityMap() {
-        return getActivities()
+    
+    public Map<String, List<HumanActivity>> getRoleActivityMap(BizProcess bizProcess) {
+        return getActivities(bizProcess)
                 .values()
                 .stream()
                 .filter(x -> HumanActivity.class.isAssignableFrom(x.getClass()))
@@ -103,12 +85,14 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
                 .collect(Collectors.groupingBy(HumanActivity::getHandledBy));
     }
 
-    @Override
-    public Boolean isApprovalActivity(String activity) {
+    
+    public Boolean isApprovalActivity(BizProcess bizProcess, String activity) {
+        Map<String, Activity> activities = getActivities(bizProcess);
+        
         return isApprovalActivity(activities.get(activity));
     }
 
-    @Override
+    
     public Boolean isApprovalActivity(Activity activity) {
         if (activity == null) {
             return Boolean.FALSE;
@@ -118,48 +102,53 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
                 || activity.getClass().equals(XorMajorityApprovalActivity.class));
     }
 
-    @Override
-    public T run(final T work, final BizUser user, boolean isError) {
+    
+    public WorkItem run(
+            final T data, 
+            final WorkItem work, 
+            final BizUser user, 
+            final boolean isError, 
+            final BizProcess bizProcess
+    ) {
+        Map<String, Activity> activities = getActivities(bizProcess);
         //Pre-run script
         String worklist = work.getWorkflowInfo().getWorklist();
         Activity currentActivity = activities.get(worklist);
-//        Castor.<Activity, BaseActivity>given(currentActivity).castItTo(BaseActivity.class).thenDo(ba -> {
-//            scripting.runScript(work, ba.getPreRunScript(), this);
-//        }).go();
-//        Castor.<Activity, StartEvent>given(currentActivity).castItTo(StartEvent.class).thenDo(s -> {
         work.setStatus(Status.IN_PROGRESS);
-//        }).go();
-
-//        Castor.<Activity, End>given(currentActivity).castItTo(End.class).thenDo(e -> {
-//            scripting.runScript(work, e.getPreRunScript(), this);
-//        }).go();
         if (!currentActivity.getClass().equals(End.class)) { //if not the end
             //transition to next steps
-            List<Activity> nextSteps = runTransition(work, user);
+            List<Activity> nextSteps = runTransition(
+                    data, 
+                    work, 
+                    user, 
+                    bizProcess
+            );
 
             //process any straight through processing, might call run() again recursively
-            straightThroughNextStepProcessing(nextSteps, work, user, isError);
+            straightThroughNextStepProcessing(
+                    nextSteps, 
+                    data, 
+                    work, 
+                    user, 
+                    isError, 
+                    bizProcess
+            );
         }
 
-        //Post-run script
-//        Castor.<Activity, BaseActivity>given(currentActivity).castItTo(BaseActivity.class).thenDo(ba -> {
-//            scripting.runScript(work, ba.getPostRunScript(), this);
-//        }).go();
-//        Castor.<Activity, End>given(currentActivity).castItTo(End.class).thenDo(e -> {
-//            scripting.runScript(work, e.getPostRunScript(), this);
-//        }).go();
         return work;
 
     }
 
-    private T straightThroughNextStepProcessing(
+    private WorkItem straightThroughNextStepProcessing(
             final List<Activity> nextSteps, 
-                  T work, 
+            final T data,
+            final WorkItem work, 
             final BizUser user, 
-            final boolean isError
+            final boolean isError,
+            BizProcess bizProcess
     ) {
         for (Activity activity : nextSteps) {
-            if (WorkflowImpl.this.isStartEvent(activity)) {
+            if (this.isStartEvent(activity,bizProcess)) {
                 //do nothing as this is startEvent
                 //do nothing as this is startEvent
             } else {
@@ -168,16 +157,14 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
                 if (activity.getClass().equals(End.class)) {
                     //we reach the end, conclude
                     work.setStatus(Status.DONE);
-                    work = run(work, user, isError); //for post run script exec
-                    return work;
+                    return run(data, work, user, isError, bizProcess); //for post run script exec
+                    
                 } else if (activity.getClass().equals(ServiceActivity.class)) {
                     String script = ((ServiceActivity) activity).getScript();
-                    scripting.runScript(work, user, script, this);
-                    work = run(work, user, isError);
-                    return work;
+                    scripting.runScript(data,work, user, script, bizProcess);
+                    return run(data, work, user, isError, bizProcess);
                 } else if (activity.getClass().equals(XorActivity.class)) {
-                    work = run(work, user, isError);
-                    return work;
+                    return run(data, work, user, isError, bizProcess);
                 } else {
                     return work; //<-- this is ok since nextStep will not contain more than 1 activity at one time
                 }
@@ -186,15 +173,20 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
         return work;
     }
 
-    private List<Activity> runTransition(T work, BizUser user) {
+    private List<Activity> runTransition(
+            final T data,
+            final WorkItem work, 
+            final BizUser user, 
+            final BizProcess bizProcess
+    ) {
         final String tenant = (String) VaadinSession.getCurrent().getSession().getAttribute("TENANT");
         final String userIdentifier = (String) VaadinSession.getCurrent().getSession().getAttribute("USER_IDENTIFIER");
         List<Activity> nextSteps = new ArrayList<>();
 
         String worklist = work.getWorkflowInfo().getWorklist();
 
-        if (isStartEvent(worklist)) {//just being created
-            StartEvent start = (StartEvent) getActivities().get(work.getWorkflowInfo().getStartEventId());
+        if (isStartEvent(worklist, bizProcess)) {//just being created
+            StartEvent start = (StartEvent) getActivities(bizProcess).get(work.getWorkflowInfo().getStartEventId());
 
             if (start.getSupervisoryApprovalHierarchy().size() != 0) {//if need supervisor, stay in the same activity first
                 handleSupervisorApproval(work,
@@ -215,10 +207,18 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
                 //runSingleTransition(activity, root, tenant, nextSteps, userIdentifier);
             }
         } else {
-            for (Map.Entry<String, Activity> e : getActivities().entrySet()) {
+            for (Map.Entry<String, Activity> e : getActivities(bizProcess).entrySet()) {
                 Activity activity = e.getValue();
                 if (worklist.equals(activity.getId())) {
-                    runSingleTransition(activity, work, user, tenant, nextSteps, userIdentifier);
+                    runSingleTransition(
+                            activity, 
+                            data,
+                            work,
+                            user, 
+                            tenant, 
+                            nextSteps, 
+                            userIdentifier,
+                            bizProcess);
                 }
             }
         }
@@ -226,7 +226,15 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
         return nextSteps;
     }
 
-    private void runSingleTransition(Activity activity, T work, BizUser user, final String tenant, List<Activity> nextSteps, final String userIdentifier) {
+    private void runSingleTransition(
+            final Activity activity,
+            final T data, 
+            final WorkItem work, 
+            final BizUser user, 
+            final String tenant, 
+            final List<Activity> nextSteps, 
+            final String userIdentifier,
+            final BizProcess bizProcess) {
         if (activity.getClass().equals(HumanActivity.class)) {
             if (((HumanActivity) activity).getSupervisoryApprovalHierarchy().size() != 0) {
                 handleSupervisorApproval(work,
@@ -252,7 +260,7 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
             //see which condition triggers and follow that branch
             boolean conditionTriggered = false;
             for (var branch : ((XorActivity) activity).getBranch()) {
-                Boolean result = expr.evaluate(branch.getCondition(), work, user, this);
+                Boolean result = expr.evaluate(branch.getCondition(),data, work, user,bizProcess);
                 if (result == true) {
                     conditionTriggered = true;
                     nextSteps.add((Activity) branch.getNext());
@@ -295,8 +303,10 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
                         this.evaluateBranchesForNextActivty(
                                 approvalActivity::getOnApproved,
                                 approvalActivity::getByDefault,
+                                data,
                                 work,
-                                user),
+                                user,
+                                bizProcess),
                         nextSteps);
             } else if (state == 2) {//at least one disapproval
                 archiveApprovals(work);
@@ -307,8 +317,10 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
                         this.evaluateBranchesForNextActivty(
                                 approvalActivity::getOnRejected,
                                 approvalActivity::getByDefault,
+                                data,
                                 work,
-                                user),
+                                user,
+                                bizProcess),
                         nextSteps);
 
             } else {
@@ -353,8 +365,10 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
                         this.evaluateBranchesForNextActivty(
                                 approvalActivity::getOnRejected,
                                 approvalActivity::getByDefault,
+                                data,
                                 work,
-                                user),
+                                user,
+                                bizProcess),
                         nextSteps);
             } else if (state == 2) {//at least one approval
                 archiveApprovals(work);
@@ -365,8 +379,10 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
                         this.evaluateBranchesForNextActivty(
                                 approvalActivity::getOnApproved,
                                 approvalActivity::getByDefault,
+                                data,
                                 work,
-                                user),
+                                user,
+                                bizProcess),
                         nextSteps);
             } else {
                 //don't move to next step but takeout the current owner so that he doesn't see it in his ownership any more
@@ -399,8 +415,10 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
                         this.evaluateBranchesForNextActivty(
                                 approvalActivity::getOnApproved,
                                 approvalActivity::getByDefault,
+                                data,
                                 work,
-                                user),
+                                user,
+                                bizProcess),
                         nextSteps);
             } else if (countDisapprove > majorityVote) {
                 archiveApprovals(work);
@@ -411,8 +429,10 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
                         this.evaluateBranchesForNextActivty(
                                 approvalActivity::getOnRejected,
                                 approvalActivity::getByDefault,
+                                data,
                                 work,
-                                user),
+                                user,
+                                bizProcess),
                         nextSteps);
             } else if (countDisapprove == countApprove
                     && countDisapprove + countApprove == work.getApprovals().size()) { //everyone voted and its a tie
@@ -430,7 +450,7 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
         }
     }
 
-    private void handleSupervisorApproval(final T root,
+    private void handleSupervisorApproval(final WorkItem root,
             final String tenant,
             final Activity next,
             final Activity activity,
@@ -529,7 +549,7 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
         }
     }
 
-    private void dealWithNextStep(T work, String tenant, Activity nextActivity, List<Activity> nextSteps) {
+    private void dealWithNextStep(WorkItem work, String tenant, Activity nextActivity, List<Activity> nextSteps) {
 
         work.getWorkflowInfo().getOwners().clear(); //so that the next folks can pick it up
 
@@ -556,7 +576,7 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
         }
     }
 
-    private void loadUserIntoApprovalList(String loginName,T work) {
+    private void loadUserIntoApprovalList(String loginName,WorkItem work) {
 //        BizUser user = bizUserService.getUser(loginName);
          Approval approval = new Approval();
          approval.setUsername(loginName);
@@ -567,14 +587,14 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
 
     }
 
-    private Boolean isSupervisorNeeded(T work) {
+    private Boolean isSupervisorNeeded(WorkItem work) {
         return work.getSupervisorApprovalSeeker() != null; //there is a need to get supervisor's approval
     }
 
     private void loadUsersIntoApprovalList(String role,
             Activity nextActivity,
             final String tenant,
-            T work) {
+            WorkItem work) {
         List<BizUser> users = bizUserService.getUsersByRole(role);
        
         //work.archiveApproval();
@@ -597,7 +617,7 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
 
     }
 
-    private void archiveApprovals(T work) {
+    private void archiveApprovals(WorkItem work) {
         workItemService.archiveApprovalsAndSave(work);
 //        System.out.println("=======Element id:"+work.getId()+"==============");
 //        System.out.println("   Approvals:");
@@ -613,7 +633,7 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
     }
 
     private void createApprovalAndAssociateToWork(
-            T work,
+            WorkItem work,
             BizUser user,
             Set<Approval> approvals
     ) {
@@ -667,52 +687,26 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
 
         }
     }
-
-//    private void mapUserToApproval(Approval approval, BizUser user, final String tenant) {
-////        userNameLookup.lookup(user).ifPresent(userIdentifier -> {
-////            approval.setUsername(userIdentifier);
-////        });
-////        approval.setTenant(tenant);
-//        approval.setUsername(user.getUsername());
-//    }
-
-    /**
-     * @return the bizProcess
-     */
-    public BizProcess getBizProcess() {
-        return bizProcess;
-    }
-
-    /**
-     * @param bizProcess the bizProcess to set
-     */
-    public void setBizProcess(BizProcess bizProcess) {
-        this.bizProcess = bizProcess;
-    }
-
-    /**
-     * @return the activities
-     */
-    public Map<String, Activity> getActivities() {
-        return activities;
-    }
-
-    public Boolean isStartEvent(Activity activity) {
+    
+    public Boolean isStartEvent(Activity activity, BizProcess bizProcess) {
         return bizProcess.getStartEvents().stream().anyMatch(se -> se.getId().equals(activity.getId()));
     }
 
-    public Boolean isStartEvent(String activityId) {
+    
+    public Boolean isStartEvent(String activityId, BizProcess bizProcess) {
         return bizProcess.getStartEvents().stream().anyMatch(se -> se.getId().equals(activityId));
     }
 
-    public Boolean isActivityAccessibleByRoles(String activityid, Set<String> inroles) {
-        return isActivityAccessibleByRoles(activities.get(activityid), inroles);
+    
+    public Boolean isActivityAccessibleByRoles(String activityid, Set<String> inroles, BizProcess bizProcess ) {
+         Map<String, Activity> activities = getActivities(bizProcess);
+        return isActivityAccessibleByRoles(activities.get(activityid), inroles, bizProcess);
     }
 
-    public Boolean isActivityAccessibleByRoles(Activity activity, Set<String> inroles) {
+    public Boolean isActivityAccessibleByRoles(Activity activity, Set<String> inroles, BizProcess bizProcess ) {
 
         if (activity == null || activity.getClass().equals(StartEvent.class)) {
-            return whoCanStart().stream().anyMatch(inroles::contains);
+            return whoCanStart(bizProcess).stream().anyMatch(inroles::contains);
         } else if (HumanActivity.class.isAssignableFrom(activity.getClass())) {
             return inroles.contains(((HumanActivity) activity).getHandledBy());
         } else {
@@ -721,8 +715,8 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
 
     }
 
-    @Override
-    public Set<String> whoCanStart() {
+    
+    public Set<String> whoCanStart(BizProcess bizProcess) {
         return new HashSet<String>(bizProcess
                 .getStartEvents()
                 .stream()
@@ -731,15 +725,16 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
                 .collect(Collectors.toList()));
     }
 
-    @Override
-    public Set<String> whoCanStart(T currentActivity) {
+
+    public Set<String> whoCanStart(WorkItem currentActivity,BizProcess bizProcess) {
+         Map<String, Activity> activities = getActivities(bizProcess);
         String startEventId = currentActivity.getWorkflowInfo().getStartEventId();
         StartEvent startEvent = (StartEvent) activities.get(startEventId);
         return new HashSet<String>(startEvent.getCanBeStartedBy());
     }
 
-    @Override
-    public Set<StartEvent> getStartEvents() {
+
+    public Set<StartEvent> getStartEvents(BizProcess bizProcess) {
         return new HashSet<StartEvent>(bizProcess.getStartEvents());
     }
 
@@ -754,11 +749,12 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
         return f;
     }
 
-    @Override
-    public Boolean isActivitySLAExpired(String activity, LocalDateTime workSLAUpdateTime) {
+    
+    public Boolean isActivitySLAExpired(String activity, LocalDateTime workSLAUpdateTime, BizProcess bizProcess) {
         if (activity == null) { //start event
             return Boolean.FALSE;
         }
+         Map<String, Activity> activities = getActivities(bizProcess);
         if (activities.get(activity) == null) { //cater for updating workflow id in workflow.xml but data is old
             return Boolean.FALSE;
         }
@@ -769,7 +765,7 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
         }
     }
 
-    @Override
+    
     public Boolean isActivitySLAExpired(HumanActivity activity, LocalDateTime workSLAUpdateTime) {
         if (activity.getSlaInHours() != null && workSLAUpdateTime != null) {
             Duration diff = Duration.between(workSLAUpdateTime, LocalDateTime.now());
@@ -780,17 +776,19 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
     }
 
     private Activity evaluateBranchesForNextActivty(
-            Supplier<List<? extends ConditionalBranch>> getBranches, 
-            Supplier<DefaultBranch> getDefaultBranch,
-            T root,
-            BizUser user) {
+            final Supplier<List<? extends ConditionalBranch>> getBranches, 
+            final Supplier<DefaultBranch> getDefaultBranch,
+            final T data,
+            final WorkItem work,
+            final BizUser user,
+            final BizProcess bizProces) {
 
         //state=0: no activity has condition == true
         //state=1: 1 activity has condition == true
         //state=2: multiple activities has condition == true (in this case, we have no guarantee which branch is executed)
         Activity nextStep = null;
         for (var branch : getBranches.get()) {
-            Boolean result = expr.evaluate(branch.getCondition(), root,user, this);
+            Boolean result = expr.evaluate(branch.getCondition(), data, work,user, bizProces);
             if (result == true) {
                 nextStep = (Activity) branch.getNext(); //deal with state=1
                 break; //deal with state=2
@@ -802,6 +800,15 @@ public class WorkflowImpl<T extends WorkItem> implements Workflow<T> {
             nextStep = (Activity) (getDefaultBranch.get()).getNext();
         }
         return nextStep;
+    }
+    
+    private Map<String, Activity> getActivities(BizProcess bizProcess) {
+        Map<String, Activity> activities = new HashMap<>();
+        BizProcess.Workflow workflow = bizProcess.getWorkflow();
+        for (Activity currentActivity : workflow.getStartEventOrServiceOrHuman()) {
+            activities.put(currentActivity.getId(), currentActivity);
+        }
+        return activities;
     }
     
      

@@ -1,0 +1,167 @@
+<?xml version="1.0"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:complexType name="Activity" abstract="true">
+        <xs:attribute type="xs:ID" name="id"/>
+        <xs:attribute type="xs:string" name="description"/>
+    </xs:complexType>
+    <xs:complexType name="End">
+        <xs:complexContent>
+            <xs:extension base="Activity">
+                <xs:choice>
+                    <xs:element type="xs:string" name="preRunScript" minOccurs="0"  maxOccurs="1"/>
+                    <xs:element type="xs:string" name="postRunScript" minOccurs="0"  maxOccurs="1"/>
+                </xs:choice>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    <xs:complexType name="BaseActivity" abstract="true">
+        <xs:complexContent>
+            <xs:extension base="Activity">
+                <xs:choice>
+                    <xs:element type="xs:string" name="preRunScript" minOccurs="0"  maxOccurs="1"/>
+                    <xs:element type="xs:string" name="postRunScript" minOccurs="0"  maxOccurs="1"/>
+                </xs:choice>
+                <xs:attribute type="xs:IDREF" name="next"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    <xs:simpleType name="StringArray">
+        <xs:list itemType="xs:string"/>
+    </xs:simpleType>
+    <xs:complexType name="StartEvent">
+        <xs:complexContent>
+            <xs:extension base="BaseActivity">
+                <xs:attribute type="StringArray" name="canBeStartedBy" use="required"/>
+                <xs:attribute type="StringArray" name="supervisoryApprovalHierarchy"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    <xs:complexType name="HumanActivity">
+        <xs:complexContent>
+            <xs:extension base="BaseActivity">
+                <xs:attribute type="xs:string" name="handledBy" use="required"/>
+                <xs:attribute type="StringArray" name="supervisoryApprovalHierarchy"/>
+                <xs:attribute type="xs:int" name="slaInHours"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    <xs:complexType name="ServiceActivity">
+        <xs:complexContent>
+            <xs:extension base="BaseActivity">
+                <xs:choice>
+                    <xs:element type="xs:string" name="script" minOccurs="1"  maxOccurs="1"/>
+                </xs:choice>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="DefaultBranch">
+        <xs:attribute type="xs:IDREF" name="next"/>
+    </xs:complexType>
+
+    <xs:complexType name="ConditionalBranch">
+        <xs:complexContent>
+            <xs:extension base="DefaultBranch">
+                <xs:attribute type="xs:string" name="condition" default="true" />
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    <xs:complexType name="ApprovedBranch">
+        <xs:complexContent>
+            <xs:extension base="ConditionalBranch">
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    <xs:complexType name="RejectedBranch">
+        <xs:complexContent>
+            <xs:extension base="ConditionalBranch">
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    <xs:complexType name="TieBreakerBranch">
+        <xs:complexContent>
+            <xs:extension base="DefaultBranch">
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="XorActivity" >
+        <xs:complexContent>
+            <xs:extension base="Activity">
+                <xs:sequence>
+                    <xs:element type="DefaultBranch" name="byDefault" minOccurs="1"  maxOccurs="1"/>
+                    <xs:element type="ConditionalBranch" name="branch" minOccurs="1"  maxOccurs="unbounded"/>
+                </xs:sequence>
+                <!--xs:attribute type="xs:IDREF" name="approvedBranch" use="required"/>
+                <xs:attribute type="xs:IDREF" name="defaultBranch" use="required"/-->
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="XorApprovalActivity" abstract="true">
+        <xs:complexContent>
+            <xs:extension base="HumanActivity">
+                <xs:sequence>
+                    <xs:element type="DefaultBranch" name="byDefault" minOccurs="1"  maxOccurs="1"/>
+                    <xs:element type="ApprovedBranch" name="onApproved" minOccurs="1"  maxOccurs="unbounded"/>
+                    <xs:element type="RejectedBranch" name="onRejected" minOccurs="0"  maxOccurs="unbounded"/>
+                </xs:sequence>
+                <!--xs:attribute type="xs:IDREF" name="approvedBranch" use="required"/>
+                <xs:attribute type="xs:IDREF" name="defaultBranch" use="required"/-->
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+
+
+    <xs:complexType name="XorAtleastOneApprovalActivity">
+        <xs:complexContent>
+            <xs:extension base="XorApprovalActivity">
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="XorUnanimousApprovalActivity">
+        <xs:complexContent>
+            <xs:extension base="XorApprovalActivity">
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="XorMajorityApprovalActivity">
+        <xs:complexContent>
+            <xs:extension base="XorApprovalActivity">
+                <xs:sequence>
+                    <xs:element type="TieBreakerBranch" name="onTieBreaker" minOccurs="1"  maxOccurs="1"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="bizProcess">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element type="xs:string" name="name"/>
+                <xs:element type="xs:string" name="version"/>
+                <xs:element type="xs:string" name="description"/>
+                <xs:sequence minOccurs="0" maxOccurs="unbounded">
+                    <xs:element name="workflow">
+                        <xs:complexType>
+                            <xs:choice maxOccurs="unbounded" minOccurs="0">
+                                <xs:element name="startEvent" type="StartEvent" maxOccurs="unbounded" minOccurs="1"/>
+                                <xs:element name="service" type="ServiceActivity" maxOccurs="unbounded" minOccurs="0"/>
+                                <xs:element name="human" type="HumanActivity" maxOccurs="unbounded" minOccurs="0"/>
+                                <xs:element name="xor" type="XorActivity" maxOccurs="unbounded" minOccurs="0"/>
+                                <xs:element name="xor-atleast-one-approval" type="XorAtleastOneApprovalActivity" maxOccurs="unbounded" minOccurs="0"/>
+                                <xs:element name="xor-unanimous-approval" type="XorUnanimousApprovalActivity" maxOccurs="unbounded" minOccurs="0"/>
+                                <xs:element name="xor-majority-approval" type="XorMajorityApprovalActivity" maxOccurs="unbounded" minOccurs="0"/>
+                                <xs:element name="end" type="End" maxOccurs="1" minOccurs="1"/>
+                            </xs:choice>
+                        </xs:complexType>
+                    </xs:element>
+                </xs:sequence>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

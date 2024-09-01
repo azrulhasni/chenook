@@ -5,6 +5,8 @@ import com.azrul.chenook.service.MessageService;
 import com.azrul.chenook.views.attachments.AttachmentsPanel;
 import com.azrul.chenook.views.common.Card;
 import com.azrul.chenook.views.message.MessageButton;
+import com.azrul.chenook.views.workflow.WorkflowPanel;
+import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.smefinancing.domain.Applicant;
 import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.service.ApplicantService;
@@ -52,7 +54,7 @@ public class ApplicationForm extends Dialog {
     private static final String STATE_LABEL = "State";
     private static final String APPLICATION_DATE_LABEL = "Application date";
     private static final String SSM_REGISTRATION_LABEL = "SSM Registration";
-    private static final String STATUS_LABEL = "Status";
+    //private static final String STATUS_LABEL = "Status";
     private static final String FINANCING_APPLIED_LABEL = "Financing Applied";
     private static final String REASON_FOR_FINANCING_LABEL = "Reason for financing";
 
@@ -63,6 +65,7 @@ public class ApplicationForm extends Dialog {
             FinApplicationService finappService,
             MessageService msgService,
             BadgeUtils badgeUtils,
+            WorkflowConfig workflowConfig,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel
@@ -79,6 +82,19 @@ public class ApplicationForm extends Dialog {
         MessageButton msgBtn = new MessageButton(finapp.getId(), "SME_FIN", user, msgService);
         this.add(msgBtn);
         this.add(form);
+        
+         WorkflowPanel workflowPanel = new WorkflowPanel(
+                finapp,
+                 finapp.getId(),
+                "SME_FIN",
+               false,
+                 user,
+                 workflowConfig.rootBizProcess(),
+                a -> {},
+                a -> {}
+        );
+
+        this.add(workflowPanel);
 
         VerticalLayout applicantPanel = createApplicantPanel(
                 finapp,
@@ -229,11 +245,11 @@ public class ApplicationForm extends Dialog {
         form.add(tfBizRegNumber);
 
         
-        Select<Status> cbStatus = createSelect(STATUS_LABEL,enabledForStatus);
-        cbStatus.setItems(Status.values());
-        cbStatus.setRenderer(badgeUtils.createStatusBadgeRenderer());
-        binder.bind(cbStatus, FinApplication::getStatus,FinApplication::setStatus);
-        form.add(cbStatus);
+//        Select<Status> cbStatus = createSelect(STATUS_LABEL,enabledForStatus);
+//        cbStatus.setItems(Status.values());
+//        cbStatus.setRenderer(badgeUtils.createStatusBadgeRenderer());
+//        binder.bind(cbStatus, FinApplication::getStatus,FinApplication::setStatus);
+//        form.add(cbStatus);
 
         BigDecimalField tfFinRequested = createBigDecimalField(FINANCING_APPLIED_LABEL, enabled);
         binder.bind(tfFinRequested, FinApplication::getFinancingRequested, FinApplication::setFinancingRequested);

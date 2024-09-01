@@ -10,6 +10,7 @@ import com.azrul.chenook.views.common.Card;
 import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.service.ApplicantService;
 import com.azrul.chenook.service.MessageService;
+import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.smefinancing.service.FinApplicationService;
 import com.azrul.smefinancing.views.application.ApplicationForm;
 import com.azrul.smefinancing.service.BadgeUtils;
@@ -49,12 +50,14 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
     private final MessageService msgService;
     private final BadgeUtils badgeUtils;
     private final String DATETIME_FORMAT;
+    private final WorkflowConfig workflowConfig;
 
     public ApplicationView(
             @Autowired FinApplicationService _finappService,
             @Autowired ApplicantService applicantService,
             @Autowired MessageService msgService,
             @Autowired BadgeUtils badgeUtils,
+            @Autowired WorkflowConfig workflowConfig,
             @Value("${finapp.datetime.format}") String dateTimeFormat
     ) {
         this.finappService = _finappService;
@@ -62,6 +65,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
         this.msgService=msgService;
         this.badgeUtils=badgeUtils;
         this.DATETIME_FORMAT = dateTimeFormat;
+        this.workflowConfig=workflowConfig;
 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
 
@@ -133,6 +137,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                 finappService,
                 msgService,
                 badgeUtils,
+                workflowConfig,
                 onPostSave,
                 onPostRemove,
                 onPostCancel

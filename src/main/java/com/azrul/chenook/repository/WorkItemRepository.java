@@ -14,5 +14,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  * @author azrul
  */
 public interface WorkItemRepository extends JpaRepository<WorkItem, Long>, JpaSpecificationExecutor<WorkItem> {
-    
+    public WorkItem findOneByParentIdAndContext(Long parentId,String context);
 }

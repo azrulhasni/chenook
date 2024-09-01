@@ -39,6 +39,10 @@ public class WorkItem {
     
     private Priority priority;
     
+    private Long parentId;
+    
+    private String context;
+    
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL) 
     @JoinColumn(name = "work_id", referencedColumnName = "id")
     private Set<Approval> approvals;
@@ -192,6 +196,34 @@ public class WorkItem {
      */
     public void setHistoricalApprovals(Set<Approval> historicalApprovals) {
         this.historicalApprovals = historicalApprovals;
+    }
+
+    /**
+     * @return the parentId
+     */
+    public Long getParentId() {
+        return parentId;
+    }
+
+    /**
+     * @param parentId the parentId to set
+     */
+    public void setParentId(Long parentId) {
+        this.parentId = parentId;
+    }
+
+    /**
+     * @return the context
+     */
+    public String getContext() {
+        return context;
+    }
+
+    /**
+     * @param context the context to set
+     */
+    public void setContext(String context) {
+        this.context = context;
     }
     
 }

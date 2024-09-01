@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<bizProcess xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:noNamespaceSchemaLocation="workflow.xsd">
+    <name>Loan:MY</name>
+    <version>1.0</version>
+    <description>Loan Workflow</description>
+    <workflow>
+        <startEvent
+            id='S0.MY'
+            description="Loan MY"
+            canBeStartedBy='Relationship-Manager Branch-Staff'
+            next='S1.CALL_BUREAU'
+            supervisoryApprovalHierarchy='Manager HOD'
+            >
+            <preRunScript>
+                <![CDATA[
+                    import java.time.LocalDateTime;
+                 
+                    System.out.println("===PRE RUN SCRIPT==");
+                    current.setStartTime(LocalDateTime.now());
+                ;]]>
+            </preRunScript>
+        </startEvent>
+
+        <startEvent
+            id='S0.PH'
+            description="Loan PH"
+            canBeStartedBy='Relationship-Manager Branch-Staff'
+            next='S1.CALL_BUREAU'
+            supervisoryApprovalHierarchy='Manager HOD'>
+            <preRunScript>
+                <![CDATA[
+                    import java.time.LocalDateTime;
+                 
+                    System.out.println("===PRE RUN SCRIPT==");
+                    current.setStartTime(LocalDateTime.now());
+                ;]]>
+            </preRunScript>
+        </startEvent>
+
+        <service
+            id='S1.CALL_BUREAU'
+            next='S1.1.CALL_BUREAU_DECISION'
+            description='Call bureau'>
+            <script><![CDATA[
+                import com.azrul.langkuik.loanorigsystem.bizlogic.*;
+
+                ExperianBureauLogic logic = new ExperianBureauLogic();
+                logic.run(user,tenant,current);
+                current.getProperties().put("BUREAU_SCORE",1000);
+                ;]]>
+            </script>
+        </service>
+        <xor
+            id='S1.1.CALL_BUREAU_DECISION'
+            description='Call bureau'>
+                <byDefault next='S1.1.1.BUREAU_DISAPPROVE'/>
+                <branch condition='current.getProperties()["BUREAU_SCORE"]>new Integer(dataQuery.queryBizConfig(tenant,"SCORE_THRESHOLD"))' next='S1.1.2.BUREAU_APPROVE'/>
+        </xor>
+         <service
+            id='S1.1.1.BUREAU_DISAPPROVE'
+            next='S3.VALUATION'
+            description='Fail Bureau'>
+            <script>
+                <![CDATA[
+                System.out.println(current.getId()+" - Bureau score low");
+                /*current.setBureauScore(current.getProperties().get("BUREAU_SCORE"));
+                current.setBureauResult("LOW");*/
+                 ;]]>
+            </script>
+        </service>
+         <service
+            id='S1.1.2.BUREAU_APPROVE'
+            next='S3.VALUATION'
+            description='Bureau approved'>
+            <script>
+                <![CDATA[
+                System.out.println(current.getId()+" - Bureau score high");
+                /*current.setBureauScore(current.getProperties().get("BUREAU_SCORE"));
+                current.setBureauResult("HIGH");*/
+                  ;]]>
+            </script>
+        </service>
+
+         <human
+            id='S3.VALUATION'
+            next='S4.UNDERWRITING'
+            description='Valuation'
+            handledBy='Valuator'/>
+        <human
+            id='S4.UNDERWRITING'
+            description='Underwriting'
+            next='S5.UW_CHECKER'
+            handledBy='Underwriter-Maker'
+            supervisoryApprovalHierarchy='Manager HOD'
+            slaInHours='24'/>
+
+        <xor-atleast-one-approval
+            id='S5.UW_CHECKER'
+            handledBy='Underwriter-Checker'>
+            <byDefault next="S51.SET_DISAPPROVED"/>
+            <onApproved  next="S50.SET_APPROVED"/>
+        </xor-atleast-one-approval>
+
+        <service
+            id='S50.SET_APPROVED'
+            next='S6.DISBURSEMENT_PROCESS'
+            description='Set disapproved'>
+            <script>
+                <![CDATA[
+                current.setApproved(true);
+                System.out.println("ID:"+current.getId()+" approved:"+current.getApproved());
+                ;]]>
+            </script>
+        </service>
+
+        <service
+            id='S51.SET_DISAPPROVED'
+            next='S10.INFORM_CUSTOMER'
+            description='Set approved'>
+            <script>
+                <![CDATA[
+                current.setApproved(false);
+                System.out.println("ID:"+current.getId()+" approved:"+current.getApproved());
+                ;]]>
+            </script>
+        </service>
+
+        <human
+            id='S6.DISBURSEMENT_PROCESS'
+            next='S7.DISBURSEMENT_DECISION'
+            description='Disbursement Process'
+            handledBy='Disbursement-Officer-Maker'/>
+
+        <xor-majority-approval
+            id='S7.DISBURSEMENT_DECISION'
+            description='Disbursement Decision'
+            handledBy='Disbursement-Officer-Checker'
+        >
+            <byDefault next="S9.CORRECT_DISBURSEMENT"/>
+            <onApproved next="S8.DO_DISBURSEMENT"/>
+            <onTieBreaker next="S11.DISBURSEMENT_TIE_BREAK"/>
+        </xor-majority-approval>
+
+         <xor-unanimous-approval
+            id='S11.DISBURSEMENT_TIE_BREAK'
+            description='Disbursement Tie-Breaker'
+            handledBy='Supervisor'
+         >
+             <byDefault next="S12.CORRECT_DISBURSEMENT_II"/>
+             <onApproved next="S8.DO_DISBURSEMENT"/>
+            
+         </xor-unanimous-approval>
+
+
+
+        <service
+            id='S8.DO_DISBURSEMENT'
+            next='S10.INFORM_CUSTOMER'
+            description='Do Disbursement'>
+            <script><![CDATA[
+                System.out.println("Do disbursement")
+                ;]]>
+            </script>
+        </service>
+        <human
+            id='S9.CORRECT_DISBURSEMENT'
+            next='S7.DISBURSEMENT_DECISION'
+            description='Correct Disbursement'
+            handledBy='Disbursement-Officer-Maker'/>
+        <human
+            id='S12.CORRECT_DISBURSEMENT_II'
+            next='S11.DISBURSEMENT_TIE_BREAK'
+            description='Correct Disbursement After Tie'
+            handledBy='Disbursement-Officer-Maker'/>
+        <human
+            id='S10.INFORM_CUSTOMER'
+            next='END'
+            description='Inform customer'
+            handledBy='Relationship-Manager'/>
+        <end id='END'>
+            <postRunScript>
+                <![CDATA[
+                    import java.time.Duration;
+                    import java.time.LocalDateTime;
+
+                    LocalDateTime start = current.getStartTime();
+                    LocalDateTime stop = LocalDateTime.now();
+                    current.setStopTime(stop);
+                    Duration duration = Duration.between(start,stop);
+                    System.out.println("=====TIME DURATION=======:"+duration.toSeconds()+" seconds");
+                ;]]>
+            </postRunScript>
+        </end>
+    </workflow>
+
+</bizProcess>

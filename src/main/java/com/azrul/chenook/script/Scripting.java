@@ -6,7 +6,7 @@ package com.azrul.chenook.script;
 
 import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.WorkItem;
-import com.azrul.chenook.workflow.Workflow;
+import com.azrul.chenook.workflow.model.BizProcess;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.script.ScriptEngine;
@@ -26,28 +26,30 @@ public class Scripting /*implements Scripting*/ {
   
 
     
-    public <T extends WorkItem> void runScript(
-            T work,
+    public <T> void runScript(
+            T data,
+            WorkItem workItem,
             BizUser user, 
             String script, 
-            Workflow workflow) {
+            BizProcess bizProcess) {
         if (script==null){
             return;
         }
-        if (work==null){
+        if (data==null){
             return;
         }
         try {
             
 
-            scriptEngine.put("current", work);
-            if (work != null) {
-                scriptEngine.put("currentClass", work.getClass());
+            scriptEngine.put("current", data);
+            if (data != null) {
+                scriptEngine.put("currentClass", data.getClass());
             }
             //scriptEngine.put("tenant", tenant);
+            scriptEngine.put("workItem", workItem);
             scriptEngine.put("user", user);
             //scriptEngine.put("dao", dao);
-            scriptEngine.put("workflow", workflow);
+            scriptEngine.put("bizProcess",bizProcess);
 //            scriptEngine.put("dataQuery", SpringBeanFactory.create(DataQuery.class));
 //            Map<String, Class> REF = new HashMap<>();
 //            EntityUtils entityUtils = SpringBeanFactory.create(EntityUtils.class);

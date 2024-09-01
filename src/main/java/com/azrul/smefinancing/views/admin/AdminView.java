@@ -7,6 +7,7 @@ package com.azrul.smefinancing.views.admin;
 import com.azrul.chenook.service.MessageService;
 import com.azrul.chenook.views.MainLayout;
 import com.azrul.chenook.views.common.PageNav;
+import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.service.ApplicantService;
 import com.azrul.smefinancing.service.FinApplicationService;
@@ -41,12 +42,14 @@ public class AdminView extends VerticalLayout{
     private final String DATETIME_FORMAT;
     private final int COUNT_PER_PAGE = 3;
     private final BadgeUtils badgeUtils;
+    private final WorkflowConfig workflowConfig;
 
     public AdminView(
             @Autowired FinApplicationService _finappService,
             @Autowired ApplicantService applicantService,
             @Autowired MessageService msgService,
             @Autowired BadgeUtils badgeUtils,
+            @Autowired WorkflowConfig workflowConfig,
             @Value("${finapp.datetime.format}") String dateTimeFormat
     ) {
         this.finappService = _finappService;
@@ -54,6 +57,7 @@ public class AdminView extends VerticalLayout{
         this.msgService=msgService;
         this.DATETIME_FORMAT = dateTimeFormat;
         this.badgeUtils=badgeUtils;
+        this.workflowConfig=workflowConfig;
 
         //DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
 
@@ -83,6 +87,7 @@ public class AdminView extends VerticalLayout{
                             finappService,
                             msgService,
                             badgeUtils,
+                            workflowConfig,
                             fa->grid.getDataProvider().refreshAll(),
                             fa->grid.getDataProvider().refreshAll(),
                             fa->grid.getDataProvider().refreshAll()

@@ -18,6 +18,7 @@ public class BizUser {
     private String email;
     private String manager;
     private List<String> groups = new ArrayList<>();
+    private List<String> clientRoles = new ArrayList<>();
     private Boolean enabled;
 
     /**
@@ -125,6 +126,20 @@ public class BizUser {
      */
     public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
+    }
+
+    /**
+     * @return the roles
+     */
+    public List<String> getClientRoles() {
+        return clientRoles;
+    }
+
+    /**
+     * @param roles the roles to set
+     */
+    public void setClientRoles(List<String> roles) {
+        this.clientRoles = roles;
     }
 
    

@@ -25,21 +25,15 @@ package com.azrul.chenook.script;
 //import com.azrul.langkuik.framework.workflow.Workflow;
 import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.WorkItem;
-import com.azrul.chenook.workflow.Workflow;
-import com.vaadin.flow.server.VaadinSession;
-import java.util.HashMap;
-import java.util.Map;
+import com.azrul.chenook.workflow.model.BizProcess;
 import java.util.Set;
 //import javax.persistence.EntityManagerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.EvaluationException;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.ParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Component;
 
 /**
@@ -47,7 +41,7 @@ import org.springframework.stereotype.Component;
  * @author azrul
  */
 @Component("expr")
-public class Expression<R, T extends WorkItem> {
+public class Expression<R, T> {
 
 //    @Lazy
 //    @Autowired
@@ -58,23 +52,24 @@ public class Expression<R, T extends WorkItem> {
 
     private final ExpressionParser expressionParser = new SpelExpressionParser();
 
-    public R evaluate(String exp, T data, BizUser user, Workflow workflow) {
+    public R evaluate(String exp, T data, WorkItem workItem, BizUser user,BizProcess bizProcess) {
         Container<T> container = new Container();
         container.currentClass = (Class<T>) data.getClass();
-        return eval(container, data,user,workflow, exp);
+        return eval(container, data,workItem,user,bizProcess, exp);
     }
 
-    public <R, T> R evaluate(String exp, Class<T> tclass, BizUser user, Workflow workflow) {
+    public <R, T> R evaluate(String exp, Class<T> tclass,WorkItem workItem, BizUser user,BizProcess bizProcess) {
         Container<T> container = new Container();
         container.currentClass = tclass;
-        return eval(container, null, user,workflow, exp);
+        return eval(container, null, workItem,user, bizProcess, exp);
     }
 
-    private <R, T extends WorkItem> R eval(
+    private <R, T> R eval(
             Container container, 
             T data, 
+            WorkItem workItem,
             BizUser user, 
-            Workflow workflow,
+            BizProcess bizProcess,
             String exp) throws ParseException, EvaluationException {
        
         container.current = data;
@@ -85,7 +80,8 @@ public class Expression<R, T extends WorkItem> {
 //        container.username = userIdentifier;
         container.user = user;
 //        container.roles = roles;
-        container.workflow = workflow;
+        container.workItem = workItem;
+        container.bizProcess = bizProcess;
 //        container.dataQuery = SpringBeanFactory.create(DataQuery.class);
 //        EntityUtils entityUtils = SpringBeanFactory.create(EntityUtils.class);
 //        for (Class c : entityUtils.getAllEntities(emf)) {
@@ -103,11 +99,12 @@ public class Expression<R, T extends WorkItem> {
 
         public Class<T> currentClass;
         public T current;
+        public WorkItem workItem;
 //        public String tenant;
 //        public String username;
         public BizUser user;
         public Set<String> roles;
-        public Workflow workflow;
+        public BizProcess bizProcess;
 //        public DataQuery dataQuery;
 //        public Map<String, Class> REF = new HashMap<>();
     }

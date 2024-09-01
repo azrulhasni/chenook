@@ -46,4 +46,9 @@ public class WorkItemService {
         WorkItem w = workItemRepo.save(work);
         return w;
     }
+    
+    @Transactional
+    public WorkItem findOneByParentIdAndContext(Long parentId,String context){
+        return workItemRepo.findOneByParentIdAndContext(parentId, context);
+    }
 }
