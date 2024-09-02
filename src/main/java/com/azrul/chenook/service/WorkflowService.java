@@ -16,6 +16,7 @@ import com.azrul.chenook.script.Scripting;
 import com.azrul.chenook.service.ApproverLookup;
 import com.azrul.chenook.service.BizUserService;
 import com.azrul.chenook.service.WorkItemService;
+import com.azrul.chenook.value.WorkflowMemento;
 import com.azrul.chenook.workflow.model.Activity;
 import com.azrul.chenook.workflow.model.BaseActivity;
 import com.azrul.chenook.workflow.model.BizProcess;
@@ -102,15 +103,28 @@ public class WorkflowService<T> {
                 || activity.getClass().equals(XorMajorityApprovalActivity.class));
     }
 
-    
     public WorkItem run(
-            final T data, 
-            final WorkItem work, 
-            final BizUser user, 
-            final boolean isError, 
-            final BizProcess bizProcess
+            final WorkflowMemento<T> memento,
+            final boolean isError
     ) {
-        Map<String, Activity> activities = getActivities(bizProcess);
+        WorkItem work = workItemService.findOneByParentIdAndContext(
+                memento.getParentId(), 
+                memento.getContext());
+        
+        BizUser bizUser = bizUserService.getUser(memento.getOidcUser().getPreferredUsername());
+        return run(memento,work,bizUser,isError);
+    }
+    
+    private WorkItem run(
+            final WorkflowMemento<T> memento,
+            final WorkItem work,
+            final BizUser bizUser,
+            final boolean isError
+    ) {
+       
+        
+        
+        Map<String, Activity> activities = getActivities(memento.getBizProcess());
         //Pre-run script
         String worklist = work.getWorkflowInfo().getWorklist();
         Activity currentActivity = activities.get(worklist);
@@ -118,20 +132,19 @@ public class WorkflowService<T> {
         if (!currentActivity.getClass().equals(End.class)) { //if not the end
             //transition to next steps
             List<Activity> nextSteps = runTransition(
-                    data, 
+                    memento.getParent(), 
                     work, 
-                    user, 
-                    bizProcess
+                    bizUser, 
+                    memento.getBizProcess()
             );
 
             //process any straight through processing, might call run() again recursively
             straightThroughNextStepProcessing(
-                    nextSteps, 
-                    data, 
+                    memento,
+                    nextSteps,
                     work, 
-                    user, 
-                    isError, 
-                    bizProcess
+                    bizUser,
+                    isError
             );
         }
 
@@ -140,15 +153,14 @@ public class WorkflowService<T> {
     }
 
     private WorkItem straightThroughNextStepProcessing(
+            final WorkflowMemento memento,
             final List<Activity> nextSteps, 
-            final T data,
-            final WorkItem work, 
-            final BizUser user, 
-            final boolean isError,
-            BizProcess bizProcess
+            final WorkItem work,  
+            final BizUser bizUser,
+            final boolean isError
     ) {
         for (Activity activity : nextSteps) {
-            if (this.isStartEvent(activity,bizProcess)) {
+            if (this.isStartEvent(activity,memento.getBizProcess())) {
                 //do nothing as this is startEvent
                 //do nothing as this is startEvent
             } else {
@@ -157,14 +169,14 @@ public class WorkflowService<T> {
                 if (activity.getClass().equals(End.class)) {
                     //we reach the end, conclude
                     work.setStatus(Status.DONE);
-                    return run(data, work, user, isError, bizProcess); //for post run script exec
+                    return run(memento, work,bizUser,isError); //for post run script exec
                     
                 } else if (activity.getClass().equals(ServiceActivity.class)) {
                     String script = ((ServiceActivity) activity).getScript();
-                    scripting.runScript(data,work, user, script, bizProcess);
-                    return run(data, work, user, isError, bizProcess);
+                    scripting.runScript(memento.getParent(),work, bizUser, script,memento.getBizProcess());
+                    return run(memento, work,bizUser,isError);
                 } else if (activity.getClass().equals(XorActivity.class)) {
-                    return run(data, work, user, isError, bizProcess);
+                    return run(memento, work,bizUser,isError);
                 } else {
                     return work; //<-- this is ok since nextStep will not contain more than 1 activity at one time
                 }
@@ -179,8 +191,8 @@ public class WorkflowService<T> {
             final BizUser user, 
             final BizProcess bizProcess
     ) {
-        final String tenant = (String) VaadinSession.getCurrent().getSession().getAttribute("TENANT");
-        final String userIdentifier = (String) VaadinSession.getCurrent().getSession().getAttribute("USER_IDENTIFIER");
+        final String tenant = "";//(String) VaadinSession.getCurrent().getSession().getAttribute("TENANT");
+        //final String userIdentifier = user.getUsername(); //(String) VaadinSession.getCurrent().getSession().getAttribute("USER_IDENTIFIER");
         List<Activity> nextSteps = new ArrayList<>();
 
         String worklist = work.getWorkflowInfo().getWorklist();
@@ -194,7 +206,7 @@ public class WorkflowService<T> {
                         (Activity) ((BaseActivity) start).getNext(),
                         start,
                         nextSteps,
-                        userIdentifier,
+                        user,
                         start.getSupervisoryApprovalHierarchy());
 
             } else {
@@ -217,7 +229,6 @@ public class WorkflowService<T> {
                             user, 
                             tenant, 
                             nextSteps, 
-                            userIdentifier,
                             bizProcess);
                 }
             }
@@ -233,8 +244,8 @@ public class WorkflowService<T> {
             final BizUser user, 
             final String tenant, 
             final List<Activity> nextSteps, 
-            final String userIdentifier,
             final BizProcess bizProcess) {
+        String userIdentifier = user.getUsername();
         if (activity.getClass().equals(HumanActivity.class)) {
             if (((HumanActivity) activity).getSupervisoryApprovalHierarchy().size() != 0) {
                 handleSupervisorApproval(work,
@@ -242,7 +253,7 @@ public class WorkflowService<T> {
                         (Activity) ((BaseActivity) activity).getNext(),
                         activity,
                         nextSteps,
-                        userIdentifier,
+                        user,
                         ((HumanActivity) activity).getSupervisoryApprovalHierarchy());
             } else {
 
@@ -455,7 +466,7 @@ public class WorkflowService<T> {
             final Activity next,
             final Activity activity,
             final List<Activity> nextSteps,
-            final String userIdentifier,
+            final BizUser user,
             final List<String> supervisorHierarchy) {
         if (isSupervisorNeeded(root)) { //this was sent for approval before
             if (Boolean.TRUE.equals(root.getApprovals().iterator().next().getApproved())) { //approved
@@ -514,7 +525,7 @@ public class WorkflowService<T> {
                 nextSteps.add(activity);
             }
         } else { //seeking new approval
-            root.setSupervisorApprovalSeeker(userIdentifier);
+            root.setSupervisorApprovalSeeker(user.getUsername());
 
             String nextRole = supervisorHierarchy.get(0);
             if (approverLookups != null) {
@@ -525,7 +536,7 @@ public class WorkflowService<T> {
                     }
                     return nextRole.equals(qualifier.value());
                 }).findAny().ifPresent(approverLookup -> {
-                    approverLookup.lookupApprover((T) root, userIdentifier).ifPresent(approver -> {
+                    approverLookup.lookupApprover((T) root, user.getUsername()).ifPresent(approver -> {
                         root.getWorkflowInfo().getOwners().clear();
                         root.getWorkflowInfo().getOwners().add(approver.getUsername());
 //                                        if (approver.getUsername() != null) {

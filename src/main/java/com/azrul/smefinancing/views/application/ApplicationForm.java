@@ -7,6 +7,9 @@ import com.azrul.chenook.views.common.Card;
 import com.azrul.chenook.views.message.MessageButton;
 import com.azrul.chenook.views.workflow.WorkflowPanel;
 import com.azrul.chenook.config.WorkflowConfig;
+import com.azrul.chenook.domain.BizUser;
+import com.azrul.chenook.domain.WorkItem;
+import com.azrul.chenook.value.WorkflowMemento;
 import com.azrul.smefinancing.domain.Applicant;
 import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.service.ApplicantService;
@@ -83,15 +86,19 @@ public class ApplicationForm extends Dialog {
         this.add(msgBtn);
         this.add(form);
         
-         WorkflowPanel workflowPanel = new WorkflowPanel(
+        WorkflowMemento memento=new WorkflowMemento(
                 finapp,
-                 finapp.getId(),
-                "SME_FIN",
+                finapp.getId(),
+                user,
+                workflowConfig.rootBizProcess(),
+                "SME_FIN"
+        );
+        
+         WorkflowPanel workflowPanel = new WorkflowPanel(
+               memento,
                false,
-                 user,
-                 workflowConfig.rootBizProcess(),
-                a -> {},
-                a -> {}
+               a -> {},
+               a -> {}
         );
 
         this.add(workflowPanel);
@@ -118,13 +125,16 @@ public class ApplicationForm extends Dialog {
         configureButtons(
                 binder, 
                 user, 
+                memento,
                 editable, 
                 finappService,
-                applicantService, 
+                applicantService,
                 onPostSave, 
                 onPostRemove, 
                 onPostCancel);
     }
+    
+    
 
     private Editable isEditable(
             FinApplication finapp,
@@ -367,8 +377,8 @@ public class ApplicationForm extends Dialog {
     }
 
     private void configureButtons(
-            Binder<FinApplication> binder, 
-            DefaultOidcUser user, 
+            Binder<FinApplication> binder,
+            WorkflowMemento memento,
             Editable editable, 
             FinApplicationService finappService,
             ApplicantService applicantService,
@@ -377,7 +387,7 @@ public class ApplicationForm extends Dialog {
             Consumer<FinApplication> onPostCancel) {
         
         Button btnSaveAndSubmitApp = createSaveAndSubmitButton(binder, finappService, applicantService, user, onPostSave);
-        Button btnSaveDraft = createSaveDraftButton(binder, finappService, user, onPostSave);
+        Button btnSaveDraft = createSaveDraftButton(binder, finappService, memento.getOidcUser(), onPostSave);
         Button btnSave = createSaveButton(binder, finappService,applicantService, onPostSave);
         
         Button btnCancel = createCancelButton(binder, finappService, onPostCancel);
@@ -438,6 +448,9 @@ public class ApplicationForm extends Dialog {
                 FinApplication finapp = binder.getBean();
                 finapp.setStatus(Status.IN_PROGRESS);
                 finappService.save(finapp, user.getPreferredUsername());
+//                WorkItem work = workItemService.findOneByParentIdAndContext(parentId, context);
+//         BizUser bizUser = bizUserService.getUser(oidcUser.getPreferredUsername());
+//         workflowService.run(parent, work, bizUser, false, bizProcess);
                 onPostSave.accept(finapp);
                 this.close();
             } else {
