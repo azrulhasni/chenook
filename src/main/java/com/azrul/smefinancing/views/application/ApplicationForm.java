@@ -7,8 +7,9 @@ import com.azrul.chenook.views.common.Card;
 import com.azrul.chenook.views.message.MessageButton;
 import com.azrul.chenook.views.workflow.WorkflowPanel;
 import com.azrul.chenook.config.WorkflowConfig;
-import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.WorkItem;
+import com.azrul.chenook.domain.WorkflowInfo;
+import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.value.WorkflowMemento;
 import com.azrul.smefinancing.domain.Applicant;
 import com.azrul.smefinancing.domain.FinApplication;
@@ -25,8 +26,6 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.NativeLabel;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -35,15 +34,12 @@ import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 public class ApplicationForm extends Dialog {
@@ -62,10 +58,11 @@ public class ApplicationForm extends Dialog {
     private static final String REASON_FOR_FINANCING_LABEL = "Reason for financing";
 
     public ApplicationForm(
-            FinApplication finapp,
-            DefaultOidcUser user,
+            WorkflowMemento<FinApplication> memento,
+            WorkItem work,
             ApplicantService applicantService,
             FinApplicationService finappService,
+            WorkflowService workflowService,
             MessageService msgService,
             BadgeUtils badgeUtils,
             WorkflowConfig workflowConfig,
@@ -73,29 +70,34 @@ public class ApplicationForm extends Dialog {
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel
     ) {
-        if (finapp == null) {
+        if (memento.getParent() == null) {
             return; // if finapp is null, this will not work
         }
-
-        Editable editable = isEditable(finapp, applicantService,user);
+        
+        Editable editable = isEditable(
+                memento.getParent(), 
+                work, 
+                applicantService,
+                memento.getOidcUser()
+        );
+        
         Binder<FinApplication> binder = new Binder<>(FinApplication.class);
-        binder.setBean(finapp);
+        binder.setBean(memento.getParent());
 
         FormLayout form = createForm(binder, badgeUtils, editable);
-        MessageButton msgBtn = new MessageButton(finapp.getId(), "SME_FIN", user, msgService);
+        MessageButton msgBtn = new MessageButton(
+                memento.getParent().getId(), 
+                "SME_FIN", 
+                memento.getOidcUser(), 
+                msgService
+        );
         this.add(msgBtn);
         this.add(form);
         
-        WorkflowMemento memento=new WorkflowMemento(
-                finapp,
-                finapp.getId(),
-                user,
-                workflowConfig.rootBizProcess(),
-                "SME_FIN"
-        );
+       
         
          WorkflowPanel workflowPanel = new WorkflowPanel(
-               memento,
+               work,
                false,
                a -> {},
                a -> {}
@@ -104,9 +106,9 @@ public class ApplicationForm extends Dialog {
         this.add(workflowPanel);
 
         VerticalLayout applicantPanel = createApplicantPanel(
-                finapp,
+                memento.getParent(),
                 applicantService,
-                user,
+                memento.getOidcUser(),
                 editable,
                 binder
         );
@@ -114,9 +116,9 @@ public class ApplicationForm extends Dialog {
         this.add(applicantPanel);
 
         AttachmentsPanel attachmentsPanel = new AttachmentsPanel(
-                finapp.getId(),
+                memento.getParent().getId(),
                 "SME_FIN",
-                Long.toString(finapp.getId()),
+                Long.toString(memento.getParent().getId()),
                 editable == Editable.YES,
                 a -> {},
                 a -> {});
@@ -124,11 +126,12 @@ public class ApplicationForm extends Dialog {
 
         configureButtons(
                 binder, 
-                user, 
+                work,
                 memento,
                 editable, 
                 finappService,
                 applicantService,
+                workflowService,
                 onPostSave, 
                 onPostRemove, 
                 onPostCancel);
@@ -138,6 +141,7 @@ public class ApplicationForm extends Dialog {
 
     private Editable isEditable(
             FinApplication finapp,
+            WorkItem work,
             ApplicantService applicantService, 
             OidcUser oidcUser
     ) {
@@ -155,17 +159,17 @@ public class ApplicationForm extends Dialog {
         }
         
         if (state==2){
-            if (finapp.getStatus() == Status.DRAFT
-                || finapp.getStatus() == Status.NEED_MORE_INFO
-                || finapp.getStatus() == Status.NEWLY_CREATED){
+            if (work.getStatus() == Status.DRAFT
+                || work.getStatus() == Status.NEED_MORE_INFO
+                || work.getStatus() == Status.NEWLY_CREATED){
                 state = 6;
             }else{
                 state = 8;
             }
         }else if (state == 3){
-            if (finapp.getStatus() == Status.DRAFT
-                || finapp.getStatus() == Status.NEED_MORE_INFO
-                || finapp.getStatus() == Status.NEWLY_CREATED){
+            if (work.getStatus() == Status.DRAFT
+                || work.getStatus() == Status.NEED_MORE_INFO
+                || work.getStatus() == Status.NEWLY_CREATED){
                 state = 5;
             }else{
                 state = 7;
@@ -313,7 +317,13 @@ public class ApplicationForm extends Dialog {
         return bigDecimalField;
     }
 
-    private VerticalLayout createApplicantPanel(FinApplication finapp, ApplicantService applicantService, DefaultOidcUser user, Editable editable, Binder<FinApplication> binder) {
+    private VerticalLayout createApplicantPanel(
+            FinApplication finapp, 
+            ApplicantService applicantService, 
+            OidcUser user, 
+            Editable editable, 
+            Binder<FinApplication> binder
+    ) {
         Grid<Applicant> gridApplicants = createApplicantGrid(finapp, applicantService, user, editable, binder);
         gridApplicants.getStyle().set("max-width", "285px");
         Button btnAddApplicant = createAddApplicantButton(finapp, applicantService, user, editable, gridApplicants);
@@ -329,7 +339,12 @@ public class ApplicationForm extends Dialog {
         return applicantPanel;
     }
 
-    private Grid<Applicant> createApplicantGrid(FinApplication finapp, ApplicantService applicantService, DefaultOidcUser user, Editable editable, Binder<FinApplication> binder) {
+    private Grid<Applicant> createApplicantGrid(
+            FinApplication finapp, 
+            ApplicantService applicantService, 
+            OidcUser user, 
+            Editable editable, 
+            Binder<FinApplication> binder) {
         Grid<Applicant> gridApplicants = new Grid<>();
         gridApplicants.getStyle().set("max-width", "285px");
         gridApplicants.addComponentColumn(app -> createApplicantCard(app, finapp, applicantService, user, editable, gridApplicants));
@@ -338,7 +353,14 @@ public class ApplicationForm extends Dialog {
         return gridApplicants;
     }
 
-    private Card createApplicantCard(Applicant app, FinApplication finapp, ApplicantService applicantService, DefaultOidcUser user, Editable editable, Grid<Applicant> gridApplicants) {
+    private Card createApplicantCard(
+            Applicant app, 
+            FinApplication finapp, 
+            ApplicantService applicantService, 
+            OidcUser user, 
+            Editable editable, 
+            Grid<Applicant> gridApplicants
+    ) {
         Card card = new Card("Name: " + app.getFullName());
         card.add(new NativeLabel("Email: " + app.getEmail()));
         card.add(new NativeLabel("Position: " + app.getPosition()));
@@ -357,7 +379,11 @@ public class ApplicationForm extends Dialog {
         return card;
     }
 
-    private ConfirmDialog createRemoveApplicantDialog(Applicant app, ApplicantService applicantService, Grid<Applicant> gridApplicants) {
+    private ConfirmDialog createRemoveApplicantDialog(
+            Applicant app, 
+            ApplicantService applicantService, 
+            Grid<Applicant> gridApplicants
+    ) {
         ConfirmDialog dialog = new ConfirmDialog();
         dialog.setHeader("Remove applicant");
         dialog.setText("Are you sure to remove this applicant?");
@@ -372,25 +398,42 @@ public class ApplicationForm extends Dialog {
         return dialog;
     }
 
-    private Button createAddApplicantButton(FinApplication finapp, ApplicantService applicantService, DefaultOidcUser user, Editable editable, Grid<Applicant> gridApplicants) {
-        return new Button(ADD_APPLICANT, e -> buildApplicantDialog(null, finapp, applicantService, user, editable, gridApplicants));
+    private Button createAddApplicantButton(
+            FinApplication finapp, 
+            ApplicantService applicantService, 
+            OidcUser user, 
+            Editable editable, 
+            Grid<Applicant> gridApplicants
+    ) {
+        return new Button(
+                ADD_APPLICANT, 
+                e -> buildApplicantDialog(
+                        null, 
+                        finapp, 
+                        applicantService, 
+                        user, 
+                        editable, 
+                        gridApplicants)
+        );
     }
 
     private void configureButtons(
             Binder<FinApplication> binder,
+            WorkItem work,
             WorkflowMemento memento,
             Editable editable, 
             FinApplicationService finappService,
             ApplicantService applicantService,
+            WorkflowService workflowService,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel) {
         
-        Button btnSaveAndSubmitApp = createSaveAndSubmitButton(binder, finappService, applicantService, user, onPostSave);
-        Button btnSaveDraft = createSaveDraftButton(binder, finappService, memento.getOidcUser(), onPostSave);
+        Button btnSaveAndSubmitApp = createSaveAndSubmitButton(binder,finappService, applicantService, workflowService, memento, onPostSave);
+        Button btnSaveDraft = createSaveDraftButton(binder,work, finappService, memento.getOidcUser(), onPostSave);
         Button btnSave = createSaveButton(binder, finappService,applicantService, onPostSave);
         
-        Button btnCancel = createCancelButton(binder, finappService, onPostCancel);
+        Button btnCancel = createCancelButton(binder, work, finappService, onPostCancel);
         Button btnRemove = createRemoveButton(binder, editable, finappService, onPostRemove);
 
         HorizontalLayout buttonLayout = new HorizontalLayout(
@@ -425,10 +468,16 @@ public class ApplicationForm extends Dialog {
         }
     }
 
-    private Button createSaveDraftButton(Binder<FinApplication> binder, FinApplicationService finappService, DefaultOidcUser user, Consumer<FinApplication> onPostSave) {
+    private Button createSaveDraftButton(
+            Binder<FinApplication> binder, 
+            WorkItem work,
+            FinApplicationService finappService, 
+            OidcUser user, 
+            Consumer<FinApplication> onPostSave
+    ) {
         Button btnSaveDraft = new Button("Save draft", e1 -> {
             FinApplication finapp = binder.getBean();
-            finapp.setStatus(Status.DRAFT);
+            work.setStatus(Status.DRAFT);
             finappService.save(finapp, user.getPreferredUsername());
             onPostSave.accept(finapp);
             this.close();
@@ -440,17 +489,18 @@ public class ApplicationForm extends Dialog {
             Binder<FinApplication> binder, 
             FinApplicationService finappService,
             ApplicantService applicantService,
-            DefaultOidcUser user, 
+            WorkflowService workflowService,
+            WorkflowMemento memento,
             Consumer<FinApplication> onPostSave) {
         Button btnSaveFinApp = new Button("Save and submit", e1 -> {
             Set<String> errors = validateApplication(applicantService, binder);
             if (errors.isEmpty()) {
                 FinApplication finapp = binder.getBean();
-                finapp.setStatus(Status.IN_PROGRESS);
-                finappService.save(finapp, user.getPreferredUsername());
+                //finapp.setStatus(Status.IN_PROGRESS);
+                finappService.save(finapp,memento.getOidcUser().getPreferredUsername());
 //                WorkItem work = workItemService.findOneByParentIdAndContext(parentId, context);
 //         BizUser bizUser = bizUserService.getUser(oidcUser.getPreferredUsername());
-//         workflowService.run(parent, work, bizUser, false, bizProcess);
+                workflowService.run(memento, false);
                 onPostSave.accept(finapp);
                 this.close();
             } else {
@@ -489,10 +539,15 @@ public class ApplicationForm extends Dialog {
         return btnSaveFinApp;
     }
 
-    private Button createCancelButton(Binder<FinApplication> binder, FinApplicationService finappService, Consumer<FinApplication> onPostCancel) {
+    private Button createCancelButton(
+            Binder<FinApplication> binder, 
+            WorkItem work,
+            FinApplicationService finappService, 
+            Consumer<FinApplication> onPostCancel
+    ) {
         return new Button("Cancel", e1 -> {
             FinApplication finapp = binder.getBean();
-            if (finapp.getStatus() == Status.NEWLY_CREATED) {
+            if (work.getStatus() == Status.NEWLY_CREATED) {
                 finappService.remove(finapp);
             }
             onPostCancel.accept(finapp);
@@ -528,7 +583,9 @@ public class ApplicationForm extends Dialog {
         return btnRemove;
     }
 
-    private Set<String> validateApplication(ApplicantService applicantService, Binder<FinApplication> binder) {
+    private Set<String> validateApplication(
+            ApplicantService applicantService, 
+            Binder<FinApplication> binder) {
         Set<String> errors = new HashSet<>();
         binder.validate().getValidationErrors().stream().forEach(e -> errors.add(e.getErrorMessage()));
 
@@ -545,8 +602,21 @@ public class ApplicationForm extends Dialog {
         return errors;
     }
 
-    private void buildApplicantDialog(Applicant applicant, FinApplication finApplication, ApplicantService applicantService, DefaultOidcUser user, Editable editable, Grid<Applicant> gridApplicants) {
-        ApplicantForm appForm = new ApplicantForm(applicant, finApplication, editable, user, applicantService, a -> gridApplicants.getDataProvider().refreshAll());
+    private void buildApplicantDialog(
+            Applicant applicant, 
+            FinApplication finApplication, 
+            ApplicantService applicantService, 
+            OidcUser user, 
+            Editable editable, 
+            Grid<Applicant> gridApplicants
+    ) {
+        ApplicantForm appForm = new ApplicantForm(
+                applicant, 
+                finApplication, 
+                editable, 
+                user, 
+                applicantService, 
+                a -> gridApplicants.getDataProvider().refreshAll());
         appForm.open();
     }
 

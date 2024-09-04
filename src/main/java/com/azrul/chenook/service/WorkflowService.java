@@ -8,9 +8,11 @@ package com.azrul.chenook.service;
 import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.domain.Approval;
 import com.azrul.chenook.domain.BizUser;
+import com.azrul.chenook.domain.Priority;
 import com.azrul.chenook.domain.Status;
 
 import com.azrul.chenook.domain.WorkItem;
+import com.azrul.chenook.domain.WorkflowInfo;
 import com.azrul.chenook.script.Expression;
 import com.azrul.chenook.script.Scripting;
 import com.azrul.chenook.service.ApproverLookup;
@@ -47,7 +49,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import org.springframework.stereotype.Service;
 
-
 /**
  *
  * @author azrul
@@ -56,26 +57,23 @@ import org.springframework.stereotype.Service;
 @Service
 public class WorkflowService<T> {
 
-
     @Autowired
     private Scripting scripting;
 
     //@Autowired
     //private Map<String, Activity> activities;
-
     @Autowired(required = false)
     private List<ApproverLookup<T>> approverLookups;
-    
+
     @Autowired
     WorkItemService workItemService;
-    
+
     @Autowired
     BizUserService bizUserService;
 
     @Autowired
     private Expression<Boolean, T> expr;
 
-    
     public Map<String, List<HumanActivity>> getRoleActivityMap(BizProcess bizProcess) {
         return getActivities(bizProcess)
                 .values()
@@ -86,14 +84,39 @@ public class WorkflowService<T> {
                 .collect(Collectors.groupingBy(HumanActivity::getHandledBy));
     }
 
-    
     public Boolean isApprovalActivity(BizProcess bizProcess, String activity) {
         Map<String, Activity> activities = getActivities(bizProcess);
-        
+
         return isApprovalActivity(activities.get(activity));
     }
 
-    
+    public WorkItem createOrQueryWorkInfo(final WorkflowMemento<T> memento) {
+        WorkItem work = workItemService.findOneByParentIdAndContext(
+                memento.getParentId(),
+                memento.getContext());
+        if (work != null) {
+            WorkItem newwork = new WorkItem();
+            newwork.setContext(memento.getContext());
+            newwork.setCreator(memento.getOidcUser().getPreferredUsername());
+            newwork.setParentId(memento.getParentId());
+            newwork.setPriority(Priority.NONE);
+            newwork.setStatus(Status.NEWLY_CREATED);
+            WorkflowInfo wfInfo = new WorkflowInfo();
+            Set<String> owners = new HashSet<>();
+            owners.add(memento.getOidcUser().getPreferredUsername());
+            wfInfo.setOwners(owners);
+            wfInfo.setStartEventId(memento.getBizProcess().getStartEvents().iterator().next().getId());
+            wfInfo.setStartEventDescription(memento.getBizProcess().getStartEvents().iterator().next().getDescription());
+            wfInfo.setWorklist(memento.getBizProcess().getStartEvents().iterator().next().getId());
+            wfInfo.setWorklistUpdateTime(LocalDateTime.now());
+            newwork.setWorkflowInfo(wfInfo);
+            newwork = workItemService.save(newwork);
+            return newwork;
+        } else {
+            return work;
+        }
+    }
+
     public Boolean isApprovalActivity(Activity activity) {
         if (activity == null) {
             return Boolean.FALSE;
@@ -103,27 +126,25 @@ public class WorkflowService<T> {
                 || activity.getClass().equals(XorMajorityApprovalActivity.class));
     }
 
-    public WorkItem run(
+    public  WorkItem run(
             final WorkflowMemento<T> memento,
             final boolean isError
     ) {
         WorkItem work = workItemService.findOneByParentIdAndContext(
-                memento.getParentId(), 
+                memento.getParentId(),
                 memento.getContext());
-        
+
         BizUser bizUser = bizUserService.getUser(memento.getOidcUser().getPreferredUsername());
-        return run(memento,work,bizUser,isError);
+        return run(memento, work, bizUser, isError);
     }
-    
+
     private WorkItem run(
             final WorkflowMemento<T> memento,
             final WorkItem work,
             final BizUser bizUser,
             final boolean isError
     ) {
-       
-        
-        
+
         Map<String, Activity> activities = getActivities(memento.getBizProcess());
         //Pre-run script
         String worklist = work.getWorkflowInfo().getWorklist();
@@ -132,9 +153,9 @@ public class WorkflowService<T> {
         if (!currentActivity.getClass().equals(End.class)) { //if not the end
             //transition to next steps
             List<Activity> nextSteps = runTransition(
-                    memento.getParent(), 
-                    work, 
-                    bizUser, 
+                    memento.getParent(),
+                    work,
+                    bizUser,
                     memento.getBizProcess()
             );
 
@@ -142,7 +163,7 @@ public class WorkflowService<T> {
             straightThroughNextStepProcessing(
                     memento,
                     nextSteps,
-                    work, 
+                    work,
                     bizUser,
                     isError
             );
@@ -154,13 +175,13 @@ public class WorkflowService<T> {
 
     private WorkItem straightThroughNextStepProcessing(
             final WorkflowMemento memento,
-            final List<Activity> nextSteps, 
-            final WorkItem work,  
+            final List<Activity> nextSteps,
+            final WorkItem work,
             final BizUser bizUser,
             final boolean isError
     ) {
         for (Activity activity : nextSteps) {
-            if (this.isStartEvent(activity,memento.getBizProcess())) {
+            if (this.isStartEvent(activity, memento.getBizProcess())) {
                 //do nothing as this is startEvent
                 //do nothing as this is startEvent
             } else {
@@ -169,14 +190,14 @@ public class WorkflowService<T> {
                 if (activity.getClass().equals(End.class)) {
                     //we reach the end, conclude
                     work.setStatus(Status.DONE);
-                    return run(memento, work,bizUser,isError); //for post run script exec
-                    
+                    return run(memento, work, bizUser, isError); //for post run script exec
+
                 } else if (activity.getClass().equals(ServiceActivity.class)) {
                     String script = ((ServiceActivity) activity).getScript();
-                    scripting.runScript(memento.getParent(),work, bizUser, script,memento.getBizProcess());
-                    return run(memento, work,bizUser,isError);
+                    scripting.runScript(memento.getParent(), work, bizUser, script, memento.getBizProcess());
+                    return run(memento, work, bizUser, isError);
                 } else if (activity.getClass().equals(XorActivity.class)) {
-                    return run(memento, work,bizUser,isError);
+                    return run(memento, work, bizUser, isError);
                 } else {
                     return work; //<-- this is ok since nextStep will not contain more than 1 activity at one time
                 }
@@ -187,8 +208,8 @@ public class WorkflowService<T> {
 
     private List<Activity> runTransition(
             final T data,
-            final WorkItem work, 
-            final BizUser user, 
+            final WorkItem work,
+            final BizUser user,
             final BizProcess bizProcess
     ) {
         final String tenant = "";//(String) VaadinSession.getCurrent().getSession().getAttribute("TENANT");
@@ -223,12 +244,12 @@ public class WorkflowService<T> {
                 Activity activity = e.getValue();
                 if (worklist.equals(activity.getId())) {
                     runSingleTransition(
-                            activity, 
+                            activity,
                             data,
                             work,
-                            user, 
-                            tenant, 
-                            nextSteps, 
+                            user,
+                            tenant,
+                            nextSteps,
                             bizProcess);
                 }
             }
@@ -239,11 +260,11 @@ public class WorkflowService<T> {
 
     private void runSingleTransition(
             final Activity activity,
-            final T data, 
-            final WorkItem work, 
-            final BizUser user, 
-            final String tenant, 
-            final List<Activity> nextSteps, 
+            final T data,
+            final WorkItem work,
+            final BizUser user,
+            final String tenant,
+            final List<Activity> nextSteps,
             final BizProcess bizProcess) {
         String userIdentifier = user.getUsername();
         if (activity.getClass().equals(HumanActivity.class)) {
@@ -271,7 +292,7 @@ public class WorkflowService<T> {
             //see which condition triggers and follow that branch
             boolean conditionTriggered = false;
             for (var branch : ((XorActivity) activity).getBranch()) {
-                Boolean result = expr.evaluate(branch.getCondition(),data, work, user,bizProcess);
+                Boolean result = expr.evaluate(branch.getCondition(), data, work, user, bizProcess);
                 if (result == true) {
                     conditionTriggered = true;
                     nextSteps.add((Activity) branch.getNext());
@@ -506,7 +527,7 @@ public class WorkflowService<T> {
                                         archiveApprovals(root);
                                         //then add the new approver
                                         //loadUserIntoApprovalList(approver.getLoginName(), activity, tenant, root);//for apperovals, we log the current activity for supervisor approval
-                                        loadUserIntoApprovalList(approver.getUsername(),  root);
+                                        loadUserIntoApprovalList(approver.getUsername(), root);
                                         nextSteps.add(activity); //if need supervisor, stay in the same activity first
 
                                     });
@@ -587,15 +608,14 @@ public class WorkflowService<T> {
         }
     }
 
-    private void loadUserIntoApprovalList(String loginName,WorkItem work) {
+    private void loadUserIntoApprovalList(String loginName, WorkItem work) {
 //        BizUser user = bizUserService.getUser(loginName);
-         Approval approval = new Approval();
-         approval.setUsername(loginName);
-         work.getApprovals().add(approval);
-         
+        Approval approval = new Approval();
+        approval.setUsername(loginName);
+        work.getApprovals().add(approval);
+
 //        Set<Approval> approvals = createApprovalAndAssociateToWork(work, user);
 //        work.setApprovals(approvals);
-
     }
 
     private Boolean isSupervisorNeeded(WorkItem work) {
@@ -607,7 +627,7 @@ public class WorkflowService<T> {
             final String tenant,
             WorkItem work) {
         List<BizUser> users = bizUserService.getUsersByRole(role);
-       
+
         //work.archiveApproval();
         //dao.save(work);
 //        System.out.println("=======Element id:"+work.getId()+"==============");
@@ -622,9 +642,8 @@ public class WorkflowService<T> {
 //                w -> ((WorkElement) w).getApprovals().clear());
         workItemService.archiveApprovalsAndSave(work);
         for (BizUser user : users) {
-            loadUserIntoApprovalList(user.getUsername(),work);
+            loadUserIntoApprovalList(user.getUsername(), work);
         }
-        
 
     }
 
@@ -661,11 +680,10 @@ public class WorkflowService<T> {
 //                Optional.empty(),
 //                Status.IN_PROGRESS,
 //                work.getCreator());
-        
         Approval approval = new Approval();
-         if (user.isEnabled()) {
-        approval.setUsername(user.getUsername());
-       
+        if (user.isEnabled()) {
+            approval.setUsername(user.getUsername());
+
 //                approval.getWorkflowInfo().setWorklist(((BaseActivity) nextActivity).getId());
 //                if (work.getWorkflowInfo().getStartEventDescription() != null) {
 //                    approval.getWorkflowInfo().setStartEventDescription(work.getWorkflowInfo().getStartEventDescription());
@@ -673,8 +691,6 @@ public class WorkflowService<T> {
 //                if (work.getWorkflowInfo().getStartEventId() != null) {
 //                    approval.getWorkflowInfo().setStartEventId(work.getWorkflowInfo().getStartEventId());
 //                }
-            
-
 //            oapproval.ifPresent(approval -> {
 //                mapUserToApproval(approval, user, tenant);
 //                approval.getWorkflowInfo().setWorklist(((BaseActivity) nextActivity).getId());
@@ -695,26 +711,23 @@ public class WorkflowService<T> {
 //                });
 //
 //            });
-
         }
     }
-    
+
     public Boolean isStartEvent(Activity activity, BizProcess bizProcess) {
         return bizProcess.getStartEvents().stream().anyMatch(se -> se.getId().equals(activity.getId()));
     }
 
-    
     public Boolean isStartEvent(String activityId, BizProcess bizProcess) {
         return bizProcess.getStartEvents().stream().anyMatch(se -> se.getId().equals(activityId));
     }
 
-    
-    public Boolean isActivityAccessibleByRoles(String activityid, Set<String> inroles, BizProcess bizProcess ) {
-         Map<String, Activity> activities = getActivities(bizProcess);
+    public Boolean isActivityAccessibleByRoles(String activityid, Set<String> inroles, BizProcess bizProcess) {
+        Map<String, Activity> activities = getActivities(bizProcess);
         return isActivityAccessibleByRoles(activities.get(activityid), inroles, bizProcess);
     }
 
-    public Boolean isActivityAccessibleByRoles(Activity activity, Set<String> inroles, BizProcess bizProcess ) {
+    public Boolean isActivityAccessibleByRoles(Activity activity, Set<String> inroles, BizProcess bizProcess) {
 
         if (activity == null || activity.getClass().equals(StartEvent.class)) {
             return whoCanStart(bizProcess).stream().anyMatch(inroles::contains);
@@ -726,7 +739,6 @@ public class WorkflowService<T> {
 
     }
 
-    
     public Set<String> whoCanStart(BizProcess bizProcess) {
         return new HashSet<String>(bizProcess
                 .getStartEvents()
@@ -736,14 +748,12 @@ public class WorkflowService<T> {
                 .collect(Collectors.toList()));
     }
 
-
-    public Set<String> whoCanStart(WorkItem currentActivity,BizProcess bizProcess) {
-         Map<String, Activity> activities = getActivities(bizProcess);
+    public Set<String> whoCanStart(WorkItem currentActivity, BizProcess bizProcess) {
+        Map<String, Activity> activities = getActivities(bizProcess);
         String startEventId = currentActivity.getWorkflowInfo().getStartEventId();
         StartEvent startEvent = (StartEvent) activities.get(startEventId);
         return new HashSet<String>(startEvent.getCanBeStartedBy());
     }
-
 
     public Set<StartEvent> getStartEvents(BizProcess bizProcess) {
         return new HashSet<StartEvent>(bizProcess.getStartEvents());
@@ -760,12 +770,11 @@ public class WorkflowService<T> {
         return f;
     }
 
-    
     public Boolean isActivitySLAExpired(String activity, LocalDateTime workSLAUpdateTime, BizProcess bizProcess) {
         if (activity == null) { //start event
             return Boolean.FALSE;
         }
-         Map<String, Activity> activities = getActivities(bizProcess);
+        Map<String, Activity> activities = getActivities(bizProcess);
         if (activities.get(activity) == null) { //cater for updating workflow id in workflow.xml but data is old
             return Boolean.FALSE;
         }
@@ -776,7 +785,6 @@ public class WorkflowService<T> {
         }
     }
 
-    
     public Boolean isActivitySLAExpired(HumanActivity activity, LocalDateTime workSLAUpdateTime) {
         if (activity.getSlaInHours() != null && workSLAUpdateTime != null) {
             Duration diff = Duration.between(workSLAUpdateTime, LocalDateTime.now());
@@ -787,7 +795,7 @@ public class WorkflowService<T> {
     }
 
     private Activity evaluateBranchesForNextActivty(
-            final Supplier<List<? extends ConditionalBranch>> getBranches, 
+            final Supplier<List<? extends ConditionalBranch>> getBranches,
             final Supplier<DefaultBranch> getDefaultBranch,
             final T data,
             final WorkItem work,
@@ -799,7 +807,7 @@ public class WorkflowService<T> {
         //state=2: multiple activities has condition == true (in this case, we have no guarantee which branch is executed)
         Activity nextStep = null;
         for (var branch : getBranches.get()) {
-            Boolean result = expr.evaluate(branch.getCondition(), data, work,user, bizProces);
+            Boolean result = expr.evaluate(branch.getCondition(), data, work, user, bizProces);
             if (result == true) {
                 nextStep = (Activity) branch.getNext(); //deal with state=1
                 break; //deal with state=2
@@ -812,7 +820,7 @@ public class WorkflowService<T> {
         }
         return nextStep;
     }
-    
+
     private Map<String, Activity> getActivities(BizProcess bizProcess) {
         Map<String, Activity> activities = new HashMap<>();
         BizProcess.Workflow workflow = bizProcess.getWorkflow();
@@ -821,6 +829,5 @@ public class WorkflowService<T> {
         }
         return activities;
     }
-    
-     
+
 }

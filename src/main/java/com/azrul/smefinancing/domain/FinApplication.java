@@ -50,7 +50,7 @@ public class FinApplication {
     private String postalCode;
     private String state;
     private String mainBusinessActivity;
-    private Status status;
+    //private Status status;
     private BigDecimal financingRequested;
     private LocalDateTime applicationDate;
     private String username;
@@ -178,19 +178,19 @@ public class FinApplication {
         this.applicants = applicants;
     }
 
-    /**
-     * @return the status
-     */
-    public Status getStatus() {
-        return status;
-    }
-
-    /**
-     * @param status the status to set
-     */
-    public void setStatus(Status status) {
-        this.status = status;
-    }
+//    /**
+//     * @return the status
+//     */
+//    public Status getStatus() {
+//        return status;
+//    }
+//
+//    /**
+//     * @param status the status to set
+//     */
+//    public void setStatus(Status status) {
+//        this.status = status;
+//    }
 
     /**
      * @return the version

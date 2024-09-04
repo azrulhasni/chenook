@@ -33,10 +33,6 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
  * @author azrul
  */
 public class WorkflowPanel<T> extends VerticalLayout {
-    
-    //private Long parentId;
-    private final WorkflowMemento memento;
-    
 
     @Autowired
     private WorkflowService workflowService;
@@ -46,63 +42,31 @@ public class WorkflowPanel<T> extends VerticalLayout {
 
     @Autowired
     private BadgeUtils badgeUtils;
-    
+
     @Autowired
     private BizUserService bizUserService;
 
     private static final String STATUS_LABEL = "Status";
 
     public WorkflowPanel(
-            final WorkflowMemento memento, 
+            final WorkItem work,
             final Boolean editable,
             final Consumer<Attachment> onPostSave,
             final Consumer<Attachment> onPostRemove
     ) {
         ApplicationContextHolder.autowireBean(this);
-        this.memento=memento;
-        
-        WorkItem work = workItemService.findOneByParentIdAndContext(
-                memento.getParentId(), 
-                memento.getContext());
-        if (work != null) {
-            if (work.getWorkflowInfo().getOwners().contains(memento.getOidcUser().getPreferredUsername())) {
-                Select<Status> cbStatus = createSelect(STATUS_LABEL, editable);
-                cbStatus.setItems(Status.values());
-                cbStatus.setRenderer(badgeUtils.createStatusBadgeRenderer());
-                cbStatus.setValue(work.getStatus());
-                this.add(cbStatus);
-            } else {
-                //show nothing
-            }
-        } else {
-            WorkItem newwork = new WorkItem();
-            newwork.setContext(memento.getContext());
-            newwork.setCreator(memento.getOidcUser().getPreferredUsername());
-            newwork.setParentId(memento.getParentId());
-            newwork.setPriority(Priority.NONE);
-            newwork.setStatus(Status.NEWLY_CREATED);
-            WorkflowInfo wfInfo = new WorkflowInfo();
-            Set<String> owners = new HashSet<>();
-            owners.add(memento.getOidcUser().getPreferredUsername());
-            wfInfo.setOwners(owners);
-            wfInfo.setStartEventId(memento.getBizProcess().getStartEvents().iterator().next().getId());
-            wfInfo.setStartEventDescription(memento.getBizProcess().getStartEvents().iterator().next().getDescription());
-            wfInfo.setWorklist(memento.getBizProcess().getStartEvents().iterator().next().getId());
-            wfInfo.setWorklistUpdateTime(LocalDateTime.now());
-            newwork.setWorkflowInfo(wfInfo);
-            newwork = workItemService.save(newwork);
-            Select<Status> cbStatus = createSelect(STATUS_LABEL, editable);
-            cbStatus.setItems(Status.values());
-            cbStatus.setRenderer(badgeUtils.createStatusBadgeRenderer());
-            cbStatus.setValue(newwork.getStatus());
-            this.add(cbStatus);
-        }
-        //this.parentId = parentId;
 
+        Select<Status> cbStatus = createSelect(STATUS_LABEL, editable);
+        cbStatus.setItems(Status.values());
+        cbStatus.setRenderer(badgeUtils.createStatusBadgeRenderer());
+        cbStatus.setValue(work.getStatus());
+        this.add(cbStatus);
+
+        //this.parentId = parentId;
     }
 
     private <T> Select<T> createSelect(
-            final String label, 
+            final String label,
             final boolean editable
     ) {
         Select<T> select = new Select<>();
@@ -110,7 +74,7 @@ public class WorkflowPanel<T> extends VerticalLayout {
         select.setReadOnly(!editable);
         return select;
     }
-    
+
 //    public void moveWork(){
 //         WorkItem work = workItemService.findOneByParentIdAndContext(parentId, context);
 //         BizUser bizUser = bizUserService.getUser(oidcUser.getPreferredUsername());

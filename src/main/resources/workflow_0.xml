@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Relationship-Manager: user101
+Valuator: user102
+
+-->
 <bizProcess xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:noNamespaceSchemaLocation="workflow.xsd">
     <name>Loan:MY</name>

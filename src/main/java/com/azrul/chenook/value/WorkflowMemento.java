@@ -4,6 +4,7 @@
  */
 package com.azrul.chenook.value;
 
+import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.workflow.model.BizProcess;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
@@ -20,7 +21,7 @@ public class WorkflowMemento<T> {
 
     public WorkflowMemento(T parent, Long parentId, OidcUser oidcUser, BizProcess bizProcess, String context) {
         this.parent = parent;
-        this.parentId = parentId;
+        //this.parentId = parentId;
         this.oidcUser = oidcUser;
         this.bizProcess = bizProcess;
         this.context = context;

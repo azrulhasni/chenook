@@ -11,6 +11,8 @@ import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.service.ApplicantService;
 import com.azrul.chenook.service.MessageService;
 import com.azrul.chenook.config.WorkflowConfig;
+import com.azrul.chenook.service.WorkflowService;
+import com.azrul.chenook.value.WorkflowMemento;
 import com.azrul.smefinancing.service.FinApplicationService;
 import com.azrul.smefinancing.views.application.ApplicationForm;
 import com.azrul.smefinancing.service.BadgeUtils;
@@ -35,6 +37,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 /**
  *
@@ -46,6 +49,7 @@ import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 public class ApplicationView extends VerticalLayout implements AfterNavigationObserver/*, HasUrlParameter<Long> */ {
 
     private final FinApplicationService finappService;
+    private final WorkflowService workflowService;
     private final ApplicantService applicantService;
     private final MessageService msgService;
     private final BadgeUtils badgeUtils;
@@ -53,19 +57,21 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
     private final WorkflowConfig workflowConfig;
 
     public ApplicationView(
-            @Autowired FinApplicationService _finappService,
+            @Autowired FinApplicationService finappService,
             @Autowired ApplicantService applicantService,
             @Autowired MessageService msgService,
+            @Autowired WorkflowService workflowService,
             @Autowired BadgeUtils badgeUtils,
             @Autowired WorkflowConfig workflowConfig,
             @Value("${finapp.datetime.format}") String dateTimeFormat
     ) {
-        this.finappService = _finappService;
+        this.finappService = finappService;
         this.applicantService = applicantService;
         this.msgService=msgService;
         this.badgeUtils=badgeUtils;
         this.DATETIME_FORMAT = dateTimeFormat;
         this.workflowConfig=workflowConfig;
+        this.workflowService=workflowService;
 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
 
@@ -77,10 +83,11 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
             grid.setAllRowsVisible(true);
             Button btnAddNew = new Button("Add new", e -> {
                 FinApplication finapp = new FinApplication();
-                finapp.setStatus(Status.NEWLY_CREATED);
+                //finapp.setStatus(Status.NEWLY_CREATED);
                 finapp.setApplicationDate(LocalDateTime.now());
 
                 finapp = finappService.save(finapp, oidcUser.getPreferredUsername());
+                
                 showApplicationDialog(
                         finapp, 
                         oidcUser, 
@@ -110,7 +117,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                 
                 card.add(btnPanel);
 
-                if (null == finapp.getStatus()) {
+                if (null == work.getStatus()) {
 
                 } else {
                     card.add(badgeUtils.createStatusBadge(finapp.getStatus()));
@@ -125,7 +132,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
 
     private void showApplicationDialog(
             FinApplication app,
-            DefaultOidcUser oidcUser,
+            OidcUser oidcUser,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel
@@ -135,6 +142,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                 oidcUser,
                 applicantService,
                 finappService,
+                workflowService,
                 msgService,
                 badgeUtils,
                 workflowConfig,

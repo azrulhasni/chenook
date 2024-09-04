@@ -29,8 +29,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 
 @Service
-@Qualifier("Manager")
-public class BizUserManagerLookup <T extends WorkItem> implements ApproverLookup<T> {
+@Qualifier("HOD")
+public class BizUserHODLookup <T extends WorkItem> implements ApproverLookup<T> {
 
     @Autowired
     BizUserService bizUserService;
@@ -39,7 +39,8 @@ public class BizUserManagerLookup <T extends WorkItem> implements ApproverLookup
     public Optional<BizUser> lookupApprover(T work, String userIdentifier) {
         BizUser bizUser = bizUserService.getUser(userIdentifier);
         BizUser manager = bizUserService.getUser(bizUser.getManager());
-        return Optional.ofNullable(manager);
+        BizUser hod = bizUserService.getUser(manager.getManager());
+        return Optional.ofNullable(hod);
     }
 
 

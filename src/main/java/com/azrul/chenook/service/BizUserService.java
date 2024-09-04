@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -93,13 +94,16 @@ public class BizUserService {
 //    }
     
     public BizUser getUser(String username){
-        return mapperService.map(
-                keycloak
-                .realm(keycloakRealm)
-                .users()
-                .get(username)
-                .toRepresentation()
-        );
+        List<UserRepresentation> users = keycloak.realm(keycloakRealm).users().searchByUsername(username, true);
+        if (users.isEmpty() || users.size()>1){
+            return null;
+        }
+        return mapperService.map(users.iterator().next());
+//        UserResource ur = keycloak
+//                .realm(keycloakRealm)
+//                .users()
+//                .get(username);
+//        return mapperService.map(ur.toRepresentation());
     }
     
     public List<BizUser> getUsersByRole(String role) {
