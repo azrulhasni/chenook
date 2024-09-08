@@ -5,8 +5,9 @@
 package com.azrul.chenook.domain;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
@@ -14,9 +15,16 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.OneToMany;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -24,39 +32,56 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * @author azrul
  */
 @Entity
-@Audited 
+@Audited
 @EntityListeners(AuditingEntityListener.class)
 public class WorkItem {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    
+
     private String creator;
-    
+
     private Status status;
-    
+
     private String tenant;
-    
+
     private Priority priority;
-    
+
+    @Column(nullable = false, unique=true)
     private Long parentId;
-    
+
     private String context;
-    
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL) 
+
+    private String startEventId;
+
+    private String startEventDescription;
+
+    private Set<String> owners;
+
+    private String worklist;
+
+    private LocalDateTime worklistUpdateTime;
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "work_id", referencedColumnName = "id")
-    private Set<Approval> approvals;
-    
-    @Embedded
-    private WorkflowInfo workflowInfo;
-    
+    private Set<Approval> approvals = new HashSet<>();
+
     private String supervisorApprovalSeeker;
 
     private String supervisorApprovalLevel;
-    
+
+    @NotAudited
     @OneToMany(fetch = FetchType.LAZY) //do not cascade. Will create problem due to 2 fields pointing to the same type i.e. Approvals
     @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
-    private Set<Approval> historicalApprovals;
+    private Set<Approval> historicalApprovals = new HashSet<>();
+    
+    @ElementCollection
+    @CollectionTable(name="WorkField",
+        joinColumns=@JoinColumn(name="work_id"))
+    @MapKeyColumn(name="key")
+    @Column(name="value")
+    private Map<String, String> fields = new HashMap<>();
 
     /**
      * @return the id
@@ -143,20 +168,6 @@ public class WorkItem {
     }
 
     /**
-     * @return the workflowInfo
-     */
-    public WorkflowInfo getWorkflowInfo() {
-        return workflowInfo;
-    }
-
-    /**
-     * @param workflowInfo the workflowInfo to set
-     */
-    public void setWorkflowInfo(WorkflowInfo workflowInfo) {
-        this.workflowInfo = workflowInfo;
-    }
-
-    /**
      * @return the supervisorApprovalSeeker
      */
     public String getSupervisorApprovalSeeker() {
@@ -225,5 +236,89 @@ public class WorkItem {
     public void setContext(String context) {
         this.context = context;
     }
-    
+
+    /**
+     * @return the startEventId
+     */
+    public String getStartEventId() {
+        return startEventId;
+    }
+
+    /**
+     * @param startEventId the startEventId to set
+     */
+    public void setStartEventId(String startEventId) {
+        this.startEventId = startEventId;
+    }
+
+    /**
+     * @return the startEventDescription
+     */
+    public String getStartEventDescription() {
+        return startEventDescription;
+    }
+
+    /**
+     * @param startEventDescription the startEventDescription to set
+     */
+    public void setStartEventDescription(String startEventDescription) {
+        this.startEventDescription = startEventDescription;
+    }
+
+    /**
+     * @return the owners
+     */
+    public Set<String> getOwners() {
+        return owners;
+    }
+
+    /**
+     * @param owners the owners to set
+     */
+    public void setOwners(Set<String> owners) {
+        this.owners = owners;
+    }
+
+    /**
+     * @return the worklist
+     */
+    public String getWorklist() {
+        return worklist;
+    }
+
+    /**
+     * @param worklist the worklist to set
+     */
+    public void setWorklist(String worklist) {
+        this.worklist = worklist;
+    }
+
+    /**
+     * @return the worklistUpdateTime
+     */
+    public LocalDateTime getWorklistUpdateTime() {
+        return worklistUpdateTime;
+    }
+
+    /**
+     * @param worklistUpdateTime the worklistUpdateTime to set
+     */
+    public void setWorklistUpdateTime(LocalDateTime worklistUpdateTime) {
+        this.worklistUpdateTime = worklistUpdateTime;
+    }
+
+    /**
+     * @return the fields
+     */
+    public Map<String, String> getFields() {
+        return fields;
+    }
+
+    /**
+     * @param fields the fields to set
+     */
+    public void setFields(Map<String, String> fields) {
+        this.fields = fields;
+    }
+
 }

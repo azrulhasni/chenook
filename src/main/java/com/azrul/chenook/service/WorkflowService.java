@@ -5,19 +5,15 @@
  */
 package com.azrul.chenook.service;
 
-import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.domain.Approval;
 import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.Priority;
 import com.azrul.chenook.domain.Status;
 
 import com.azrul.chenook.domain.WorkItem;
-import com.azrul.chenook.domain.WorkflowInfo;
+import com.azrul.chenook.repository.WorkItemRepository;
 import com.azrul.chenook.script.Expression;
 import com.azrul.chenook.script.Scripting;
-import com.azrul.chenook.service.ApproverLookup;
-import com.azrul.chenook.service.BizUserService;
-import com.azrul.chenook.service.WorkItemService;
 import com.azrul.chenook.value.WorkflowMemento;
 import com.azrul.chenook.workflow.model.Activity;
 import com.azrul.chenook.workflow.model.BaseActivity;
@@ -32,14 +28,18 @@ import com.azrul.chenook.workflow.model.XorActivity;
 import com.azrul.chenook.workflow.model.XorAtleastOneApprovalActivity;
 import com.azrul.chenook.workflow.model.XorMajorityApprovalActivity;
 import com.azrul.chenook.workflow.model.XorUnanimousApprovalActivity;
-import com.vaadin.flow.server.VaadinSession;
+import com.azrul.smefinancing.domain.Applicant;
+import com.azrul.smefinancing.domain.FinApplication;
+import com.vaadin.flow.data.provider.CallbackDataProvider;
+import com.vaadin.flow.data.provider.QuerySortOrder;
+import com.vaadin.flow.data.provider.SortDirection;
+import jakarta.persistence.criteria.Join;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -47,7 +47,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import java.util.Collection;
 import java.util.HashMap;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  *
@@ -60,21 +64,20 @@ public class WorkflowService<T> {
     @Autowired
     private Scripting scripting;
 
-    //@Autowired
-    //private Map<String, Activity> activities;
     @Autowired(required = false)
     private List<ApproverLookup<T>> approverLookups;
 
-    @Autowired
-    WorkItemService workItemService;
 
     @Autowired
     BizUserService bizUserService;
+    
+    @Autowired
+    WorkItemRepository workItemRepo;
 
     @Autowired
     private Expression<Boolean, T> expr;
 
-    public Map<String, List<HumanActivity>> getRoleActivityMap(BizProcess bizProcess) {
+    private Map<String, List<HumanActivity>> getRoleActivityMap(BizProcess bizProcess) {
         return getActivities(bizProcess)
                 .values()
                 .stream()
@@ -84,40 +87,15 @@ public class WorkflowService<T> {
                 .collect(Collectors.groupingBy(HumanActivity::getHandledBy));
     }
 
-    public Boolean isApprovalActivity(BizProcess bizProcess, String activity) {
+    private Boolean isApprovalActivity(BizProcess bizProcess, String activity) {
         Map<String, Activity> activities = getActivities(bizProcess);
 
         return isApprovalActivity(activities.get(activity));
     }
 
-    public WorkItem createOrQueryWorkInfo(final WorkflowMemento<T> memento) {
-        WorkItem work = workItemService.findOneByParentIdAndContext(
-                memento.getParentId(),
-                memento.getContext());
-        if (work != null) {
-            WorkItem newwork = new WorkItem();
-            newwork.setContext(memento.getContext());
-            newwork.setCreator(memento.getOidcUser().getPreferredUsername());
-            newwork.setParentId(memento.getParentId());
-            newwork.setPriority(Priority.NONE);
-            newwork.setStatus(Status.NEWLY_CREATED);
-            WorkflowInfo wfInfo = new WorkflowInfo();
-            Set<String> owners = new HashSet<>();
-            owners.add(memento.getOidcUser().getPreferredUsername());
-            wfInfo.setOwners(owners);
-            wfInfo.setStartEventId(memento.getBizProcess().getStartEvents().iterator().next().getId());
-            wfInfo.setStartEventDescription(memento.getBizProcess().getStartEvents().iterator().next().getDescription());
-            wfInfo.setWorklist(memento.getBizProcess().getStartEvents().iterator().next().getId());
-            wfInfo.setWorklistUpdateTime(LocalDateTime.now());
-            newwork.setWorkflowInfo(wfInfo);
-            newwork = workItemService.save(newwork);
-            return newwork;
-        } else {
-            return work;
-        }
-    }
+    
 
-    public Boolean isApprovalActivity(Activity activity) {
+    private Boolean isApprovalActivity(Activity activity) {
         if (activity == null) {
             return Boolean.FALSE;
         }
@@ -130,12 +108,17 @@ public class WorkflowService<T> {
             final WorkflowMemento<T> memento,
             final boolean isError
     ) {
-        WorkItem work = workItemService.findOneByParentIdAndContext(
+        WorkItem work = findOneByParentIdAndContext(
                 memento.getParentId(),
                 memento.getContext());
+        if (work==null){
+            work = create(memento);
+        }
 
         BizUser bizUser = bizUserService.getUser(memento.getOidcUser().getPreferredUsername());
-        return run(memento, work, bizUser, isError);
+        work = run(memento, work, bizUser, isError);
+        save(work);
+        return work;
     }
 
     private WorkItem run(
@@ -147,7 +130,7 @@ public class WorkflowService<T> {
 
         Map<String, Activity> activities = getActivities(memento.getBizProcess());
         //Pre-run script
-        String worklist = work.getWorkflowInfo().getWorklist();
+        String worklist = work.getWorklist();
         Activity currentActivity = activities.get(worklist);
         work.setStatus(Status.IN_PROGRESS);
         if (!currentActivity.getClass().equals(End.class)) { //if not the end
@@ -168,7 +151,7 @@ public class WorkflowService<T> {
                     isError
             );
         }
-
+        
         return work;
 
     }
@@ -185,8 +168,8 @@ public class WorkflowService<T> {
                 //do nothing as this is startEvent
                 //do nothing as this is startEvent
             } else {
-                work.getWorkflowInfo().setWorklist(activity.getId());
-                work.getWorkflowInfo().setWorklistUpdateTime(LocalDateTime.now());
+                work.setWorklist(activity.getId());
+                work.setWorklistUpdateTime(LocalDateTime.now());
                 if (activity.getClass().equals(End.class)) {
                     //we reach the end, conclude
                     work.setStatus(Status.DONE);
@@ -216,10 +199,10 @@ public class WorkflowService<T> {
         //final String userIdentifier = user.getUsername(); //(String) VaadinSession.getCurrent().getSession().getAttribute("USER_IDENTIFIER");
         List<Activity> nextSteps = new ArrayList<>();
 
-        String worklist = work.getWorkflowInfo().getWorklist();
+        String worklist = work.getWorklist();
 
         if (isStartEvent(worklist, bizProcess)) {//just being created
-            StartEvent start = (StartEvent) getActivities(bizProcess).get(work.getWorkflowInfo().getStartEventId());
+            StartEvent start = (StartEvent) getActivities(bizProcess).get(work.getStartEventId());
 
             if (start.getSupervisoryApprovalHierarchy().size() != 0) {//if need supervisor, stay in the same activity first
                 handleSupervisorApproval(work,
@@ -231,13 +214,10 @@ public class WorkflowService<T> {
                         start.getSupervisoryApprovalHierarchy());
 
             } else {
-//                String nextId = start.getNext();
-//                nextSteps.put(nextId, Boolean.TRUE);
                 dealWithNextStep(work,
                         tenant,
                         (Activity) start.getNext(),
                         nextSteps);
-                //runSingleTransition(activity, root, tenant, nextSteps, userIdentifier);
             }
         } else {
             for (Map.Entry<String, Activity> e : getActivities(bizProcess).entrySet()) {
@@ -357,7 +337,7 @@ public class WorkflowService<T> {
 
             } else {
                 //don't move to next step but takeout the current owners (i.e. the approvers) so that he doesn't see it in his ownership any more
-                work.getWorkflowInfo().getOwners().remove(userIdentifier);
+                work.getOwners().remove(userIdentifier);
             }
             //dealWithNextStep(root, tenant, getActivities().get(activity.getNext()), nextSteps, container);
         } else if (activity.getClass().equals(XorAtleastOneApprovalActivity.class)) {
@@ -418,7 +398,7 @@ public class WorkflowService<T> {
                         nextSteps);
             } else {
                 //don't move to next step but takeout the current owner so that he doesn't see it in his ownership any more
-                work.getWorkflowInfo().getOwners().remove(userIdentifier);
+                work.getOwners().remove(userIdentifier);
             }
             //dealWithNextStep(root, tenant, getActivities().get(activity.getNext()), nextSteps, container);
         } else if (activity.getClass().equals(XorMajorityApprovalActivity.class)) {
@@ -476,7 +456,7 @@ public class WorkflowService<T> {
                         nextSteps);
             } else {
                 //don't move to next step but takeout the current owner so that he doesn't see it in his ownership any more
-                work.getWorkflowInfo().getOwners().remove(userIdentifier);
+                work.getOwners().remove(userIdentifier);
             }
 
         }
@@ -490,7 +470,8 @@ public class WorkflowService<T> {
             final BizUser user,
             final List<String> supervisorHierarchy) {
         if (isSupervisorNeeded(root)) { //this was sent for approval before
-            if (Boolean.TRUE.equals(root.getApprovals().iterator().next().getApproved())) { //approved
+            if (root.getApprovals().isEmpty()==Boolean.FALSE && 
+                    Boolean.TRUE.equals(root.getApprovals().iterator().next().getApproved())) { //approved
                 //see which level is the approval on
                 String currentApprLevel = root.getSupervisorApprovalLevel();
                 int indexOfNextApprLevel = getArrayIndexOfValue(supervisorHierarchy, currentApprLevel) + 1;
@@ -514,12 +495,12 @@ public class WorkflowService<T> {
                         }).findAny().ifPresent(approverLookup -> {
                             approverLookup.lookupApprover((T) root, root.getSupervisorApprovalSeeker())
                                     .ifPresent(approver -> {
-                                        root.getWorkflowInfo().getOwners().clear();
-                                        root.getWorkflowInfo().getOwners().add(approver.getUsername());
+                                        root.getOwners().clear();
+                                        root.getOwners().add(approver.getUsername());
 //                                        if (approver.getUsername() != null) {
-//                                            root.getWorkflowInfo().getOwners().add(approver.getUsername());
+//                                            root.getOwners().add(approver.getUsername());
 //                                        } else {
-//                                            root.getWorkflowInfo().getOwners().add(approver.getLoginName());
+//                                            root.getOwners().add(approver.getLoginName());
 //                                        }
                                         root.setSupervisorApprovalLevel(nextRole);
 
@@ -537,8 +518,8 @@ public class WorkflowService<T> {
 
                 }
             } else {//not approved. Reassign back to original user
-                root.getWorkflowInfo().getOwners().clear();
-                root.getWorkflowInfo().getOwners().add(root.getSupervisorApprovalSeeker());
+                root.getOwners().clear();
+                root.getOwners().add(root.getSupervisorApprovalSeeker());
 
                 archiveApprovals(root);
                 root.setSupervisorApprovalLevel(null);
@@ -546,7 +527,7 @@ public class WorkflowService<T> {
                 nextSteps.add(activity);
             }
         } else { //seeking new approval
-            root.setSupervisorApprovalSeeker(user.getUsername());
+            
 
             String nextRole = supervisorHierarchy.get(0);
             if (approverLookups != null) {
@@ -558,12 +539,12 @@ public class WorkflowService<T> {
                     return nextRole.equals(qualifier.value());
                 }).findAny().ifPresent(approverLookup -> {
                     approverLookup.lookupApprover((T) root, user.getUsername()).ifPresent(approver -> {
-                        root.getWorkflowInfo().getOwners().clear();
-                        root.getWorkflowInfo().getOwners().add(approver.getUsername());
+                        root.getOwners().clear();
+                        root.getOwners().add(approver.getUsername());
 //                                        if (approver.getUsername() != null) {
-//                                            root.getWorkflowInfo().getOwners().add(approver.getUsername());
+//                                            root.getOwners().add(approver.getUsername());
 //                                        } else {
-//                                            root.getWorkflowInfo().getOwners().add(approver.getLoginName());
+//                                            root.getOwners().add(approver.getLoginName());
 //                                        }
                         root.setSupervisorApprovalLevel(nextRole);
 
@@ -577,21 +558,20 @@ public class WorkflowService<T> {
                     });
                 });
             }
-
+            root.setSupervisorApprovalSeeker(user.getUsername());
         }
     }
 
     private void dealWithNextStep(WorkItem work, String tenant, Activity nextActivity, List<Activity> nextSteps) {
 
-        work.getWorkflowInfo().getOwners().clear(); //so that the next folks can pick it up
+        work.getOwners().clear(); //so that the next folks can pick it up
 
         work.setSupervisorApprovalSeeker(null);//nullify the approval seeker too
-        workItemService.save(work);
+        workItemRepo.save(work);
         //only current activity ids in wait states
         if (nextActivity == null) { //nextActivity==END
             nextSteps.add(nextActivity);
-        }// else if (nextActivity.getClass().equals(XorActivity.class)) {  // sand next activity is xor
-        //}
+        }
         else if (nextActivity.getClass().equals(XorUnanimousApprovalActivity.class)) {
             loadUsersIntoApprovalList(((XorUnanimousApprovalActivity) nextActivity).getHandledBy(), nextActivity, tenant, work);
             nextSteps.add(nextActivity);
@@ -609,13 +589,9 @@ public class WorkflowService<T> {
     }
 
     private void loadUserIntoApprovalList(String loginName, WorkItem work) {
-//        BizUser user = bizUserService.getUser(loginName);
         Approval approval = new Approval();
         approval.setUsername(loginName);
         work.getApprovals().add(approval);
-
-//        Set<Approval> approvals = createApprovalAndAssociateToWork(work, user);
-//        work.setApprovals(approvals);
     }
 
     private Boolean isSupervisorNeeded(WorkItem work) {
@@ -640,7 +616,7 @@ public class WorkflowService<T> {
 //                work,
 //                "historicalApprovals",
 //                w -> ((WorkElement) w).getApprovals().clear());
-        workItemService.archiveApprovalsAndSave(work);
+        archiveApprovalsAndSave(work);
         for (BizUser user : users) {
             loadUserIntoApprovalList(user.getUsername(), work);
         }
@@ -648,7 +624,7 @@ public class WorkflowService<T> {
     }
 
     private void archiveApprovals(WorkItem work) {
-        workItemService.archiveApprovalsAndSave(work);
+        archiveApprovalsAndSave(work);
 //        System.out.println("=======Element id:"+work.getId()+"==============");
 //        System.out.println("   Approvals:");
 //        for (Approval a:work.getApprovals()){
@@ -684,21 +660,21 @@ public class WorkflowService<T> {
         if (user.isEnabled()) {
             approval.setUsername(user.getUsername());
 
-//                approval.getWorkflowInfo().setWorklist(((BaseActivity) nextActivity).getId());
-//                if (work.getWorkflowInfo().getStartEventDescription() != null) {
-//                    approval.getWorkflowInfo().setStartEventDescription(work.getWorkflowInfo().getStartEventDescription());
+//                approval.setWorklist(((BaseActivity) nextActivity).getId());
+//                if (work.getStartEventDescription() != null) {
+//                    approval.setStartEventDescription(work.getStartEventDescription());
 //                }
-//                if (work.getWorkflowInfo().getStartEventId() != null) {
-//                    approval.getWorkflowInfo().setStartEventId(work.getWorkflowInfo().getStartEventId());
+//                if (work.getStartEventId() != null) {
+//                    approval.setStartEventId(work.getStartEventId());
 //                }
 //            oapproval.ifPresent(approval -> {
 //                mapUserToApproval(approval, user, tenant);
-//                approval.getWorkflowInfo().setWorklist(((BaseActivity) nextActivity).getId());
-//                if (work.getWorkflowInfo().getStartEventDescription() != null) {
-//                    approval.getWorkflowInfo().setStartEventDescription(work.getWorkflowInfo().getStartEventDescription());
+//                approval.setWorklist(((BaseActivity) nextActivity).getId());
+//                if (work.getStartEventDescription() != null) {
+//                    approval.setStartEventDescription(work.getStartEventDescription());
 //                }
-//                if (work.getWorkflowInfo().getStartEventId() != null) {
-//                    approval.getWorkflowInfo().setStartEventId(work.getWorkflowInfo().getStartEventId());
+//                if (work.getStartEventId() != null) {
+//                    approval.setStartEventId(work.getStartEventId());
 //                }
 //                dao.saveAndAssociate(approval, work, "approvals").ifPresent(d -> {
 //                    Approval savedApproval = (Approval) ((Dual) d).getSecond();
@@ -707,27 +683,27 @@ public class WorkflowService<T> {
 //                    //dao.saveAndAssociate(savedApproval, work, "historicalApprovals"); <--move this to ApprovalRenderer beforeSaveCallback/beforeSubmitCallback
 //                });
 //                userIdentifierLookup.lookup(user).ifPresent(userId -> {
-//                    work.getWorkflowInfo().getOwners().add(userId);
+//                    work.getOwners().add(userId);
 //                });
 //
 //            });
         }
     }
 
-    public Boolean isStartEvent(Activity activity, BizProcess bizProcess) {
+    private Boolean isStartEvent(Activity activity, BizProcess bizProcess) {
         return bizProcess.getStartEvents().stream().anyMatch(se -> se.getId().equals(activity.getId()));
     }
 
-    public Boolean isStartEvent(String activityId, BizProcess bizProcess) {
+    private Boolean isStartEvent(String activityId, BizProcess bizProcess) {
         return bizProcess.getStartEvents().stream().anyMatch(se -> se.getId().equals(activityId));
     }
 
-    public Boolean isActivityAccessibleByRoles(String activityid, Set<String> inroles, BizProcess bizProcess) {
+    private Boolean isActivityAccessibleByRoles(String activityid, Set<String> inroles, BizProcess bizProcess) {
         Map<String, Activity> activities = getActivities(bizProcess);
         return isActivityAccessibleByRoles(activities.get(activityid), inroles, bizProcess);
     }
 
-    public Boolean isActivityAccessibleByRoles(Activity activity, Set<String> inroles, BizProcess bizProcess) {
+    private Boolean isActivityAccessibleByRoles(Activity activity, Set<String> inroles, BizProcess bizProcess) {
 
         if (activity == null || activity.getClass().equals(StartEvent.class)) {
             return whoCanStart(bizProcess).stream().anyMatch(inroles::contains);
@@ -739,7 +715,7 @@ public class WorkflowService<T> {
 
     }
 
-    public Set<String> whoCanStart(BizProcess bizProcess) {
+    private Set<String> whoCanStart(BizProcess bizProcess) {
         return new HashSet<String>(bizProcess
                 .getStartEvents()
                 .stream()
@@ -748,14 +724,14 @@ public class WorkflowService<T> {
                 .collect(Collectors.toList()));
     }
 
-    public Set<String> whoCanStart(WorkItem currentActivity, BizProcess bizProcess) {
+    private Set<String> whoCanStart(WorkItem currentActivity, BizProcess bizProcess) {
         Map<String, Activity> activities = getActivities(bizProcess);
-        String startEventId = currentActivity.getWorkflowInfo().getStartEventId();
+        String startEventId = currentActivity.getStartEventId();
         StartEvent startEvent = (StartEvent) activities.get(startEventId);
         return new HashSet<String>(startEvent.getCanBeStartedBy());
     }
 
-    public Set<StartEvent> getStartEvents(BizProcess bizProcess) {
+    private Set<StartEvent> getStartEvents(BizProcess bizProcess) {
         return new HashSet<StartEvent>(bizProcess.getStartEvents());
     }
 
@@ -770,7 +746,7 @@ public class WorkflowService<T> {
         return f;
     }
 
-    public Boolean isActivitySLAExpired(String activity, LocalDateTime workSLAUpdateTime, BizProcess bizProcess) {
+    private Boolean isActivitySLAExpired(String activity, LocalDateTime workSLAUpdateTime, BizProcess bizProcess) {
         if (activity == null) { //start event
             return Boolean.FALSE;
         }
@@ -785,7 +761,7 @@ public class WorkflowService<T> {
         }
     }
 
-    public Boolean isActivitySLAExpired(HumanActivity activity, LocalDateTime workSLAUpdateTime) {
+    private Boolean isActivitySLAExpired(HumanActivity activity, LocalDateTime workSLAUpdateTime) {
         if (activity.getSlaInHours() != null && workSLAUpdateTime != null) {
             Duration diff = Duration.between(workSLAUpdateTime, LocalDateTime.now());
             return (diff.getSeconds() / 3600) > activity.getSlaInHours();
@@ -828,6 +804,157 @@ public class WorkflowService<T> {
             activities.put(currentActivity.getId(), currentActivity);
         }
         return activities;
+    }
+    
+    @Transactional
+    public WorkItem save(WorkItem work){
+        return workItemRepo.save(work);
+    }
+    
+    @Transactional
+    public WorkItem create(final WorkflowMemento memento) {
+//        WorkItem work = findOneByParentIdAndContext(
+//                memento.getParentId(),
+//                memento.getContext());
+//        if (work != null) {
+            WorkItem newwork = new WorkItem();
+            newwork.setContext(memento.getContext());
+            newwork.setCreator(memento.getOidcUser().getPreferredUsername());
+            newwork.setParentId(memento.getParentId());
+            newwork.setPriority(Priority.NONE);
+            newwork.setStatus(Status.NEWLY_CREATED);
+            //newwork.setFields(fields);
+            Set<String> owners = new HashSet<>();
+            owners.add(memento.getOidcUser().getPreferredUsername());
+            newwork.setOwners(owners);
+            newwork.setStartEventId(memento.getBizProcess().getStartEvents().iterator().next().getId());
+            newwork.setStartEventDescription(memento.getBizProcess().getStartEvents().iterator().next().getDescription());
+            newwork.setWorklist(memento.getBizProcess().getStartEvents().iterator().next().getId());
+            newwork.setWorklistUpdateTime(LocalDateTime.now());
+            
+            newwork = save(newwork);
+            return newwork;
+//        } else {
+//            return work;
+//        }
+    }
+    
+   
+
+    
+    @Transactional
+    public WorkItem findOneByParentIdAndContext(final WorkflowMemento memento){
+        WorkItem work = findOneByParentIdAndContext(
+                memento.getParentId(),
+                memento.getContext());
+        return work;
+    } 
+    
+    @Transactional
+    public WorkItem createApprovalAndSave(WorkItem work){
+        
+        work.getHistoricalApprovals().addAll(work.getApprovals());
+        work.getApprovals().clear();
+        WorkItem w = workItemRepo.save(work);
+        return w;
+    }
+    
+    @Transactional
+    private WorkItem archiveApprovalsAndSave(WorkItem work){
+        work.getHistoricalApprovals().addAll(work.getApprovals());
+        work.getApprovals().clear();
+        WorkItem w = workItemRepo.save(work);
+        return w;
+    }
+    
+    @Transactional
+    private WorkItem findOneByParentIdAndContext(Long parentId,String context){
+        return workItemRepo.findOneByParentIdAndContext(parentId, context);
+    }
+    
+    public CallbackDataProvider.FetchCallback<WorkItem, Void> getWorkByOwner(String username) {
+        return query -> {
+            var vaadinSortOrders = query.getSortOrders();
+            var springSortOrders = new ArrayList<Sort.Order>();
+            for (QuerySortOrder so : vaadinSortOrders) {
+                String colKey = so.getSorted();
+                if (so.getDirection() == SortDirection.ASCENDING) {
+                    springSortOrders.add(Sort.Order.asc(colKey));
+                }
+            }
+            return workItemRepo.findAll(
+                    //whereUsernameEquals(username),
+                    whereOwnersContains(username),
+                    PageRequest.of(
+                            query.getPage(),
+                            query.getPageSize(),
+                            Sort.by(springSortOrders)
+                    )
+            ).stream();
+        };
+    }
+    
+    public CallbackDataProvider.FetchCallback<WorkItem, Void> getWorkByCreator(String username) {
+        return query -> {
+            var vaadinSortOrders = query.getSortOrders();
+            var springSortOrders = new ArrayList<Sort.Order>();
+            for (QuerySortOrder so : vaadinSortOrders) {
+                String colKey = so.getSorted();
+                if (so.getDirection() == SortDirection.ASCENDING) {
+                    springSortOrders.add(Sort.Order.asc(colKey));
+                }
+            }
+            return workItemRepo.findAll(
+                    //whereUsernameEquals(username),
+                    whereCreatorEquals(username),
+                    PageRequest.of(
+                            query.getPage(),
+                            query.getPageSize(),
+                            Sort.by(springSortOrders)
+                    )
+            ).stream();
+        };
+    }
+    
+    public CallbackDataProvider.FetchCallback<WorkItem, Void> getWorkByWorklist(String worklist) {
+        return query -> {
+            var vaadinSortOrders = query.getSortOrders();
+            var springSortOrders = new ArrayList<Sort.Order>();
+            for (QuerySortOrder so : vaadinSortOrders) {
+                String colKey = so.getSorted();
+                if (so.getDirection() == SortDirection.ASCENDING) {
+                    springSortOrders.add(Sort.Order.asc(colKey));
+                }
+            }
+            return workItemRepo.findAll(
+                    //whereUsernameEquals(username),
+                    whereCreatorEquals(worklist),
+                    PageRequest.of(
+                            query.getPage(),
+                            query.getPageSize(),
+                            Sort.by(springSortOrders)
+                    )
+            ).stream();
+        };
+    }
+    
+    
+    private Specification<WorkItem> whereOwnersContains(String username) {
+        return (workItem, cq, cb) -> {
+            return cb.isMember(username,workItem.get("owners"));
+        };
+    }
+    
+    private Specification<WorkItem> whereCreatorEquals(String username) {
+        return (workItem, cq, cb) -> {
+            return cb.equal(workItem.get("creator"),username);
+        };
+    }
+    
+    private Specification<WorkItem> whereWorklistEquals(String worklist) {
+        return (workItem, cq, cb) -> {
+            return cb.equal(workItem.get("worklist"),worklist);
+        };
     }
 
 }

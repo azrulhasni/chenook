@@ -8,7 +8,6 @@ import com.azrul.chenook.views.message.MessageButton;
 import com.azrul.chenook.views.workflow.WorkflowPanel;
 import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.WorkItem;
-import com.azrul.chenook.domain.WorkflowInfo;
 import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.value.WorkflowMemento;
 import com.azrul.smefinancing.domain.Applicant;
@@ -35,8 +34,10 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
@@ -56,10 +57,12 @@ public class ApplicationForm extends Dialog {
     //private static final String STATUS_LABEL = "Status";
     private static final String FINANCING_APPLIED_LABEL = "Financing Applied";
     private static final String REASON_FOR_FINANCING_LABEL = "Reason for financing";
+    private String DATETIME_FORMAT;
 
     public ApplicationForm(
             WorkflowMemento<FinApplication> memento,
             WorkItem work,
+            String dateTimeFormat,
             ApplicantService applicantService,
             FinApplicationService finappService,
             WorkflowService workflowService,
@@ -73,34 +76,39 @@ public class ApplicationForm extends Dialog {
         if (memento.getParent() == null) {
             return; // if finapp is null, this will not work
         }
-        
+        this.DATETIME_FORMAT = dateTimeFormat;
+
+//        WorkItem work = workflowService.findOneByParentIdAndContext(memento);
+//        if (work == null) {
+//            return;
+//        }
         Editable editable = isEditable(
-                memento.getParent(), 
-                work, 
+                memento.getParent(),
+                work,
                 applicantService,
                 memento.getOidcUser()
         );
-        
+
         Binder<FinApplication> binder = new Binder<>(FinApplication.class);
         binder.setBean(memento.getParent());
 
         FormLayout form = createForm(binder, badgeUtils, editable);
         MessageButton msgBtn = new MessageButton(
-                memento.getParent().getId(), 
-                "SME_FIN", 
-                memento.getOidcUser(), 
+                memento.getParent().getId(),
+                memento.getContext(),
+                memento.getOidcUser(),
                 msgService
         );
         this.add(msgBtn);
         this.add(form);
-        
-       
-        
-         WorkflowPanel workflowPanel = new WorkflowPanel(
-               work,
-               false,
-               a -> {},
-               a -> {}
+
+        WorkflowPanel workflowPanel = new WorkflowPanel(
+                work,
+                false,
+                a -> {
+                },
+                a -> {
+                }
         );
 
         this.add(workflowPanel);
@@ -120,62 +128,67 @@ public class ApplicationForm extends Dialog {
                 "SME_FIN",
                 Long.toString(memento.getParent().getId()),
                 editable == Editable.YES,
-                a -> {},
-                a -> {});
+                a -> {
+                },
+                a -> {
+                });
         this.add(attachmentsPanel);
 
         configureButtons(
-                binder, 
+                binder,
                 work,
                 memento,
-                editable, 
+                editable,
                 finappService,
                 applicantService,
                 workflowService,
-                onPostSave, 
-                onPostRemove, 
+                onPostSave,
+                onPostRemove,
                 onPostCancel);
     }
-    
-    
 
     private Editable isEditable(
             FinApplication finapp,
             WorkItem work,
-            ApplicantService applicantService, 
+            ApplicantService applicantService,
             OidcUser oidcUser
     ) {
         Set<String> applicantsEmail = applicantService.getApplicantsEmail(finapp);
-        
+
         int state = 0;
-        if (oidcUser.getAuthorities().stream().anyMatch(sga->StringUtils.equals(sga.getAuthority(),"ROLE_FINAPP_ADMIN"))){ // admin
+        if (oidcUser.getAuthorities().stream().anyMatch(sga -> StringUtils.equals(sga.getAuthority(), "ROLE_FINAPP_ADMIN"))) { // admin
             state = 1;
-        }else if (applicantsEmail.contains(oidcUser.getEmail())){ // applicant
+        } else if (applicantsEmail.contains(oidcUser.getEmail())) { // applicant
             state = 2;
-        }else if (StringUtils.equals(oidcUser.getPreferredUsername(),finapp.getUsername())){
+        } else if (StringUtils.equals(oidcUser.getPreferredUsername(), finapp.getUsername())) {
             state = 3;
-        }else{
+        } else {
             state = 4;
         }
-        
-        if (state==2){
-            if (work.getStatus() == Status.DRAFT
-                || work.getStatus() == Status.NEED_MORE_INFO
-                || work.getStatus() == Status.NEWLY_CREATED){
-                state = 6;
-            }else{
-                state = 8;
-            }
-        }else if (state == 3){
-            if (work.getStatus() == Status.DRAFT
-                || work.getStatus() == Status.NEED_MORE_INFO
-                || work.getStatus() == Status.NEWLY_CREATED){
-                state = 5;
-            }else{
-                state = 7;
+
+        if (work == null) {
+            state = 5;
+        } else {
+
+            if (state == 2) {
+                if (work.getStatus() == Status.DRAFT
+                        || work.getStatus() == Status.NEED_MORE_INFO
+                        || work.getStatus() == Status.NEWLY_CREATED) {
+                    state = 6;
+                } else {
+                    state = 8;
+                }
+            } else if (state == 3) {
+                if (work.getStatus() == Status.DRAFT
+                        || work.getStatus() == Status.NEED_MORE_INFO
+                        || work.getStatus() == Status.NEWLY_CREATED) {
+                    state = 5;
+                } else {
+                    state = 7;
+                }
             }
         }
-        
+
         switch (state) {
             case 4:
                 return Editable.NO_DUE_TO_USER;
@@ -191,16 +204,12 @@ public class ApplicationForm extends Dialog {
             default:
                 return Editable.NO_DUE_TO_USER;
         }
-        
+
     }
-        
-        
-        
-        
 
     private FormLayout createForm(
-            Binder<FinApplication> binder, 
-            BadgeUtils badgeUtils, 
+            Binder<FinApplication> binder,
+            BadgeUtils badgeUtils,
             Editable editable
     ) {
         FormLayout form = new FormLayout();
@@ -208,9 +217,9 @@ public class ApplicationForm extends Dialog {
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("500px", 2)
         );
-        
-        Boolean enabled = (editable==Editable.YES);
-        Boolean enabledForStatus = (editable==Editable.YES_AS_ADMIN);
+
+        Boolean enabled = (editable == Editable.YES);
+        Boolean enabledForStatus = (editable == Editable.YES_AS_ADMIN);
 
         TextField tfID = createTextField(APPLICATION_ID_LABEL, enabled, false);
         binder.forField(tfID).bindReadOnly(fa -> fa.getId().toString());
@@ -258,13 +267,6 @@ public class ApplicationForm extends Dialog {
         binder.bind(tfBizRegNumber, FinApplication::getSsmRegistrationNumber, FinApplication::setSsmRegistrationNumber);
         form.add(tfBizRegNumber);
 
-        
-//        Select<Status> cbStatus = createSelect(STATUS_LABEL,enabledForStatus);
-//        cbStatus.setItems(Status.values());
-//        cbStatus.setRenderer(badgeUtils.createStatusBadgeRenderer());
-//        binder.bind(cbStatus, FinApplication::getStatus,FinApplication::setStatus);
-//        form.add(cbStatus);
-
         BigDecimalField tfFinRequested = createBigDecimalField(FINANCING_APPLIED_LABEL, enabled);
         binder.bind(tfFinRequested, FinApplication::getFinancingRequested, FinApplication::setFinancingRequested);
         form.add(tfFinRequested);
@@ -296,9 +298,9 @@ public class ApplicationForm extends Dialog {
         comboBox.setReadOnly(!editable);
         return comboBox;
     }
-    
+
     private <T> Select<T> createSelect(String label, boolean editable) {
-        Select<T> select= new Select<>();
+        Select<T> select = new Select<>();
         select.setLabel(label);
         select.setReadOnly(!editable);
         return select;
@@ -318,10 +320,10 @@ public class ApplicationForm extends Dialog {
     }
 
     private VerticalLayout createApplicantPanel(
-            FinApplication finapp, 
-            ApplicantService applicantService, 
-            OidcUser user, 
-            Editable editable, 
+            FinApplication finapp,
+            ApplicantService applicantService,
+            OidcUser user,
+            Editable editable,
             Binder<FinApplication> binder
     ) {
         Grid<Applicant> gridApplicants = createApplicantGrid(finapp, applicantService, user, editable, binder);
@@ -340,10 +342,10 @@ public class ApplicationForm extends Dialog {
     }
 
     private Grid<Applicant> createApplicantGrid(
-            FinApplication finapp, 
-            ApplicantService applicantService, 
-            OidcUser user, 
-            Editable editable, 
+            FinApplication finapp,
+            ApplicantService applicantService,
+            OidcUser user,
+            Editable editable,
             Binder<FinApplication> binder) {
         Grid<Applicant> gridApplicants = new Grid<>();
         gridApplicants.getStyle().set("max-width", "285px");
@@ -354,11 +356,11 @@ public class ApplicationForm extends Dialog {
     }
 
     private Card createApplicantCard(
-            Applicant app, 
-            FinApplication finapp, 
-            ApplicantService applicantService, 
-            OidcUser user, 
-            Editable editable, 
+            Applicant app,
+            FinApplication finapp,
+            ApplicantService applicantService,
+            OidcUser user,
+            Editable editable,
             Grid<Applicant> gridApplicants
     ) {
         Card card = new Card("Name: " + app.getFullName());
@@ -380,8 +382,8 @@ public class ApplicationForm extends Dialog {
     }
 
     private ConfirmDialog createRemoveApplicantDialog(
-            Applicant app, 
-            ApplicantService applicantService, 
+            Applicant app,
+            ApplicantService applicantService,
             Grid<Applicant> gridApplicants
     ) {
         ConfirmDialog dialog = new ConfirmDialog();
@@ -399,20 +401,20 @@ public class ApplicationForm extends Dialog {
     }
 
     private Button createAddApplicantButton(
-            FinApplication finapp, 
-            ApplicantService applicantService, 
-            OidcUser user, 
-            Editable editable, 
+            FinApplication finapp,
+            ApplicantService applicantService,
+            OidcUser user,
+            Editable editable,
             Grid<Applicant> gridApplicants
     ) {
         return new Button(
-                ADD_APPLICANT, 
+                ADD_APPLICANT,
                 e -> buildApplicantDialog(
-                        null, 
-                        finapp, 
-                        applicantService, 
-                        user, 
-                        editable, 
+                        null,
+                        finapp,
+                        applicantService,
+                        user,
+                        editable,
                         gridApplicants)
         );
     }
@@ -421,24 +423,24 @@ public class ApplicationForm extends Dialog {
             Binder<FinApplication> binder,
             WorkItem work,
             WorkflowMemento memento,
-            Editable editable, 
+            Editable editable,
             FinApplicationService finappService,
             ApplicantService applicantService,
             WorkflowService workflowService,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel) {
-        
-        Button btnSaveAndSubmitApp = createSaveAndSubmitButton(binder,finappService, applicantService, workflowService, memento, onPostSave);
-        Button btnSaveDraft = createSaveDraftButton(binder,work, finappService, memento.getOidcUser(), onPostSave);
-        Button btnSave = createSaveButton(binder, finappService,applicantService, onPostSave);
-        
+
+        Button btnSaveAndSubmitApp = createSaveAndSubmitButton(binder, finappService, applicantService, workflowService, memento, onPostSave);
+        Button btnSaveDraft = createSaveDraftButton(binder, work, finappService, memento.getOidcUser(), onPostSave);
+        Button btnSave = createSaveButton(binder, finappService, applicantService, onPostSave);
+
         Button btnCancel = createCancelButton(binder, work, finappService, onPostCancel);
         Button btnRemove = createRemoveButton(binder, editable, finappService, onPostRemove);
 
         HorizontalLayout buttonLayout = new HorizontalLayout(
-                btnSaveAndSubmitApp, 
-                btnSaveDraft, 
+                btnSaveAndSubmitApp,
+                btnSaveDraft,
                 btnSave,
                 btnCancel,
                 btnRemove
@@ -451,33 +453,35 @@ public class ApplicationForm extends Dialog {
         btnRemove.setEnabled(false);
         btnCancel.setEnabled(false);
         btnSave.setEnabled(false);
-        
+
         if (editable == Editable.YES) {
             btnSaveAndSubmitApp.setEnabled(true);
             btnSaveDraft.setEnabled(true);
             btnRemove.setEnabled(true);
             btnCancel.setEnabled(true);
-        }else if (editable == Editable.YES_AS_APPLICANT){
+        } else if (editable == Editable.YES_AS_APPLICANT) {
             btnSaveDraft.setEnabled(true);
             btnCancel.setEnabled(true);
-        }else if (editable == Editable.YES_AS_ADMIN) {
+        } else if (editable == Editable.YES_AS_ADMIN) {
             btnSave.setEnabled(true);
             btnCancel.setEnabled(true);
-        }else{
-            btnCancel.setEnabled(true);    
+        } else {
+            btnCancel.setEnabled(true);
         }
     }
 
     private Button createSaveDraftButton(
-            Binder<FinApplication> binder, 
+            Binder<FinApplication> binder,
             WorkItem work,
-            FinApplicationService finappService, 
-            OidcUser user, 
+            FinApplicationService finappService,
+            OidcUser user,
             Consumer<FinApplication> onPostSave
     ) {
         Button btnSaveDraft = new Button("Save draft", e1 -> {
             FinApplication finapp = binder.getBean();
-            work.setStatus(Status.DRAFT);
+            if (work!=null){
+                work.setStatus(Status.DRAFT);
+            }
             finappService.save(finapp, user.getPreferredUsername());
             onPostSave.accept(finapp);
             this.close();
@@ -486,7 +490,7 @@ public class ApplicationForm extends Dialog {
     }
 
     private Button createSaveAndSubmitButton(
-            Binder<FinApplication> binder, 
+            Binder<FinApplication> binder,
             FinApplicationService finappService,
             ApplicantService applicantService,
             WorkflowService workflowService,
@@ -496,8 +500,12 @@ public class ApplicationForm extends Dialog {
             Set<String> errors = validateApplication(applicantService, binder);
             if (errors.isEmpty()) {
                 FinApplication finapp = binder.getBean();
+                
+
                 //finapp.setStatus(Status.IN_PROGRESS);
-                finappService.save(finapp,memento.getOidcUser().getPreferredUsername());
+                finapp = finappService.save(finapp, memento.getOidcUser().getPreferredUsername());
+                memento.setParent(finapp);
+                memento.setParentId(finapp.getId());
 //                WorkItem work = workItemService.findOneByParentIdAndContext(parentId, context);
 //         BizUser bizUser = bizUserService.getUser(oidcUser.getPreferredUsername());
                 workflowService.run(memento, false);
@@ -514,9 +522,9 @@ public class ApplicationForm extends Dialog {
         });
         return btnSaveFinApp;
     }
-    
+
     private Button createSaveButton(
-            Binder<FinApplication> binder, 
+            Binder<FinApplication> binder,
             FinApplicationService finappService,
             ApplicantService applicantService,
             Consumer<FinApplication> onPostSave) {
@@ -540,14 +548,16 @@ public class ApplicationForm extends Dialog {
     }
 
     private Button createCancelButton(
-            Binder<FinApplication> binder, 
+            Binder<FinApplication> binder,
             WorkItem work,
-            FinApplicationService finappService, 
+            FinApplicationService finappService,
             Consumer<FinApplication> onPostCancel
     ) {
         return new Button("Cancel", e1 -> {
             FinApplication finapp = binder.getBean();
-            if (work.getStatus() == Status.NEWLY_CREATED) {
+            if (work==null){
+                finappService.remove(finapp);
+            }else if (work.getStatus() == Status.NEWLY_CREATED) {
                 finappService.remove(finapp);
             }
             onPostCancel.accept(finapp);
@@ -556,9 +566,9 @@ public class ApplicationForm extends Dialog {
     }
 
     private Button createRemoveButton(
-            Binder<FinApplication> binder, 
-            Editable editable, 
-            FinApplicationService finappService, 
+            Binder<FinApplication> binder,
+            Editable editable,
+            FinApplicationService finappService,
             Consumer<FinApplication> onPostRemove
     ) {
         Button btnRemove = new Button("Remove", e1 -> {
@@ -584,14 +594,14 @@ public class ApplicationForm extends Dialog {
     }
 
     private Set<String> validateApplication(
-            ApplicantService applicantService, 
+            ApplicantService applicantService,
             Binder<FinApplication> binder) {
         Set<String> errors = new HashSet<>();
         binder.validate().getValidationErrors().stream().forEach(e -> errors.add(e.getErrorMessage()));
 
         FinApplication finapp = binder.getBean();
-        
-        if (applicantService.countApplicants(finapp)<=0) {
+
+        if (applicantService.countApplicants(finapp) <= 0) {
             errors.add("No applicant");
         }
         applicantService.getApplicants(finapp).forEach(applicant -> {
@@ -603,19 +613,19 @@ public class ApplicationForm extends Dialog {
     }
 
     private void buildApplicantDialog(
-            Applicant applicant, 
-            FinApplication finApplication, 
-            ApplicantService applicantService, 
-            OidcUser user, 
-            Editable editable, 
+            Applicant applicant,
+            FinApplication finApplication,
+            ApplicantService applicantService,
+            OidcUser user,
+            Editable editable,
             Grid<Applicant> gridApplicants
     ) {
         ApplicantForm appForm = new ApplicantForm(
-                applicant, 
-                finApplication, 
-                editable, 
-                user, 
-                applicantService, 
+                applicant,
+                finApplication,
+                editable,
+                user,
+                applicantService,
                 a -> gridApplicants.getDataProvider().refreshAll());
         appForm.open();
     }

@@ -29,6 +29,9 @@ public class KeycloakConfig {
     @Value("${chenook.keycloak.client-id}")
     private String keycloakClientId;
     
+    @Value("${chenook.keycloak.client-name}")
+    private String keycloakClientName;
+    
     @Value("${chenook.keycloak.realm}")
     private String keycloakRealm;
 
@@ -37,7 +40,7 @@ public class KeycloakConfig {
         return KeycloakBuilder.builder()
                 .serverUrl(keycloakUrl)
                 .realm(keycloakRealm)
-                .clientId(keycloakClientId)
+                .clientId(keycloakClientName)
                 .grantType(OAuth2Constants.PASSWORD)
                 .username(keycloakUsername)
                 .password(keycloakPassword)

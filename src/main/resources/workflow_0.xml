@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
-Relationship-Manager: user101
-Valuator: user102
+Relationship-Manager: user111
+Valuator: user112
+Underwriter-Maker: user211
+Underwriter-Checker: user212,user213
+Disbursement-Officer-Maker: user311
+Disbursement-Officer-Checker: user312,user313
+Supervisor: user310
+
 
 -->
 <bizProcess xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

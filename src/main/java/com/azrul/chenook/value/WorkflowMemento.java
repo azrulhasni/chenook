@@ -19,9 +19,15 @@ public class WorkflowMemento<T> {
     private BizProcess bizProcess;
     private String context;
 
-    public WorkflowMemento(T parent, Long parentId, OidcUser oidcUser, BizProcess bizProcess, String context) {
+    public WorkflowMemento(
+            T parent, 
+            Long parentId, 
+            OidcUser oidcUser, 
+            BizProcess bizProcess, 
+            String context
+    ) {
         this.parent = parent;
-        //this.parentId = parentId;
+        this.parentId = parentId;
         this.oidcUser = oidcUser;
         this.bizProcess = bizProcess;
         this.context = context;

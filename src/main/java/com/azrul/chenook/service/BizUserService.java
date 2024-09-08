@@ -15,8 +15,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +48,8 @@ public class BizUserService {
     private final Keycloak keycloak;
     private final String clientId;
     private final Integer queryBatchSize;
+    
+    private Pattern userPattern =  Pattern.compile("(?i:(?<=uid=)).*?(?=,[A-Za-z]{0,2}=|$)", Pattern.CASE_INSENSITIVE);
 
     public BizUserService(
             @Autowired MapperService mapperService,
@@ -95,10 +100,29 @@ public class BizUserService {
     
     public BizUser getUser(String username){
         List<UserRepresentation> users = keycloak.realm(keycloakRealm).users().searchByUsername(username, true);
+        
         if (users.isEmpty() || users.size()>1){
             return null;
         }
-        return mapperService.map(users.iterator().next());
+        UserRepresentation userRep = users.iterator().next();
+        List<RoleRepresentation> roles = keycloak.realm(keycloakRealm).users().get(userRep.getId()).roles().clientLevel(clientId).listAll();
+        BizUser bizUser = mapperService.map(userRep);
+        for (var r:roles){
+            bizUser.getClientRoles().add(r.getName());
+        }
+        List<String> lmanager = userRep.getAttributes().get("manager");
+        if (lmanager!=null && !lmanager.isEmpty()){
+            String manager = lmanager.get(0);
+            if (manager.contains("uid=")){//ldap exprreession
+                Matcher matcher =userPattern.matcher(manager);
+                if (matcher.find()){
+                    bizUser.setManager(matcher.group(0));
+                }
+            }else{
+                bizUser.setManager(manager);
+            }
+        }
+        return bizUser;
 //        UserResource ur = keycloak
 //                .realm(keycloakRealm)
 //                .users()

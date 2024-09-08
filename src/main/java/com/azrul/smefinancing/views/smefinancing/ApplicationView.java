@@ -11,6 +11,7 @@ import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.service.ApplicantService;
 import com.azrul.chenook.service.MessageService;
 import com.azrul.chenook.config.WorkflowConfig;
+import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.value.WorkflowMemento;
 import com.azrul.smefinancing.service.FinApplicationService;
@@ -31,13 +32,14 @@ import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+
 
 /**
  *
@@ -67,11 +69,11 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
     ) {
         this.finappService = finappService;
         this.applicantService = applicantService;
-        this.msgService=msgService;
-        this.badgeUtils=badgeUtils;
+        this.msgService = msgService;
+        this.badgeUtils = badgeUtils;
         this.DATETIME_FORMAT = dateTimeFormat;
-        this.workflowConfig=workflowConfig;
-        this.workflowService=workflowService;
+        this.workflowConfig = workflowConfig;
+        this.workflowService = workflowService;
 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
 
@@ -79,7 +81,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
             DefaultOidcUser oidcUser = (DefaultOidcUser) oauth2AuthToken.getPrincipal();
 
             Grid<FinApplication> grid = new Grid<>(FinApplication.class, false);
-            grid.getStyle().set("max-width","285px");
+            grid.getStyle().set("max-width", "285px");
             grid.setAllRowsVisible(true);
             Button btnAddNew = new Button("Add new", e -> {
                 FinApplication finapp = new FinApplication();
@@ -87,16 +89,26 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                 finapp.setApplicationDate(LocalDateTime.now());
 
                 finapp = finappService.save(finapp, oidcUser.getPreferredUsername());
+                WorkflowMemento<FinApplication> memento = new WorkflowMemento<>(
+                        finapp,
+                        finapp.getId(),
+                        oidcUser,
+                        workflowConfig.rootBizProcess(),
+                        "SME_FIN"
+                );
+
                 
+                
+                //WorkItem work = workflowService.create(memento);
+
                 showApplicationDialog(
-                        finapp, 
-                        oidcUser, 
+                        memento,
+                        null,
                         fa -> grid.getDataProvider().refreshAll(),
                         fa -> grid.getDataProvider().refreshAll(),
                         fa -> grid.getDataProvider().refreshAll());
             });
-            
-            
+
             this.add(btnAddNew);
             this.add(grid);
             //grid.setSortableColumns("name", "email");
@@ -107,22 +119,29 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
 
                 HorizontalLayout btnPanel = new HorizontalLayout();
                 btnPanel.add(new Button("See more", e -> {
+                    WorkflowMemento<FinApplication> memento = new WorkflowMemento<>(
+                        finapp,
+                        finapp.getId(),
+                        oidcUser,
+                        workflowConfig.rootBizProcess(),
+                        "SME_FIN"
+                    );
+                    WorkItem work = workflowService.findOneByParentIdAndContext(memento);
                     showApplicationDialog(
-                        finapp, 
-                        oidcUser, 
-                        fa -> grid.getDataProvider().refreshAll(),
-                        fa -> grid.getDataProvider().refreshAll(),
-                        fa -> grid.getDataProvider().refreshAll());
+                            memento,
+                            work,
+                            fa -> grid.getDataProvider().refreshAll(),
+                            fa -> grid.getDataProvider().refreshAll(),
+                            fa -> grid.getDataProvider().refreshAll());
                 }));
-                
+
                 card.add(btnPanel);
 
-                if (null == work.getStatus()) {
-
-                } else {
-                    card.add(badgeUtils.createStatusBadge(finapp.getStatus()));
-                }
-
+//                if (null == work.getStatus()) {
+//
+//                } else {
+//                    card.add(badgeUtils.createStatusBadge(finapp.getStatus()));
+//                }
                 return card;
             });
             grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
@@ -131,15 +150,16 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
     }
 
     private void showApplicationDialog(
-            FinApplication app,
-            OidcUser oidcUser,
+            WorkflowMemento<FinApplication> memento,
+            WorkItem work,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel
     ) {
         ApplicationForm appform = new ApplicationForm(
-                app,
-                oidcUser,
+                memento,
+                work,
+                DATETIME_FORMAT,
                 applicantService,
                 finappService,
                 workflowService,
@@ -150,6 +170,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                 onPostRemove,
                 onPostCancel
         );
+
         appform.open();
     }
 
