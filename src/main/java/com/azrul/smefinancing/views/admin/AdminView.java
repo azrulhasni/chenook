@@ -73,7 +73,7 @@ public class AdminView extends VerticalLayout{
             
             Long count = finappService.countFinApplications();
             DataProvider dataProvider = finappService.buildFinApplicationsDataProvider(pageNav);
-            pageNav.init(dataProvider, count.intValue(), COUNT_PER_PAGE,"id", false);
+//            pageNav.init(dataProvider, count.intValue(), COUNT_PER_PAGE,"id", false);
             grid.setDataProvider(dataProvider);
             
             grid.addColumn(FinApplication::getId).setHeader("Id").setSortProperty("id").setSortable(true);

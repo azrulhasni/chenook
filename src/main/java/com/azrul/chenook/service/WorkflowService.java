@@ -1030,50 +1030,7 @@ public class WorkflowService<T> {
         };
         return dp;
     }
-    
-//    public CallbackDataProvider.FetchCallback<WorkItem, Void> getWorkByCreator(String username) {
-//        return query -> {
-//            var vaadinSortOrders = query.getSortOrders();
-//            var springSortOrders = new ArrayList<Sort.Order>();
-//            for (QuerySortOrder so : vaadinSortOrders) {
-//                String colKey = so.getSorted();
-//                if (so.getDirection() == SortDirection.ASCENDING) {
-//                    springSortOrders.add(Sort.Order.asc(colKey));
-//                }
-//            }
-//            return workItemRepo.findAll(
-//                    //whereUsernameEquals(username),
-//                    whereCreatorEquals(username),
-//                    PageRequest.of(
-//                            query.getPage(),
-//                            query.getPageSize(),
-//                            Sort.by(springSortOrders)
-//                    )
-//            ).stream();
-//        };
-//    }
-
-//    public CallbackDataProvider.FetchCallback<WorkItem, Void> getWorkByWorklist(String worklist) {
-//        return query -> {
-//            var vaadinSortOrders = query.getSortOrders();
-//            var springSortOrders = new ArrayList<Sort.Order>();
-//            for (QuerySortOrder so : vaadinSortOrders) {
-//                String colKey = so.getSorted();
-//                if (so.getDirection() == SortDirection.ASCENDING) {
-//                    springSortOrders.add(Sort.Order.asc(colKey));
-//                }
-//            }
-//            return workItemRepo.findAll(
-//                    whereWorklistEquals(worklist),
-//                    PageRequest.of(
-//                            query.getPage(),
-//                            query.getPageSize(),
-//                            Sort.by(springSortOrders)
-//                    )
-//            ).stream();
-//        };
-//    }
-//    
+ 
 
     private Specification<WorkItem> whereOwnersContains(String username) {
         return (workItem, cq, cb) -> {

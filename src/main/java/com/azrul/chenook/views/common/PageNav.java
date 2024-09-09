@@ -6,11 +6,14 @@ package com.azrul.chenook.views.common;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.contextmenu.ContextMenu;
+import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -23,6 +26,7 @@ public class PageNav extends HorizontalLayout {
     private Button finalPage;
     private Button nextPage;
     private Button previousPage;
+    private Button sortBy;
     private NativeLabel currentPage;
     
     private Integer countPerPage;
@@ -31,13 +35,23 @@ public class PageNav extends HorizontalLayout {
     private Integer totalDataCount;
     private String sortField;
     private Boolean asc;
-    private DataProvider dataProvider;
+    private Grid grid;
+   // private DataProvider dataProvider;
+    private Map<String,String> sortableFields;
 
     public PageNav(){
     }
     
-    public void init(DataProvider dataProvider,Integer totalDataCount, Integer countPerPage, String sortField, Boolean asc) {
-        this.dataProvider = dataProvider;
+    public void init(
+            Grid grid,
+            Integer totalDataCount, 
+            Integer countPerPage, 
+            String sortField, 
+            Map<String,String> sortableFields,
+            Boolean asc) {
+        //this.dataProvider = dataProvider;
+        this.grid = grid;
+        this.sortableFields = sortableFields;
         String uniqueDisc = "PAGE_NAV";
         //this.setSpacing(false);
         firstPage = new Button("<<");
@@ -53,6 +67,18 @@ public class PageNav extends HorizontalLayout {
         previousPage.setId("btnLastPage-"+uniqueDisc);
         previousPage.addThemeVariants(ButtonVariant.LUMO_SMALL);
         currentPage = new NativeLabel();
+        sortBy = new Button("=");
+        ContextMenu sortMenu = new ContextMenu();
+        
+        sortMenu.setTarget(sortBy);
+        sortMenu.setOpenOnClick(true);
+        for (var sortItem:sortableFields.entrySet()){
+            sortMenu.addItem(sortItem.getValue(),e->{
+            
+            });
+        }
+        
+        
         this.sortField = sortField; 
         this.asc=asc;
         //currentPage.getStyle().set("font-size","12px");
@@ -79,14 +105,14 @@ public class PageNav extends HorizontalLayout {
             this.setPage((Integer) 1);
             calculateEnable();
             this.currentPage.setText(Integer.toString(page) + "/" + Integer.toString(totalPageCount));
-            this.dataProvider.refreshAll();
+            this.grid.getDataProvider().refreshAll();
         });
         this.getFinalPage().addClickListener(e -> {
             if (this.page < this.totalPageCount) {
                 this.setPage(this.totalPageCount);
                 calculateEnable();
                 this.currentPage.setText(Integer.toString(page) + "/" + Integer.toString(totalPageCount));
-                this.dataProvider.refreshAll();
+                this.grid.getDataProvider().refreshAll();
             }
         });
         this.getNextPage().addClickListener(e -> {
@@ -94,7 +120,7 @@ public class PageNav extends HorizontalLayout {
                 this.page++;
                 calculateEnable();
                 this.currentPage.setText(Integer.toString(page) + "/" + Integer.toString(totalPageCount));
-                this.dataProvider.refreshAll();
+                this.grid.getDataProvider().refreshAll();
             }
         });
         this.getPreviousPage().addClickListener(e -> {
@@ -102,7 +128,7 @@ public class PageNav extends HorizontalLayout {
                 this.page--;
                 calculateEnable();
                 this.currentPage.setText(Integer.toString(page) + "/" + Integer.toString(totalPageCount));
-                this.dataProvider.refreshAll();
+                this.grid.getDataProvider().refreshAll();
             }
         });
         
@@ -250,7 +276,7 @@ public class PageNav extends HorizontalLayout {
         setPage(page);
          calculateEnable();
                 this.currentPage.setText(Integer.toString(page) + "/" + Integer.toString(totalPageCount));
-                dataProvider.refreshAll();
+                grid.getDataProvider().refreshAll();
         
     }
 

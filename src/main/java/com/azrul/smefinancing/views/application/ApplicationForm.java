@@ -291,6 +291,7 @@ public class ApplicationForm extends Dialog {
 
     private TextArea createTextArea(String label, boolean editable) {
         TextArea textArea = new TextArea(label);
+        textArea.setMaxLength(255);
         textArea.setReadOnly(!editable);
         return textArea;
     }
@@ -509,11 +510,13 @@ public class ApplicationForm extends Dialog {
             finappService.save(finapp, memento.getOidcUser().getPreferredUsername());
             memento.setParent(finapp);
             memento.setParentId(finapp.getId());
+            String requestedAmount = finapp.getFinancingRequested()!=null
+                            ?
+                                NumberFormat.getCurrencyInstance().format(finapp.getFinancingRequested())
+                            :
+                                "";
             final Map<String, String> fields = Map.<String, String>of(
-                    "TITLE", "SME Loan",
-                    "FINANCING_REQUESTED", finapp.getFinancingRequested()!=null
-                            ?NumberFormat.getCurrencyInstance().format(finapp.getFinancingRequested())
-                            :"",
+                    "TITLE", "SME Loan: "+ requestedAmount ,
                     "APPLICATION_DATE", finapp.getApplicationDate().format(formatter),
                     "REASON_FOR_FINANCING", finapp.getReasonForFinancing()
             );
@@ -552,9 +555,13 @@ public class ApplicationForm extends Dialog {
                         finapp,
                         memento.getOidcUser().getPreferredUsername()
                 );
+                String requestedAmount = finapp.getFinancingRequested()!=null
+                            ?
+                                NumberFormat.getCurrencyInstance().format(finapp.getFinancingRequested())
+                            :
+                                "";
                 final Map<String, String> fields = Map.<String, String>of(
-                    "TITLE", "SME Loan",
-                    "FINANCING_REQUESTED", NumberFormat.getCurrencyInstance().format(finapp.getFinancingRequested()),
+                    "TITLE", "SME Loan: "+requestedAmount,
                     "APPLICATION_DATE", finapp.getApplicationDate().format(formatter),
                     "REASON_FOR_FINANCING", finapp.getReasonForFinancing()
             );
@@ -581,29 +588,7 @@ public class ApplicationForm extends Dialog {
         return btnSaveFinApp;
     }
 
-//    private Button createSaveButton(
-//            Binder<FinApplication> binder,
-//            FinApplicationService finappService,
-//            ApplicantService applicantService,
-//            Consumer<FinApplication> onPostSave) {
-//        Button btnSaveFinApp = new Button("Save", e1 -> {
-//            Set<String> errors = validateApplication(applicantService, binder);
-//            if (errors.isEmpty()) {
-//                FinApplication finapp = binder.getBean();
-//                finappService.save(finapp);
-//                onPostSave.accept(finapp);
-//                this.close();
-//            } else {
-//                StringBuilder errMsg = new StringBuilder();
-//                for (String err : errors) {
-//                    errMsg.append(err);
-//                    errMsg.append("\n");
-//                }
-//                Notification.show(errMsg.toString());
-//            }
-//        });
-//        return btnSaveFinApp;
-//    }
+
     private Button createCancelButton(
             Binder<FinApplication> binder,
             WorkItem work,
@@ -688,260 +673,3 @@ public class ApplicationForm extends Dialog {
     }
 
 }
-
-//package com.azrul.smefinancing.views.application;
-//
-//import com.azrul.smefinancing.views.attachments.AttachmentsPanel;
-//import com.azrul.smefinancing.domain.Status;
-//import com.azrul.chenook.views.common.Card;
-//import com.azrul.smefinancing.domain.Applicant;
-//import com.azrul.smefinancing.domain.FinApplication;
-//import com.azrul.smefinancing.service.ApplicantService;
-//import com.azrul.smefinancing.service.FinApplicationService;
-//import com.azrul.smefinancing.views.applicant.ApplicantForm;
-//import com.vaadin.flow.component.button.Button;
-//import com.vaadin.flow.component.combobox.ComboBox;
-//import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
-//import com.vaadin.flow.component.datetimepicker.DateTimePicker;
-//import com.vaadin.flow.component.dialog.Dialog;
-//import com.vaadin.flow.component.formlayout.FormLayout;
-//import com.vaadin.flow.component.grid.Grid;
-//import com.vaadin.flow.component.html.NativeLabel;
-//import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-//import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-//import com.vaadin.flow.component.textfield.BigDecimalField;
-//import com.vaadin.flow.component.textfield.TextArea;
-//import com.vaadin.flow.component.textfield.TextField;
-//import com.vaadin.flow.data.binder.Binder;
-//import com.vaadin.flow.theme.lumo.LumoUtility;
-//import java.util.List;
-//import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
-//import java.util.function.Consumer;
-//
-///**
-// *
-// * @author azrul
-// */
-//public class ApplicationForm extends Dialog{
-//
-//    
-//    public ApplicationForm(
-//            FinApplication finapp,
-//            DefaultOidcUser user,
-//            ApplicantService applicantService,
-//            FinApplicationService finappService,
-//            Consumer<FinApplication> onPostSave
-//    ) {
-//        //Boolean isNew = finapp == null;
-//        Boolean editable = finapp==null || finapp.getStatus() == Status.DRAFT || finapp.getStatus() == Status.NEED_MORE_INFO;
-//        Binder<FinApplication> binder = new Binder<>(FinApplication.class);
-//        if (finapp != null) {
-//            binder.setBean(finapp);
-//        } else {
-//            return; //if finapp is null, this will not work
-//        }
-//
-//        FormLayout form = new FormLayout();
-//       // form.getStyle().
-//        
-//        TextField tfID = new TextField("Application ID (AA Number)");
-//        binder.forField(tfID).bindReadOnly(fa->fa.getId().toString());
-//        form.add(tfID);
-//
-//        TextField tfName = new TextField("Business Name");
-//        binder.forField(tfName).asRequired().bind(FinApplication::getName, FinApplication::setName);
-//        form.add(tfName);
-//
-//        TextArea tfAddress = new TextArea("Address");
-//        binder.bind(tfAddress, FinApplication::getAddress, FinApplication::setAddress);
-//        form.add(tfAddress);
-//
-//        TextField tfPostalCode = new TextField("Postal code");
-//        binder.bind(tfName, FinApplication::getPostalCode, FinApplication::setPostalCode);
-//        form.add(tfPostalCode);
-//
-//        ComboBox cbState = new ComboBox("State");
-//        cbState.setItems(List.of("W. Persekutuan Kuala Lumpur", "W. Persekutuan Putrajaya", "Selangor", "Penang", "Johor", "Perak"));
-//        binder.bind(cbState, FinApplication::getState, FinApplication::setState);
-//        form.add(cbState);
-//
-//        DateTimePicker dtpApplicationDate = new DateTimePicker("Application date");
-//        dtpApplicationDate.setReadOnly(true);
-//        binder.bind(dtpApplicationDate, FinApplication::getApplicationDate, FinApplication::setApplicationDate);
-//        form.add(dtpApplicationDate);
-//
-//        TextField tfBizRegNumber = new TextField("SSM Registration");
-//        binder.bind(tfBizRegNumber, FinApplication::getSsmRegistrationNumber, FinApplication::setSsmRegistrationNumber);
-//        form.add(tfBizRegNumber);
-//
-//        TextField tfStatus = new TextField("Status");
-//        tfStatus.setReadOnly(true);
-//        binder.bind(tfStatus, FinApplication::getState, FinApplication::setState);
-//        form.add(tfStatus);
-//
-//        BigDecimalField tfFinRequested = new BigDecimalField("Financing Applied");
-//        tfFinRequested.setPrefixComponent(new NativeLabel("MYR "));
-//        binder.bind(tfFinRequested, FinApplication::getFinancingRequested, FinApplication::setFinancingRequested);
-//
-//        form.add(tfFinRequested);
-//        TextArea taReasonForFinancing = new TextArea("Reason for financing");
-//        binder.bind(taReasonForFinancing, FinApplication::getReasonForFinancing, FinApplication::setReasonForFinancing);
-//        form.add(tfFinRequested);
-//
-//        
-//        Grid<Applicant> gridApplicants = new Grid<>();
-//
-//        final FinApplication fa = finapp;
-//        gridApplicants.addComponentColumn(app -> {
-//            Card card = new Card("Name: " + app.getFullName());
-//            card.add(new NativeLabel("Email:    "+app.getEmail()));
-//            card.add(new NativeLabel("Position: "+app.getPosition()));    
-//            card.add(new NativeLabel("Phone:    "+app.getPhoneNumber())); 
-//            Button btnSeeMore = new Button("See more", e -> {
-//                buildApplicantDialog(app, fa, applicantService, editable,gridApplicants);
-//            });
-//            Button btnRemove = new Button("Remove", e -> {
-//                ConfirmDialog dialog = new ConfirmDialog();
-//                dialog.setHeader("Remove applicant");
-//                dialog.setText("Are you sure to remove this applicant");
-//
-//                dialog.setCancelable(true);
-//                dialog.addCancelListener(event -> dialog.close());
-//
-//                dialog.setConfirmText("Remove");
-//                dialog.addConfirmListener(event -> {
-//                    applicantService.remove(app);
-//                    gridApplicants.getDataProvider().refreshAll();
-//                    dialog.close();
-//                });
-//                dialog.open();
-//            });
-//            HorizontalLayout buttonPanel = new HorizontalLayout();
-//            buttonPanel.add(btnSeeMore, btnRemove);
-//            card.add(buttonPanel);
-//            if (editable==false){
-//                btnRemove.setEnabled(false);
-//            }
-//            return card;
-//        });
-//        gridApplicants.setAllRowsVisible(true);
-//        gridApplicants.setItems(applicantService.getApplicantsByApplication(binder.getBean()));
-//
-//        Button btnAddApplicant = new Button("Add applicant", e -> {
-//            buildApplicantDialog(null, fa, applicantService, editable,gridApplicants);
-//        });
-//        
-//        VerticalLayout applicantPanel = new VerticalLayout();
-//        applicantPanel.add(btnAddApplicant);
-//        applicantPanel.add(gridApplicants);
-//        applicantPanel.addClassNames(
-//                LumoUtility.Padding.SMALL,
-//                LumoUtility.Background.BASE
-//        );
-//        this.add(form); 
-//        this.add(applicantPanel);
-//        
-//        
-//        if (editable == false) {
-//            btnAddApplicant.setEnabled(false);
-//            taReasonForFinancing.setReadOnly(true);
-//            tfFinRequested.setReadOnly(true);
-//            tfName.setReadOnly(true);
-//            tfAddress.setReadOnly(true);
-//            tfPostalCode.setReadOnly(true);
-//            cbState.setReadOnly(true);
-//            tfBizRegNumber.setReadOnly(true);
-//        }
-//        AttachmentsPanel attchPanel = new AttachmentsPanel(
-//                finapp.getId(),
-//                Long.toString(finapp.getId()),
-//                editable,
-//                a->{},
-//                a->{}
-//        );
-//        this.add(attchPanel);
-//        save(binder, user, editable, finappService, onPostSave);
-//    }
-//    
-//    private void save(
-//            Binder<FinApplication> binder, 
-//            DefaultOidcUser user, 
-//            Boolean editable, 
-//            FinApplicationService finappService,
-//            Consumer<FinApplication> onPostSave){
-//            
-//        Button btnSaveFinApp = new Button("Save and submit", e1 -> {
-//                if (validateApplication(binder)) {
-//                    FinApplication finapp = binder.getBean();
-//                    finapp.setStatus(Status.IN_PROGRESS);
-//                    finappService.save(finapp, user.getPreferredUsername());
-//                    onPostSave.accept(finapp);
-//                    this.close();
-//                }
-//            });
-//            Button btnSaveDraft = new Button("Save draft", e1 -> {
-//                    FinApplication finapp = binder.getBean();
-//                    finapp.setStatus(Status.DRAFT);
-//                    finappService.save(finapp, user.getPreferredUsername());
-//                    onPostSave.accept(finapp);
-//                    this.close();
-//            });
-//            this.getFooter().add( btnSaveFinApp );
-//            this.getFooter().add( btnSaveDraft );
-//            if (!editable) {
-//                btnSaveFinApp.setEnabled(false);
-//                btnSaveDraft.setEnabled(false);
-//            }
-//            this.getFooter().add(new Button("Cancel", e1 -> {
-//                this.close();
-//            }));
-//            this.getFooter().add(new Button("Remove", e1 -> {
-//                FinApplication finapp = binder.getBean();
-//                finappService.remove(finapp);
-//                
-//                this.close();
-//            }));
-//           
-//    }
-//    
-//    private Boolean validateApplication(Binder<FinApplication> binder){
-//        if (Boolean.FALSE.equals(binder.validate().isOk())){
-//            return false;
-//        }
-//        FinApplication finapp = binder.getBean();
-//        for (Applicant applicant:finapp.getApplicants()){
-//            if (applicant.getSignature()==null){
-//                return false;
-//            }else if (applicant.getSignature().length<=0){
-//                return false;
-//            }
-//        }
-//        return true;
-//    }
-//
-//    /**
-//     * @return the finapp
-//     */
-//    
-//
-//    private void buildApplicantDialog(
-//            Applicant applicant, 
-//            FinApplication finApplication, 
-//            ApplicantService applicantService,
-//            Boolean editable,
-//            Grid<Applicant> gridApplicants
-//        ) {
-//       
-//        ApplicantForm appform = new ApplicantForm(
-//                applicant,
-//                finApplication,
-//                editable, 
-//                applicantService,
-//                a->{
-//                    gridApplicants.getDataProvider().refreshAll();
-//                }
-//        );
-//        appform.open();
-//    }
-//
-//}

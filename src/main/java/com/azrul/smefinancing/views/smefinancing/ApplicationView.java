@@ -12,14 +12,19 @@ import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.value.WorkflowMemento;
+import com.azrul.chenook.views.common.Card;
 import com.azrul.chenook.views.workflow.MyWorkPanel;
 import com.azrul.chenook.workflow.model.StartEvent;
 import com.azrul.smefinancing.service.FinApplicationService;
 import com.azrul.smefinancing.views.application.ApplicationForm;
 import com.azrul.smefinancing.service.BadgeUtils;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -27,6 +32,7 @@ import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,12 +78,16 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
 
         if (SecurityContextHolder.getContext().getAuthentication() instanceof OAuth2AuthenticationToken oauth2AuthToken) {
             DefaultOidcUser oidcUser = (DefaultOidcUser) oauth2AuthToken.getPrincipal();
-
+             Map<String,String> sortableFields = Map.of(
+                "id","id"
+                
+            );
             MyWorkPanel workPanel = new MyWorkPanel(
                     oidcUser,
                     workflowConfig.rootBizProcess(),
                     workflowService,
-                    (wp,startEvent) -> {
+                    sortableFields,
+                    (wp, startEvent) -> {
                         FinApplication finapp = new FinApplication();
                         finapp.setApplicationDate(LocalDateTime.now());
                         finapp = finappService.save(finapp, oidcUser.getPreferredUsername());
@@ -95,22 +105,33 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                                 fa -> wp.refresh(),
                                 fa -> wp.refresh());
                     },
-                    (wp,startEvent,work) -> {
+                    (wp, startEvent, work) -> {
                         FinApplication finapp = finappService.getById(work.getParentId());
                         WorkflowMemento<FinApplication> memento = new WorkflowMemento<>(
-                                finapp, 
-                                finapp.getId(), 
-                                oidcUser, 
-                                workflowConfig.rootBizProcess(), 
+                                finapp,
+                                finapp.getId(),
+                                oidcUser,
+                                workflowConfig.rootBizProcess(),
                                 "SME_FIN"
                         );
                         showApplicationDialog(
-                            memento,
-                            startEvent,
-                            work,
-                            fa -> wp.refresh(),
-                            fa -> wp.refresh(),
-                            fa -> wp.refresh());
+                                memento,
+                                startEvent,
+                                work,
+                                fa -> wp.refresh(),
+                                fa -> wp.refresh(),
+                                fa -> wp.refresh());
+                    },
+                    work -> {
+                        VerticalLayout content = new VerticalLayout();
+                        content.add(new NativeLabel("Application date: " + work.getFields().get("APPLICATION_DATE")));
+                        TextArea reason = new TextArea();
+                        reason.setValue(work.getFields().get("REASON_FOR_FINANCING"));
+                        reason.setWidthFull();
+                        reason.setMaxHeight("60px");
+                        reason.setReadOnly(true);
+                        content.add(reason);
+                        return content;
                     }
             );
             this.add(workPanel);
@@ -146,7 +167,6 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
 //        grid.setItems(workflowService.getWorkByCreator(oidcUser.getPreferredUsername()));
 //        return grid;
 //    }
-
     private void showApplicationDialog(
             WorkflowMemento<FinApplication> memento,
             StartEvent startEvent,
