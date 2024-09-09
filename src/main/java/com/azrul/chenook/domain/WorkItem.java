@@ -71,13 +71,14 @@ public class WorkItem {
 
     private String supervisorApprovalLevel;
 
-    @NotAudited
+    @NotAudited //cannot be auditted. if not, WorkItem.id (hist_work_id) will be compulsorry when creating audit and when there is no historical approval, it should not
     @OneToMany(fetch = FetchType.LAZY) //do not cascade. Will create problem due to 2 fields pointing to the same type i.e. Approvals
     @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
     private Set<Approval> historicalApprovals = new HashSet<>();
     
-    @ElementCollection
-    @CollectionTable(name="WorkField",
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name="WorkField",
         joinColumns=@JoinColumn(name="work_id"))
     @MapKeyColumn(name="key")
     @Column(name="value")

@@ -18,7 +18,7 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
     <workflow>
         <startEvent
             id='S0.MY'
-            description="Loan MY"
+            description="SME Financing (MY)"
             canBeStartedBy='Relationship-Manager Branch-Staff'
             next='S1.CALL_BUREAU'
             supervisoryApprovalHierarchy='Manager HOD'
@@ -35,7 +35,7 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
 
         <startEvent
             id='S0.PH'
-            description="Loan PH"
+            description="SME Financing (PH)"
             canBeStartedBy='Relationship-Manager Branch-Staff'
             next='S1.CALL_BUREAU'
             supervisoryApprovalHierarchy='Manager HOD'>

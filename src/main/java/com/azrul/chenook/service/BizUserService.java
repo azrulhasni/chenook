@@ -98,6 +98,7 @@ public class BizUserService {
 //        return null;
 //    }
     
+    
     public BizUser getUser(String username){
         List<UserRepresentation> users = keycloak.realm(keycloakRealm).users().searchByUsername(username, true);
         

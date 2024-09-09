@@ -10,6 +10,7 @@ import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.value.WorkflowMemento;
+import com.azrul.chenook.workflow.model.StartEvent;
 import com.azrul.smefinancing.domain.Applicant;
 import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.service.ApplicantService;
@@ -34,6 +35,8 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import java.text.NumberFormat;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
@@ -58,9 +61,11 @@ public class ApplicationForm extends Dialog {
     private static final String FINANCING_APPLIED_LABEL = "Financing Applied";
     private static final String REASON_FOR_FINANCING_LABEL = "Reason for financing";
     private String DATETIME_FORMAT;
+    private DateTimeFormatter formatter;
 
     public ApplicationForm(
             WorkflowMemento<FinApplication> memento,
+            StartEvent startEvent,
             WorkItem work,
             String dateTimeFormat,
             ApplicantService applicantService,
@@ -77,11 +82,7 @@ public class ApplicationForm extends Dialog {
             return; // if finapp is null, this will not work
         }
         this.DATETIME_FORMAT = dateTimeFormat;
-
-//        WorkItem work = workflowService.findOneByParentIdAndContext(memento);
-//        if (work == null) {
-//            return;
-//        }
+        this.formatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
         Editable editable = isEditable(
                 memento.getParent(),
                 work,
@@ -136,6 +137,7 @@ public class ApplicationForm extends Dialog {
 
         configureButtons(
                 binder,
+                startEvent,
                 work,
                 memento,
                 editable,
@@ -421,6 +423,7 @@ public class ApplicationForm extends Dialog {
 
     private void configureButtons(
             Binder<FinApplication> binder,
+            StartEvent startEvent,
             WorkItem work,
             WorkflowMemento memento,
             Editable editable,
@@ -431,17 +434,36 @@ public class ApplicationForm extends Dialog {
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel) {
 
-        Button btnSaveAndSubmitApp = createSaveAndSubmitButton(binder, finappService, applicantService, workflowService, memento, onPostSave);
-        Button btnSaveDraft = createSaveDraftButton(binder, work, finappService, memento.getOidcUser(), onPostSave);
-        Button btnSave = createSaveButton(binder, finappService, applicantService, onPostSave);
+        Button btnSaveAndSubmitApp = createSaveAndSubmitButton(
+                binder,
+                work,
+                startEvent,
+                finappService,
+                applicantService,
+                workflowService,
+                memento,
+                onPostSave
+        );
 
+        Button btnSaveDraft = createSaveDraftButton(
+                binder,
+                work,
+                startEvent,
+                finappService,
+                applicantService,
+                workflowService,
+                memento,
+                onPostSave
+        );
+
+        //Button btnSave = createSaveButton(binder, finappService, applicantService, onPostSave);
         Button btnCancel = createCancelButton(binder, work, finappService, onPostCancel);
         Button btnRemove = createRemoveButton(binder, editable, finappService, onPostRemove);
 
         HorizontalLayout buttonLayout = new HorizontalLayout(
                 btnSaveAndSubmitApp,
                 btnSaveDraft,
-                btnSave,
+                //btnSave,
                 btnCancel,
                 btnRemove
         );
@@ -452,7 +474,7 @@ public class ApplicationForm extends Dialog {
         btnSaveDraft.setEnabled(false);
         btnRemove.setEnabled(false);
         btnCancel.setEnabled(false);
-        btnSave.setEnabled(false);
+        //btnSave.setEnabled(false);
 
         if (editable == Editable.YES) {
             btnSaveAndSubmitApp.setEnabled(true);
@@ -463,7 +485,8 @@ public class ApplicationForm extends Dialog {
             btnSaveDraft.setEnabled(true);
             btnCancel.setEnabled(true);
         } else if (editable == Editable.YES_AS_ADMIN) {
-            btnSave.setEnabled(true);
+            //btnSave.setEnabled(true);
+            btnSaveAndSubmitApp.setEnabled(true);
             btnCancel.setEnabled(true);
         } else {
             btnCancel.setEnabled(true);
@@ -473,16 +496,38 @@ public class ApplicationForm extends Dialog {
     private Button createSaveDraftButton(
             Binder<FinApplication> binder,
             WorkItem work,
+            StartEvent startEvent,
             FinApplicationService finappService,
-            OidcUser user,
+            ApplicantService applicantService,
+            WorkflowService workflowService,
+            final WorkflowMemento memento,
             Consumer<FinApplication> onPostSave
     ) {
         Button btnSaveDraft = new Button("Save draft", e1 -> {
             FinApplication finapp = binder.getBean();
-            if (work!=null){
+
+            finappService.save(finapp, memento.getOidcUser().getPreferredUsername());
+            memento.setParent(finapp);
+            memento.setParentId(finapp.getId());
+            final Map<String, String> fields = Map.<String, String>of(
+                    "TITLE", "SME Loan",
+                    "FINANCING_REQUESTED", finapp.getFinancingRequested()!=null
+                            ?NumberFormat.getCurrencyInstance().format(finapp.getFinancingRequested())
+                            :"",
+                    "APPLICATION_DATE", finapp.getApplicationDate().format(formatter),
+                    "REASON_FOR_FINANCING", finapp.getReasonForFinancing()
+            );
+            if (work == null) {
+                WorkItem w = workflowService.create(memento, startEvent.getId(), fields);
+                w.setFields(fields);
+                w.setStatus(Status.DRAFT);
+                workflowService.save(w);
+            } else {
+                work.setFields(fields);
                 work.setStatus(Status.DRAFT);
+                workflowService.save(work);
             }
-            finappService.save(finapp, user.getPreferredUsername());
+
             onPostSave.accept(finapp);
             this.close();
         });
@@ -491,23 +536,36 @@ public class ApplicationForm extends Dialog {
 
     private Button createSaveAndSubmitButton(
             Binder<FinApplication> binder,
+            WorkItem work,
+            StartEvent startEvent,
             FinApplicationService finappService,
             ApplicantService applicantService,
             WorkflowService workflowService,
             WorkflowMemento memento,
-            Consumer<FinApplication> onPostSave) {
+            Consumer<FinApplication> onPostSave
+    ) {
         Button btnSaveFinApp = new Button("Save and submit", e1 -> {
             Set<String> errors = validateApplication(applicantService, binder);
             if (errors.isEmpty()) {
                 FinApplication finapp = binder.getBean();
-                
-
-                //finapp.setStatus(Status.IN_PROGRESS);
-                finapp = finappService.save(finapp, memento.getOidcUser().getPreferredUsername());
+                finapp = finappService.save(
+                        finapp,
+                        memento.getOidcUser().getPreferredUsername()
+                );
+                final Map<String, String> fields = Map.<String, String>of(
+                    "TITLE", "SME Loan",
+                    "FINANCING_REQUESTED", NumberFormat.getCurrencyInstance().format(finapp.getFinancingRequested()),
+                    "APPLICATION_DATE", finapp.getApplicationDate().format(formatter),
+                    "REASON_FOR_FINANCING", finapp.getReasonForFinancing()
+            );
+                if (work == null) {
+                    WorkItem w = workflowService.create(memento, startEvent.getId(), fields);
+                    w.setFields(fields);
+                    w.setStatus(Status.DRAFT);
+                    workflowService.save(w);
+                }
                 memento.setParent(finapp);
                 memento.setParentId(finapp.getId());
-//                WorkItem work = workItemService.findOneByParentIdAndContext(parentId, context);
-//         BizUser bizUser = bizUserService.getUser(oidcUser.getPreferredUsername());
                 workflowService.run(memento, false);
                 onPostSave.accept(finapp);
                 this.close();
@@ -523,30 +581,29 @@ public class ApplicationForm extends Dialog {
         return btnSaveFinApp;
     }
 
-    private Button createSaveButton(
-            Binder<FinApplication> binder,
-            FinApplicationService finappService,
-            ApplicantService applicantService,
-            Consumer<FinApplication> onPostSave) {
-        Button btnSaveFinApp = new Button("Save", e1 -> {
-            Set<String> errors = validateApplication(applicantService, binder);
-            if (errors.isEmpty()) {
-                FinApplication finapp = binder.getBean();
-                finappService.save(finapp);
-                onPostSave.accept(finapp);
-                this.close();
-            } else {
-                StringBuilder errMsg = new StringBuilder();
-                for (String err : errors) {
-                    errMsg.append(err);
-                    errMsg.append("\n");
-                }
-                Notification.show(errMsg.toString());
-            }
-        });
-        return btnSaveFinApp;
-    }
-
+//    private Button createSaveButton(
+//            Binder<FinApplication> binder,
+//            FinApplicationService finappService,
+//            ApplicantService applicantService,
+//            Consumer<FinApplication> onPostSave) {
+//        Button btnSaveFinApp = new Button("Save", e1 -> {
+//            Set<String> errors = validateApplication(applicantService, binder);
+//            if (errors.isEmpty()) {
+//                FinApplication finapp = binder.getBean();
+//                finappService.save(finapp);
+//                onPostSave.accept(finapp);
+//                this.close();
+//            } else {
+//                StringBuilder errMsg = new StringBuilder();
+//                for (String err : errors) {
+//                    errMsg.append(err);
+//                    errMsg.append("\n");
+//                }
+//                Notification.show(errMsg.toString());
+//            }
+//        });
+//        return btnSaveFinApp;
+//    }
     private Button createCancelButton(
             Binder<FinApplication> binder,
             WorkItem work,
@@ -555,9 +612,9 @@ public class ApplicationForm extends Dialog {
     ) {
         return new Button("Cancel", e1 -> {
             FinApplication finapp = binder.getBean();
-            if (work==null){
+            if (work == null) {
                 finappService.remove(finapp);
-            }else if (work.getStatus() == Status.NEWLY_CREATED) {
+            } else if (work.getStatus() == Status.NEWLY_CREATED) {
                 finappService.remove(finapp);
             }
             onPostCancel.accept(finapp);

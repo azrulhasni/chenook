@@ -4,9 +4,7 @@
  */
 package com.azrul.smefinancing.views.smefinancing;
 
-import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.views.MainLayout;
-import com.azrul.chenook.views.common.Card;
 import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.service.ApplicantService;
 import com.azrul.chenook.service.MessageService;
@@ -14,16 +12,13 @@ import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.value.WorkflowMemento;
+import com.azrul.chenook.views.workflow.MyWorkPanel;
+import com.azrul.chenook.workflow.model.StartEvent;
 import com.azrul.smefinancing.service.FinApplicationService;
 import com.azrul.smefinancing.views.application.ApplicationForm;
 import com.azrul.smefinancing.service.BadgeUtils;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.grid.GridVariant;
-import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
@@ -32,14 +27,12 @@ import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
 import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
-
 
 /**
  *
@@ -80,77 +73,83 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
         if (SecurityContextHolder.getContext().getAuthentication() instanceof OAuth2AuthenticationToken oauth2AuthToken) {
             DefaultOidcUser oidcUser = (DefaultOidcUser) oauth2AuthToken.getPrincipal();
 
-            Grid<FinApplication> grid = new Grid<>(FinApplication.class, false);
-            grid.getStyle().set("max-width", "285px");
-            grid.setAllRowsVisible(true);
-            Button btnAddNew = new Button("Add new", e -> {
-                FinApplication finapp = new FinApplication();
-                //finapp.setStatus(Status.NEWLY_CREATED);
-                finapp.setApplicationDate(LocalDateTime.now());
-
-                finapp = finappService.save(finapp, oidcUser.getPreferredUsername());
-                WorkflowMemento<FinApplication> memento = new WorkflowMemento<>(
-                        finapp,
-                        finapp.getId(),
-                        oidcUser,
-                        workflowConfig.rootBizProcess(),
-                        "SME_FIN"
-                );
-
-                
-                
-                //WorkItem work = workflowService.create(memento);
-
-                showApplicationDialog(
-                        memento,
-                        null,
-                        fa -> grid.getDataProvider().refreshAll(),
-                        fa -> grid.getDataProvider().refreshAll(),
-                        fa -> grid.getDataProvider().refreshAll());
-            });
-
-            this.add(btnAddNew);
-            this.add(grid);
-            //grid.setSortableColumns("name", "email");
-            grid.addComponentColumn(finapp -> {
-                Card card = new Card("SME Loan: MYR " + finapp.getFinancingRequested());
-                card.add(new NativeLabel("Application date: " + finapp.getApplicationDate().format(dateTimeFormatter)));
-                card.add(finapp.getReasonForFinancing());
-
-                HorizontalLayout btnPanel = new HorizontalLayout();
-                btnPanel.add(new Button("See more", e -> {
-                    WorkflowMemento<FinApplication> memento = new WorkflowMemento<>(
-                        finapp,
-                        finapp.getId(),
-                        oidcUser,
-                        workflowConfig.rootBizProcess(),
-                        "SME_FIN"
-                    );
-                    WorkItem work = workflowService.findOneByParentIdAndContext(memento);
-                    showApplicationDialog(
+            MyWorkPanel workPanel = new MyWorkPanel(
+                    oidcUser,
+                    workflowConfig.rootBizProcess(),
+                    workflowService,
+                    (wp,startEvent) -> {
+                        FinApplication finapp = new FinApplication();
+                        finapp.setApplicationDate(LocalDateTime.now());
+                        finapp = finappService.save(finapp, oidcUser.getPreferredUsername());
+                        WorkflowMemento<FinApplication> memento = new WorkflowMemento<>(
+                                finapp,
+                                finapp.getId(),
+                                oidcUser,
+                                workflowConfig.rootBizProcess(),
+                                "SME_FIN");
+                        showApplicationDialog(
+                                memento,
+                                startEvent,
+                                null,
+                                fa -> wp.refresh(),
+                                fa -> wp.refresh(),
+                                fa -> wp.refresh());
+                    },
+                    (wp,startEvent,work) -> {
+                        FinApplication finapp = finappService.getById(work.getParentId());
+                        WorkflowMemento<FinApplication> memento = new WorkflowMemento<>(
+                                finapp, 
+                                finapp.getId(), 
+                                oidcUser, 
+                                workflowConfig.rootBizProcess(), 
+                                "SME_FIN"
+                        );
+                        showApplicationDialog(
                             memento,
+                            startEvent,
                             work,
-                            fa -> grid.getDataProvider().refreshAll(),
-                            fa -> grid.getDataProvider().refreshAll(),
-                            fa -> grid.getDataProvider().refreshAll());
-                }));
-
-                card.add(btnPanel);
-
-//                if (null == work.getStatus()) {
-//
-//                } else {
-//                    card.add(badgeUtils.createStatusBadge(finapp.getStatus()));
-//                }
-                return card;
-            });
-            grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
-            grid.setItems(finappService.getApplicationsByUsernameOrEmail(oidcUser.getPreferredUsername(), oidcUser.getEmail()));
+                            fa -> wp.refresh(),
+                            fa -> wp.refresh(),
+                            fa -> wp.refresh());
+                    }
+            );
+            this.add(workPanel);
+            //grid.setItems(finappService.getApplicationsByUsernameOrEmail(oidcUser.getPreferredUsername(), oidcUser.getEmail()));
         }
     }
 
+//    private Grid<WorkItem> createMyWorkflowPanel(
+//            final OidcUser oidcUser,
+//            final WorkflowService workflowService,
+//            final Consumer<Grid> showCreationDialog,
+//            final BiConsumer<Grid, WorkItem> showUpdateDialog) {
+//        Grid<WorkItem> grid = new Grid<>(WorkItem.class, false);
+//        grid.getStyle().set("max-width", "285px");
+//        grid.setAllRowsVisible(true);
+//        Button btnAddNew = new Button("Add new", e -> {
+//            showCreationDialog.accept(grid);
+//        });
+//        this.add(btnAddNew);
+//        this.add(grid);
+//        grid.addComponentColumn(work -> {
+//            Card card = new Card(work.getFields().get("TITLE")+": MYR " + work.getFields().get("FINANCING_REQUESTED"));
+//            card.add(new NativeLabel("Application date: " + work.getFields().get("APPLICATION_DATE")));
+//            card.add(work.getFields().get("REASON_FOR_FINANCING"));
+//            HorizontalLayout btnPanel = new HorizontalLayout();
+//            btnPanel.add(new Button("See more", e -> {
+//                showUpdateDialog.accept(grid,work);
+//            }));
+//            card.add(btnPanel);
+//            return card;
+//        });
+//        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
+//        grid.setItems(workflowService.getWorkByCreator(oidcUser.getPreferredUsername()));
+//        return grid;
+//    }
+
     private void showApplicationDialog(
             WorkflowMemento<FinApplication> memento,
+            StartEvent startEvent,
             WorkItem work,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
@@ -158,6 +157,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
     ) {
         ApplicationForm appform = new ApplicationForm(
                 memento,
+                startEvent,
                 work,
                 DATETIME_FORMAT,
                 applicantService,

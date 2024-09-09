@@ -15,6 +15,7 @@ import com.azrul.chenook.repository.WorkItemRepository;
 import com.azrul.chenook.script.Expression;
 import com.azrul.chenook.script.Scripting;
 import com.azrul.chenook.value.WorkflowMemento;
+import com.azrul.chenook.views.common.PageNav;
 import com.azrul.chenook.workflow.model.Activity;
 import com.azrul.chenook.workflow.model.BaseActivity;
 import com.azrul.chenook.workflow.model.BizProcess;
@@ -30,7 +31,10 @@ import com.azrul.chenook.workflow.model.XorMajorityApprovalActivity;
 import com.azrul.chenook.workflow.model.XorUnanimousApprovalActivity;
 import com.azrul.smefinancing.domain.Applicant;
 import com.azrul.smefinancing.domain.FinApplication;
+import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
+import com.vaadin.flow.data.provider.DataProvider;
+import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 import com.vaadin.flow.data.provider.SortDirection;
 import jakarta.persistence.criteria.Join;
@@ -47,9 +51,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.stream.Stream;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,10 +74,9 @@ public class WorkflowService<T> {
     @Autowired(required = false)
     private List<ApproverLookup<T>> approverLookups;
 
-
     @Autowired
     BizUserService bizUserService;
-    
+
     @Autowired
     WorkItemRepository workItemRepo;
 
@@ -93,8 +99,6 @@ public class WorkflowService<T> {
         return isApprovalActivity(activities.get(activity));
     }
 
-    
-
     private Boolean isApprovalActivity(Activity activity) {
         if (activity == null) {
             return Boolean.FALSE;
@@ -103,16 +107,19 @@ public class WorkflowService<T> {
                 || activity.getClass().equals(XorUnanimousApprovalActivity.class)
                 || activity.getClass().equals(XorMajorityApprovalActivity.class));
     }
+    
+    
 
-    public  WorkItem run(
+    public WorkItem run(
             final WorkflowMemento<T> memento,
-            final boolean isError
+            Boolean isError
     ) {
         WorkItem work = findOneByParentIdAndContext(
                 memento.getParentId(),
                 memento.getContext());
-        if (work==null){
-            work = create(memento);
+        if (work == null) {
+            isError = Boolean.TRUE;
+            return null;
         }
 
         BizUser bizUser = bizUserService.getUser(memento.getOidcUser().getPreferredUsername());
@@ -151,7 +158,7 @@ public class WorkflowService<T> {
                     isError
             );
         }
-        
+
         return work;
 
     }
@@ -470,8 +477,8 @@ public class WorkflowService<T> {
             final BizUser user,
             final List<String> supervisorHierarchy) {
         if (isSupervisorNeeded(root)) { //this was sent for approval before
-            if (root.getApprovals().isEmpty()==Boolean.FALSE && 
-                    Boolean.TRUE.equals(root.getApprovals().iterator().next().getApproved())) { //approved
+            if (root.getApprovals().isEmpty() == Boolean.FALSE
+                    && Boolean.TRUE.equals(root.getApprovals().iterator().next().getApproved())) { //approved
                 //see which level is the approval on
                 String currentApprLevel = root.getSupervisorApprovalLevel();
                 int indexOfNextApprLevel = getArrayIndexOfValue(supervisorHierarchy, currentApprLevel) + 1;
@@ -527,7 +534,6 @@ public class WorkflowService<T> {
                 nextSteps.add(activity);
             }
         } else { //seeking new approval
-            
 
             String nextRole = supervisorHierarchy.get(0);
             if (approverLookups != null) {
@@ -571,8 +577,7 @@ public class WorkflowService<T> {
         //only current activity ids in wait states
         if (nextActivity == null) { //nextActivity==END
             nextSteps.add(nextActivity);
-        }
-        else if (nextActivity.getClass().equals(XorUnanimousApprovalActivity.class)) {
+        } else if (nextActivity.getClass().equals(XorUnanimousApprovalActivity.class)) {
             loadUsersIntoApprovalList(((XorUnanimousApprovalActivity) nextActivity).getHandledBy(), nextActivity, tenant, work);
             nextSteps.add(nextActivity);
         } else if (nextActivity.getClass().equals(XorAtleastOneApprovalActivity.class)) {
@@ -714,6 +719,28 @@ public class WorkflowService<T> {
         }
 
     }
+    
+    public Set<StartEvent> whatUserStart(OidcUser oidcUser, BizProcess bizProcess){
+        Set<String> roles =  oidcUser
+                .getAuthorities()
+                .stream()
+                .map(a->a.getAuthority())
+                .map(String::toLowerCase)
+                .map(a->a.replace("role_", ""))
+                .collect(Collectors.toSet());
+        
+        Set<StartEvent> startEvents =  bizProcess
+                .getStartEvents()
+                .stream()
+                .filter(e->{
+                    Set<String> intersect = e.getCanBeStartedBy().stream().map(String::toLowerCase).collect(Collectors.toSet());
+                    intersect.retainAll(roles);
+                    return !intersect.isEmpty();
+                 })
+                 .collect(Collectors.toSet());
+        return startEvents;
+    }
+    
 
     private Set<String> whoCanStart(BizProcess bizProcess) {
         return new HashSet<String>(bizProcess
@@ -805,155 +832,264 @@ public class WorkflowService<T> {
         }
         return activities;
     }
-    
+
     @Transactional
-    public WorkItem save(WorkItem work){
+    public WorkItem save(WorkItem work) {
         return workItemRepo.save(work);
     }
-    
-    @Transactional
-    public WorkItem create(final WorkflowMemento memento) {
-//        WorkItem work = findOneByParentIdAndContext(
-//                memento.getParentId(),
-//                memento.getContext());
-//        if (work != null) {
-            WorkItem newwork = new WorkItem();
-            newwork.setContext(memento.getContext());
-            newwork.setCreator(memento.getOidcUser().getPreferredUsername());
-            newwork.setParentId(memento.getParentId());
-            newwork.setPriority(Priority.NONE);
-            newwork.setStatus(Status.NEWLY_CREATED);
-            //newwork.setFields(fields);
-            Set<String> owners = new HashSet<>();
-            owners.add(memento.getOidcUser().getPreferredUsername());
-            newwork.setOwners(owners);
-            newwork.setStartEventId(memento.getBizProcess().getStartEvents().iterator().next().getId());
-            newwork.setStartEventDescription(memento.getBizProcess().getStartEvents().iterator().next().getDescription());
-            newwork.setWorklist(memento.getBizProcess().getStartEvents().iterator().next().getId());
-            newwork.setWorklistUpdateTime(LocalDateTime.now());
-            
-            newwork = save(newwork);
-            return newwork;
-//        } else {
-//            return work;
-//        }
-    }
-    
-   
 
-    
     @Transactional
-    public WorkItem findOneByParentIdAndContext(final WorkflowMemento memento){
+    public WorkItem create(final WorkflowMemento memento,String startEventId, final Map<String, String> fields) {
+
+        WorkItem newwork = new WorkItem();
+        newwork.setContext(memento.getContext());
+        newwork.setCreator(memento.getOidcUser().getPreferredUsername());
+        newwork.setParentId(memento.getParentId());
+        newwork.setPriority(Priority.NONE);
+        newwork.setStatus(Status.NEWLY_CREATED);
+        newwork.setFields(fields);
+        Set<String> owners = new HashSet<>();
+        owners.add(memento.getOidcUser().getPreferredUsername());
+        newwork.setOwners(owners);
+        newwork.setStartEventId(startEventId/*memento.getBizProcess().getStartEvents().iterator().next().getId()*/);
+        newwork.setStartEventDescription(memento.getBizProcess().getStartEvents().iterator().next().getDescription());
+        newwork.setWorklist(memento.getBizProcess().getStartEvents().iterator().next().getId());
+        newwork.setWorklistUpdateTime(LocalDateTime.now());
+
+        newwork = save(newwork);
+        return newwork;
+    }
+
+    @Transactional
+    public WorkItem findOneByParentIdAndContext(final WorkflowMemento memento) {
         WorkItem work = findOneByParentIdAndContext(
                 memento.getParentId(),
                 memento.getContext());
         return work;
-    } 
-    
+    }
+
     @Transactional
-    public WorkItem createApprovalAndSave(WorkItem work){
-        
+    public WorkItem createApprovalAndSave(WorkItem work) {
+
         work.getHistoricalApprovals().addAll(work.getApprovals());
         work.getApprovals().clear();
         WorkItem w = workItemRepo.save(work);
         return w;
     }
-    
+
     @Transactional
-    private WorkItem archiveApprovalsAndSave(WorkItem work){
+    private WorkItem archiveApprovalsAndSave(WorkItem work) {
         work.getHistoricalApprovals().addAll(work.getApprovals());
         work.getApprovals().clear();
         WorkItem w = workItemRepo.save(work);
         return w;
     }
-    
+
     @Transactional
-    private WorkItem findOneByParentIdAndContext(Long parentId,String context){
+    private WorkItem findOneByParentIdAndContext(Long parentId, String context) {
         return workItemRepo.findOneByParentIdAndContext(parentId, context);
     }
     
-    public CallbackDataProvider.FetchCallback<WorkItem, Void> getWorkByOwner(String username) {
-        return query -> {
-            var vaadinSortOrders = query.getSortOrders();
-            var springSortOrders = new ArrayList<Sort.Order>();
-            for (QuerySortOrder so : vaadinSortOrders) {
-                String colKey = so.getSorted();
-                if (so.getDirection() == SortDirection.ASCENDING) {
-                    springSortOrders.add(Sort.Order.asc(colKey));
-                }
-            }
-            return workItemRepo.findAll(
-                    //whereUsernameEquals(username),
+    public Integer countWorkByOwner(String username){
+        Long count =  workItemRepo.count(whereOwnersContains(username));
+        return count.intValue();
+    }
+    
+    public DataProvider getWorkByOwner(String username, PageNav pageNav) {
+        //build data provider
+        var dp = new AbstractBackEndDataProvider<WorkItem, Void>() {
+            @Override
+            protected Stream<WorkItem> fetchFromBackEnd(Query<WorkItem, Void> query) {
+                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
+                
+                Sort.Direction sort =   so==null
+                                        ?Sort.Direction.DESC
+                                        :(
+                                            SortDirection.ASCENDING.equals(so.getDirection())
+                                            ?Sort.Direction.ASC
+                                            :Sort.Direction.DESC
+                                        );
+                String sorted = so==null
+                                ?"id"
+                                :so.getSorted();
+                query.getPage();
+                Page<WorkItem> finapps = workItemRepo.findAll(
                     whereOwnersContains(username),
                     PageRequest.of(
-                            query.getPage(),
-                            query.getPageSize(),
-                            Sort.by(springSortOrders)
-                    )
-            ).stream();
+                            pageNav.getPage() - 1,
+                            pageNav.getMaxCountPerPage(),
+                            Sort.by(sort, sorted))
+                );
+                return finapps.stream();
+            }
+
+            @Override
+            protected int sizeInBackEnd(Query<WorkItem, Void> query) {
+                return pageNav.getDataCountPerPage();
+            }
+
+            @Override
+            public String getId(WorkItem item) {
+                return item.getId().toString();
+            }
+
         };
+        return dp;
     }
     
-    public CallbackDataProvider.FetchCallback<WorkItem, Void> getWorkByCreator(String username) {
-        return query -> {
-            var vaadinSortOrders = query.getSortOrders();
-            var springSortOrders = new ArrayList<Sort.Order>();
-            for (QuerySortOrder so : vaadinSortOrders) {
-                String colKey = so.getSorted();
-                if (so.getDirection() == SortDirection.ASCENDING) {
-                    springSortOrders.add(Sort.Order.asc(colKey));
-                }
-            }
-            return workItemRepo.findAll(
-                    //whereUsernameEquals(username),
+    public Integer countWorkByCreator(String username){
+        Long count =  workItemRepo.count(whereCreatorEquals(username));
+        return count.intValue();
+    }
+
+    public DataProvider getWorkByCreator(String username, PageNav pageNav) {
+        //build data provider
+        var dp = new AbstractBackEndDataProvider<WorkItem, Void>() {
+            @Override
+            protected Stream<WorkItem> fetchFromBackEnd(Query<WorkItem, Void> query) {
+                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
+                
+                Sort.Direction sort =   so==null
+                                        ?Sort.Direction.DESC
+                                        :(
+                                            SortDirection.ASCENDING.equals(so.getDirection())
+                                            ?Sort.Direction.ASC
+                                            :Sort.Direction.DESC
+                                        );
+                String sorted = so==null
+                                ?"id"
+                                :so.getSorted();
+                query.getPage();
+                Page<WorkItem> finapps = workItemRepo.findAll(
                     whereCreatorEquals(username),
                     PageRequest.of(
-                            query.getPage(),
-                            query.getPageSize(),
-                            Sort.by(springSortOrders)
-                    )
-            ).stream();
-        };
-    }
-    
-    public CallbackDataProvider.FetchCallback<WorkItem, Void> getWorkByWorklist(String worklist) {
-        return query -> {
-            var vaadinSortOrders = query.getSortOrders();
-            var springSortOrders = new ArrayList<Sort.Order>();
-            for (QuerySortOrder so : vaadinSortOrders) {
-                String colKey = so.getSorted();
-                if (so.getDirection() == SortDirection.ASCENDING) {
-                    springSortOrders.add(Sort.Order.asc(colKey));
-                }
+                            pageNav.getPage() - 1,
+                            pageNav.getMaxCountPerPage(),
+                            Sort.by(sort, sorted))
+                );
+                return finapps.stream();
             }
-            return workItemRepo.findAll(
-                    //whereUsernameEquals(username),
-                    whereCreatorEquals(worklist),
-                    PageRequest.of(
-                            query.getPage(),
-                            query.getPageSize(),
-                            Sort.by(springSortOrders)
-                    )
-            ).stream();
+
+            @Override
+            protected int sizeInBackEnd(Query<WorkItem, Void> query) {
+                return pageNav.getDataCountPerPage();
+            }
+
+            @Override
+            public String getId(WorkItem item) {
+                return item.getId().toString();
+            }
+
         };
+        return dp;
     }
     
+    public Integer countWorkByWorklist(String worklist){
+        Long count =  workItemRepo.count(whereWorklistEquals(worklist));
+        return count.intValue();
+    }
     
+    public DataProvider getWorkByWorklist(String worklist, PageNav pageNav) {
+        //build data provider
+        var dp = new AbstractBackEndDataProvider<WorkItem, Void>() {
+            @Override
+            protected Stream<WorkItem> fetchFromBackEnd(Query<WorkItem, Void> query) {
+                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
+                
+                Sort.Direction sort =   so==null
+                                        ?Sort.Direction.DESC
+                                        :(
+                                            SortDirection.ASCENDING.equals(so.getDirection())
+                                            ?Sort.Direction.ASC
+                                            :Sort.Direction.DESC
+                                        );
+                String sorted = so==null
+                                ?"id"
+                                :so.getSorted();
+                query.getPage();
+                Page<WorkItem> finapps = workItemRepo.findAll(
+                    whereWorklistEquals(worklist),
+                    PageRequest.of(
+                            pageNav.getPage() - 1,
+                            pageNav.getMaxCountPerPage(),
+                            Sort.by(sort, sorted))
+                );
+                return finapps.stream();
+            }
+
+            @Override
+            protected int sizeInBackEnd(Query<WorkItem, Void> query) {
+                return pageNav.getDataCountPerPage();
+            }
+
+            @Override
+            public String getId(WorkItem item) {
+                return item.getId().toString();
+            }
+
+        };
+        return dp;
+    }
+    
+//    public CallbackDataProvider.FetchCallback<WorkItem, Void> getWorkByCreator(String username) {
+//        return query -> {
+//            var vaadinSortOrders = query.getSortOrders();
+//            var springSortOrders = new ArrayList<Sort.Order>();
+//            for (QuerySortOrder so : vaadinSortOrders) {
+//                String colKey = so.getSorted();
+//                if (so.getDirection() == SortDirection.ASCENDING) {
+//                    springSortOrders.add(Sort.Order.asc(colKey));
+//                }
+//            }
+//            return workItemRepo.findAll(
+//                    //whereUsernameEquals(username),
+//                    whereCreatorEquals(username),
+//                    PageRequest.of(
+//                            query.getPage(),
+//                            query.getPageSize(),
+//                            Sort.by(springSortOrders)
+//                    )
+//            ).stream();
+//        };
+//    }
+
+//    public CallbackDataProvider.FetchCallback<WorkItem, Void> getWorkByWorklist(String worklist) {
+//        return query -> {
+//            var vaadinSortOrders = query.getSortOrders();
+//            var springSortOrders = new ArrayList<Sort.Order>();
+//            for (QuerySortOrder so : vaadinSortOrders) {
+//                String colKey = so.getSorted();
+//                if (so.getDirection() == SortDirection.ASCENDING) {
+//                    springSortOrders.add(Sort.Order.asc(colKey));
+//                }
+//            }
+//            return workItemRepo.findAll(
+//                    whereWorklistEquals(worklist),
+//                    PageRequest.of(
+//                            query.getPage(),
+//                            query.getPageSize(),
+//                            Sort.by(springSortOrders)
+//                    )
+//            ).stream();
+//        };
+//    }
+//    
+
     private Specification<WorkItem> whereOwnersContains(String username) {
         return (workItem, cq, cb) -> {
-            return cb.isMember(username,workItem.get("owners"));
+            return cb.isMember(username, workItem.get("owners"));
         };
     }
-    
+
     private Specification<WorkItem> whereCreatorEquals(String username) {
         return (workItem, cq, cb) -> {
-            return cb.equal(workItem.get("creator"),username);
+            return cb.equal(workItem.get("creator"), username);
         };
     }
-    
+
     private Specification<WorkItem> whereWorklistEquals(String worklist) {
         return (workItem, cq, cb) -> {
-            return cb.equal(workItem.get("worklist"),worklist);
+            return cb.equal(workItem.get("worklist"), worklist);
         };
     }
 

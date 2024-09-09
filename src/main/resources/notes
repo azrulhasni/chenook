@@ -1,12 +1,5 @@
-drop table if exists "revinfo" cascade;
-drop table if exists "finapp_attachments_aud" cascade;
-drop table if exists "fin_application_aud" cascade;
-drop table if exists "attachment_aud" cascade;
-drop table if exists "applicant_aud" cascade;
-drop table if exists "message" cascade;
-drop table if exists "fin_application" cascade;
-drop table if exists "applicant" cascade;
-drop table if exists "finapp_attachments" cascade;
-drop table if exists "attachment" cascade;
-drop table if exists "attachment_proxy" cascade;
-drop table if exists "attachment_proxy_aud" cascade;
+
+To include manager in Keycloak
+1) In User federation > Settings > Mapper details, create a user-attribute-ldap-mapper.
+2) map 'manager' to 'manager' in ldap
+3) tick 'Always Read Value From LDAP'    

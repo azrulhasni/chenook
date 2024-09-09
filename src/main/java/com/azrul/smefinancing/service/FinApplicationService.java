@@ -8,16 +8,11 @@ import com.azrul.chenook.views.common.PageNav;
 import com.azrul.smefinancing.domain.Applicant;
 import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.repository.FinApplicationRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vaadin.flow.data.provider.BackEndDataProvider;
 import com.vaadin.flow.data.provider.CallbackDataProvider.FetchCallback;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 import com.vaadin.flow.data.provider.SortDirection;
-import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +25,7 @@ import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
 import jakarta.persistence.criteria.Join;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +46,11 @@ public class FinApplicationService {
     ) {
         this.finAppRepo = finAppRepo;
         this.contantPersonRepo = contantPersonRepo;
+    }
+    
+    public FinApplication getById(Long id){
+        Optional<FinApplication> ofinapp = finAppRepo.findById(id);
+        return ofinapp.orElse(null);
     }
 
     public FetchCallback<FinApplication, Void> getApplicationsByUsernameOrEmail(String username, String email) {
