@@ -4,6 +4,7 @@
  */
 package com.azrul.smefinancing.repository;
 
+import com.azrul.chenook.repository.WorkItemRepository;
 import com.azrul.smefinancing.domain.FinApplication;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -12,7 +13,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  *
  * @author azrul
  */
-public interface FinApplicationRepository extends JpaRepository<FinApplication, Long>, JpaSpecificationExecutor<FinApplication> {
+public interface FinApplicationRepository extends WorkItemRepository<FinApplication> {
 
     
 }

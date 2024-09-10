@@ -4,6 +4,8 @@
  */
 package com.azrul.smefinancing.service;
 
+import com.azrul.chenook.repository.WorkItemRepository;
+import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.views.common.PageNav;
 import com.azrul.smefinancing.domain.Applicant;
 import com.azrul.smefinancing.domain.FinApplication;
@@ -34,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author azrul
  */
 @Service
-public class FinApplicationService {
+public class FinApplicationService extends WorkflowService<FinApplication> {
 
     private final FinApplicationRepository finAppRepo;
     private final ApplicantRepository contantPersonRepo;
@@ -145,8 +147,8 @@ public class FinApplicationService {
 
     
     @Transactional
-    public void save(FinApplication app) {
-            finAppRepo.save(app);
+    public FinApplication save(FinApplication app) {
+            return finAppRepo.save(app);
     }
     
     @Transactional
@@ -173,4 +175,11 @@ public class FinApplicationService {
             );
         };
     }
+
+    @Override
+    public WorkItemRepository<FinApplication> getWorkItemRepo() {
+        return finAppRepo;
+    }
+
+    
 }

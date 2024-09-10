@@ -27,26 +27,23 @@ public class Scripting /*implements Scripting*/ {
 
     
     public <T> void runScript(
-            T data,
-            WorkItem workItem,
+            T workItem,
             BizUser user, 
             String script, 
             BizProcess bizProcess) {
         if (script==null){
             return;
         }
-        if (data==null){
-            return;
-        }
+        
         try {
             
 
-            scriptEngine.put("current", data);
-            if (data != null) {
-                scriptEngine.put("currentClass", data.getClass());
-            }
+           
             //scriptEngine.put("tenant", tenant);
-            scriptEngine.put("workItem", workItem);
+            scriptEngine.put("current", workItem);
+            if (workItem!= null) {
+                scriptEngine.put("currentClass", workItem.getClass());
+            }
             scriptEngine.put("user", user);
             //scriptEngine.put("dao", dao);
             scriptEngine.put("bizProcess",bizProcess);

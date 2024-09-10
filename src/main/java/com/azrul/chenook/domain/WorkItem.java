@@ -7,6 +7,8 @@ package com.azrul.chenook.domain;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -14,6 +16,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.OneToMany;
@@ -32,49 +36,50 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * @author azrul
  */
 @Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "item_type",
+        discriminatorType = DiscriminatorType.STRING)
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 public class WorkItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    protected Long id;
 
-    private String creator;
+    protected String creator;
 
-    private Status status;
+    protected Status status;
 
-    private String tenant;
+    protected String tenant;
 
-    private Priority priority;
+    protected Priority priority;
 
-    @Column(nullable = false, unique=true)
-    private Long parentId;
 
-    private String context;
+    protected String context;
 
-    private String startEventId;
+    protected String startEventId;
 
-    private String startEventDescription;
+    protected String startEventDescription;
 
-    private Set<String> owners;
+    protected Set<String> owners;
 
-    private String worklist;
+    protected String worklist;
 
-    private LocalDateTime worklistUpdateTime;
+    protected LocalDateTime worklistUpdateTime;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "work_id", referencedColumnName = "id")
-    private Set<Approval> approvals = new HashSet<>();
+    protected Set<Approval> approvals = new HashSet<>();
 
-    private String supervisorApprovalSeeker;
+    protected String supervisorApprovalSeeker;
 
-    private String supervisorApprovalLevel;
+    protected String supervisorApprovalLevel;
 
     @NotAudited //cannot be auditted. if not, WorkItem.id (hist_work_id) will be compulsorry when creating audit and when there is no historical approval, it should not
     @OneToMany(fetch = FetchType.LAZY) //do not cascade. Will create problem due to 2 fields pointing to the same type i.e. Approvals
     @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
-    private Set<Approval> historicalApprovals = new HashSet<>();
+    protected Set<Approval> historicalApprovals = new HashSet<>();
     
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
@@ -82,7 +87,7 @@ public class WorkItem {
         joinColumns=@JoinColumn(name="work_id"))
     @MapKeyColumn(name="key")
     @Column(name="value")
-    private Map<String, String> fields = new HashMap<>();
+    protected Map<String, String> fields = new HashMap<>();
 
     /**
      * @return the id
@@ -210,19 +215,7 @@ public class WorkItem {
         this.historicalApprovals = historicalApprovals;
     }
 
-    /**
-     * @return the parentId
-     */
-    public Long getParentId() {
-        return parentId;
-    }
-
-    /**
-     * @param parentId the parentId to set
-     */
-    public void setParentId(Long parentId) {
-        this.parentId = parentId;
-    }
+  
 
     /**
      * @return the context

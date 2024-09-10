@@ -9,7 +9,6 @@ import com.azrul.chenook.domain.Attachment;
 import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.BizUserService;
-import com.azrul.chenook.service.WorkflowService;
 import com.azrul.smefinancing.service.BadgeUtils;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -22,8 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class WorkflowPanel<T> extends VerticalLayout {
 
-    @Autowired
-    private WorkflowService workflowService;
 
     @Autowired
     private BadgeUtils badgeUtils;

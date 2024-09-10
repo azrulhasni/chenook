@@ -7,7 +7,6 @@ package com.azrul.chenook.config;
 
 import com.azrul.chenook.workflow.model.Activity;
 import com.azrul.chenook.workflow.model.BizProcess;
-import com.azrul.chenook.service.WorkflowService;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;

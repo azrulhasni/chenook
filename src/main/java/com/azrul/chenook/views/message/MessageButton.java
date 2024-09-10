@@ -8,7 +8,6 @@ package com.azrul.chenook.views.message;
 import com.azrul.chenook.domain.Message;
 import com.azrul.chenook.domain.MessageStatus;
 import com.azrul.chenook.service.MessageService;
-import com.azrul.chenook.views.common.PageNav;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.avatar.Avatar;
@@ -21,20 +20,13 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.messages.MessageList;
-import com.vaadin.flow.component.messages.MessageListItem;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.virtuallist.VirtualList;
 import com.vaadin.flow.theme.lumo.LumoIcon;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
@@ -44,8 +36,13 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
  */
 public class MessageButton extends Button {
     
-    public MessageButton(Long parentId, String context, OidcUser oidcUser, MessageService msgService) {
-        Long unreadNotifCount = msgService.countMessagesByParentIdStatusAndContext(parentId, MessageStatus.NEW, context);
+    public MessageButton(
+            Long id,
+            String context,
+            OidcUser oidcUser, 
+            MessageService msgService
+    ) {
+        Long unreadNotifCount = msgService.countMessagesByParentIdStatusAndContext(id, MessageStatus.NEW, context);
         
         Span counter = buildNotifCounter(unreadNotifCount);
         
@@ -58,12 +55,12 @@ public class MessageButton extends Button {
         
         ContextMenu notifMenu = new ContextMenu();
         
-        notifMenu.add(buildMessagePanel(parentId, context, oidcUser, msgService));
+        notifMenu.add(buildMessagePanel(id, context, oidcUser, msgService));
         notifMenu.setTarget(this);
         notifMenu.setOpenOnClick(true);
         notifMenu.addDetachListener(e -> {
             //if (e. == false) {
-            Long unreadNotifCount2 = msgService.countMessagesByParentIdStatusAndContext(parentId, MessageStatus.NEW, context);
+            Long unreadNotifCount2 = msgService.countMessagesByParentIdStatusAndContext(id, MessageStatus.NEW, context);
             
             Span counter2 = buildNotifCounter(unreadNotifCount2);
             this.setSuffixComponent(counter2);

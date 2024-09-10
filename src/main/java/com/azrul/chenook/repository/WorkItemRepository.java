@@ -8,11 +8,13 @@ import com.azrul.chenook.domain.Signature;
 import com.azrul.chenook.domain.WorkItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.repository.NoRepositoryBean;
 
 /**
  *
  * @author azrul
  */
-public interface WorkItemRepository extends JpaRepository<WorkItem, Long>, JpaSpecificationExecutor<WorkItem> {
-    public WorkItem findOneByParentIdAndContext(Long parentId,String context);
+@NoRepositoryBean
+public interface WorkItemRepository<T extends WorkItem> extends JpaRepository<T, Long>, JpaSpecificationExecutor<T> {
+    public T findOneByParentIdAndContext(Long parentId,String context);
 }

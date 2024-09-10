@@ -10,11 +10,10 @@ import com.azrul.chenook.views.common.Card;
 import com.azrul.chenook.views.common.PageNav;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.chenook.workflow.model.StartEvent;
+import com.azrul.smefinancing.service.FinApplicationService;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
-import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -22,7 +21,6 @@ import com.vaadin.flow.data.provider.DataProvider;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -31,38 +29,36 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
  *
  * @author azrul
  */
-public class MyWorkPanel  extends VerticalLayout {
+public class MyWorkPanel<T extends WorkItem>  extends VerticalLayout {
     private final int COUNT_PER_PAGE = 3;
     private final PageNav navWorkByCreator;
-    private final Grid<WorkItem> gridWorkByCreator;
-    private final WorkflowService workflowService;
+    private final Grid<T> gridWorkByCreator;
+    private final FinApplicationService finappService;
     private final OidcUser oidcUser;
     private final Map<String,String> sortableFields;
     
     public MyWorkPanel(
              final OidcUser oidcUser,
             final BizProcess bizProcess,
-            final WorkflowService workflowService,
             final Map<String,String> sortableFields,
+            final FinApplicationService finappService,
             final BiConsumer<MyWorkPanel,StartEvent> showCreationDialog,
-            final TriConsumer<MyWorkPanel, StartEvent,WorkItem> showUpdateDialog,
-            final Function<WorkItem,VerticalLayout> cardBuilder
+            final TriConsumer<MyWorkPanel, StartEvent,T> showUpdateDialog,
+            final Function<T, VerticalLayout> cardBuilder
             
     ){
         this.navWorkByCreator = new PageNav();
         this.oidcUser = oidcUser;
-        this.workflowService = workflowService;
         this.sortableFields=sortableFields;
-       
+        this.finappService=finappService;
                 
-        Integer countWorkByCreator = workflowService.countWorkByCreator(oidcUser.getPreferredUsername());
-        DataProvider dpWorkByCreator = workflowService.getWorkByCreator(oidcUser.getPreferredUsername(),navWorkByCreator);
+        Integer countWorkByCreator = finappService.countWorkByCreator(oidcUser.getPreferredUsername());
+        DataProvider dpWorkByCreator = finappService.getWorkByCreator(oidcUser.getPreferredUsername(),navWorkByCreator);
         
         gridWorkByCreator = createDataPanel(
                 oidcUser,
                 bizProcess,
                 dpWorkByCreator,
-                workflowService, 
                 showCreationDialog, 
                 showUpdateDialog,
                 cardBuilder);
@@ -80,23 +76,22 @@ public class MyWorkPanel  extends VerticalLayout {
     
     public void refresh(){
         gridWorkByCreator.getDataProvider().refreshAll();
-        Integer countWorkByCreator = workflowService.countWorkByCreator(oidcUser.getPreferredUsername());
+        Integer countWorkByCreator = finappService.countWorkByCreator(oidcUser.getPreferredUsername());
         navWorkByCreator.refreshPageNav(countWorkByCreator);
     }
     
-    private Grid<WorkItem> createDataPanel(
+    private Grid<T> createDataPanel(
             final OidcUser oidcUser,
             final BizProcess bizProcess,
             final DataProvider dataProvider,
-            final WorkflowService workflowService,
             final BiConsumer<MyWorkPanel, StartEvent> showCreationDialog,
-            final TriConsumer<MyWorkPanel,StartEvent, WorkItem> showUpdateDialog,
-            final Function<WorkItem,VerticalLayout> cardBuilder) {
-        Grid<WorkItem> grid = new Grid<>(WorkItem.class, false);
+            final TriConsumer<MyWorkPanel,StartEvent, T> showUpdateDialog,
+            final Function<T, VerticalLayout> cardBuilder) {
+        Grid<T> grid = new Grid<>();
 
         grid.getStyle().set("max-width", "285px");
         grid.setAllRowsVisible(true);
-        Set<StartEvent> startEvents = workflowService.whatUserStart(oidcUser, bizProcess);
+        Set<StartEvent> startEvents = finappService.whatUserStart(oidcUser, bizProcess);
         MenuBar menu = new MenuBar();
         for (var startEvent:startEvents){
             menu.addItem("Add new "+startEvent.getDescription(), e -> {

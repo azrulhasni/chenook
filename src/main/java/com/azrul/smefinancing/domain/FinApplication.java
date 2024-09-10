@@ -4,20 +4,16 @@
  */
 package com.azrul.smefinancing.domain;
 
-import com.azrul.chenook.domain.Status;
+import com.azrul.chenook.domain.WorkItem;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.Transient;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -35,14 +31,15 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * @author azrul
  */
 @Entity
+@DiscriminatorValue("FIN_APP")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-public class FinApplication {
+public class FinApplication extends WorkItem {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id")
-    private Long id;
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.AUTO)
+//    @Column(name = "id")
+//    private Long id;
 
     private String name;
     private String ssmRegistrationNumber;
@@ -80,19 +77,19 @@ public class FinApplication {
                 @JoinColumn(name = "id", referencedColumnName = "id")})
     private Set<String> errors = new HashSet<>();
 
-    /**
-     * @return the id
-     */
-    public Long getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(Long id) {
-        this.id = id;
-    }
+//    /**
+//     * @return the id
+//     */
+//    public Long getId() {
+//        return id;
+//    }
+//
+//    /**
+//     * @param id the id to set
+//     */
+//    public void setId(Long id) {
+//        this.id = id;
+//    }
 
     /**
      * @return the name

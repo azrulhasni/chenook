@@ -52,22 +52,17 @@ public class Expression<R, T> {
 
     private final ExpressionParser expressionParser = new SpelExpressionParser();
 
-    public R evaluate(String exp, T data, WorkItem workItem, BizUser user,BizProcess bizProcess) {
+    public R evaluate(String exp, T workItem, BizUser user,BizProcess bizProcess) {
         Container<T> container = new Container();
-        container.currentClass = (Class<T>) data.getClass();
-        return eval(container, data,workItem,user,bizProcess, exp);
+        container.currentClass = (Class<T>) workItem.getClass();
+        return eval(container, workItem,user,bizProcess, exp);
     }
 
-    public <R, T> R evaluate(String exp, Class<T> tclass,WorkItem workItem, BizUser user,BizProcess bizProcess) {
-        Container<T> container = new Container();
-        container.currentClass = tclass;
-        return eval(container, null, workItem,user, bizProcess, exp);
-    }
+ 
 
     private <R, T> R eval(
             Container container, 
             T data, 
-            WorkItem workItem,
             BizUser user, 
             BizProcess bizProcess,
             String exp) throws ParseException, EvaluationException {
@@ -76,19 +71,8 @@ public class Expression<R, T> {
         if (data != null) {
             container.currentClass = data.getClass();
         }
-//        container.tenant = tenant;
-//        container.username = userIdentifier;
         container.user = user;
-//        container.roles = roles;
-        container.workItem = workItem;
         container.bizProcess = bizProcess;
-//        container.dataQuery = SpringBeanFactory.create(DataQuery.class);
-//        EntityUtils entityUtils = SpringBeanFactory.create(EntityUtils.class);
-//        for (Class c : entityUtils.getAllEntities(emf)) {
-//            if (entityUtils.getEntityType(c) == WebEntityType.REF) {
-//                container.REF.put(c.getSimpleName(), c);
-//            }
-//        }
 
         org.springframework.expression.Expression expression = expressionParser.parseExpression(exp);
         EvaluationContext context = new StandardEvaluationContext(container);
@@ -99,14 +83,9 @@ public class Expression<R, T> {
 
         public Class<T> currentClass;
         public T current;
-        public WorkItem workItem;
-//        public String tenant;
-//        public String username;
         public BizUser user;
         public Set<String> roles;
         public BizProcess bizProcess;
-//        public DataQuery dataQuery;
-//        public Map<String, Class> REF = new HashMap<>();
     }
 }
 

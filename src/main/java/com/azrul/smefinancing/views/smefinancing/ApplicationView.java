@@ -11,7 +11,6 @@ import com.azrul.chenook.service.MessageService;
 import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.WorkflowService;
-import com.azrul.chenook.value.WorkflowMemento;
 import com.azrul.chenook.views.common.Card;
 import com.azrul.chenook.views.workflow.MyWorkPanel;
 import com.azrul.chenook.workflow.model.StartEvent;
@@ -39,7 +38,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
-
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 /**
  *
  * @author azrul
@@ -50,7 +49,6 @@ import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 public class ApplicationView extends VerticalLayout implements AfterNavigationObserver/*, HasUrlParameter<Long> */ {
 
     private final FinApplicationService finappService;
-    private final WorkflowService workflowService;
     private final ApplicantService applicantService;
     private final MessageService msgService;
     private final BadgeUtils badgeUtils;
@@ -61,7 +59,6 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
             @Autowired FinApplicationService finappService,
             @Autowired ApplicantService applicantService,
             @Autowired MessageService msgService,
-            @Autowired WorkflowService workflowService,
             @Autowired BadgeUtils badgeUtils,
             @Autowired WorkflowConfig workflowConfig,
             @Value("${finapp.datetime.format}") String dateTimeFormat
@@ -72,7 +69,6 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
         this.badgeUtils = badgeUtils;
         this.DATETIME_FORMAT = dateTimeFormat;
         this.workflowConfig = workflowConfig;
-        this.workflowService = workflowService;
 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
 
@@ -82,51 +78,47 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                 "id","id"
                 
             );
-            MyWorkPanel workPanel = new MyWorkPanel(
+            MyWorkPanel<FinApplication> workPanel = new MyWorkPanel<FinApplication>(
                     oidcUser,
                     workflowConfig.rootBizProcess(),
-                    workflowService,
                     sortableFields,
+                    finappService,
                     (wp, startEvent) -> {
                         FinApplication finapp = new FinApplication();
                         finapp.setApplicationDate(LocalDateTime.now());
                         finapp = finappService.save(finapp, oidcUser.getPreferredUsername());
-                        WorkflowMemento<FinApplication> memento = new WorkflowMemento<>(
-                                finapp,
-                                finapp.getId(),
-                                oidcUser,
-                                workflowConfig.rootBizProcess(),
-                                "SME_FIN");
+//                        WorkflowMemento<FinApplication> memento = new WorkflowMemento<>(
+//                                finapp,
+//                                finapp.getId(),
+//                                oidcUser,
+//                                workflowConfig.rootBizProcess(),
+//                                "SME_FIN");
                         showApplicationDialog(
-                                memento,
+                                //memento,
                                 startEvent,
                                 null,
-                                fa -> wp.refresh(),
-                                fa -> wp.refresh(),
-                                fa -> wp.refresh());
-                    },
-                    (wp, startEvent, work) -> {
-                        FinApplication finapp = finappService.getById(work.getParentId());
-                        WorkflowMemento<FinApplication> memento = new WorkflowMemento<>(
-                                finapp,
-                                finapp.getId(),
                                 oidcUser,
-                                workflowConfig.rootBizProcess(),
-                                "SME_FIN"
-                        );
-                        showApplicationDialog(
-                                memento,
-                                startEvent,
-                                work,
+                                "SME_FIN",
                                 fa -> wp.refresh(),
                                 fa -> wp.refresh(),
                                 fa -> wp.refresh());
                     },
-                    work -> {
+                    (wp, startEvent, finapp) -> {
+                       
+                        showApplicationDialog(
+                                startEvent,
+                                finapp,
+                                oidcUser,
+                                "SME_FIN",
+                                fa -> wp.refresh(),
+                                fa -> wp.refresh(),
+                                fa -> wp.refresh());
+                    },
+                    finapp -> {
                         VerticalLayout content = new VerticalLayout();
-                        content.add(new NativeLabel("Application date: " + work.getFields().get("APPLICATION_DATE")));
+                        content.add(new NativeLabel("Application date: " + finapp.getApplicationDate()));
                         TextArea reason = new TextArea();
-                        reason.setValue(work.getFields().get("REASON_FOR_FINANCING"));
+                        reason.setValue(finapp.getReasonForFinancing());
                         reason.setWidthFull();
                         reason.setMaxHeight("60px");
                         reason.setReadOnly(true);
@@ -168,21 +160,22 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
 //        return grid;
 //    }
     private void showApplicationDialog(
-            WorkflowMemento<FinApplication> memento,
             StartEvent startEvent,
-            WorkItem work,
+            FinApplication work,
+            OidcUser oidcUser,
+            String context,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel
     ) {
         ApplicationForm appform = new ApplicationForm(
-                memento,
                 startEvent,
                 work,
+                oidcUser,
                 DATETIME_FORMAT,
+                context,
                 applicantService,
                 finappService,
-                workflowService,
                 msgService,
                 badgeUtils,
                 workflowConfig,
