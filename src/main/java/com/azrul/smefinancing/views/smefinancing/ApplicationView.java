@@ -9,19 +9,16 @@ import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.service.ApplicantService;
 import com.azrul.chenook.service.MessageService;
 import com.azrul.chenook.config.WorkflowConfig;
-import com.azrul.chenook.domain.WorkItem;
-import com.azrul.chenook.service.WorkflowService;
-import com.azrul.chenook.views.common.Card;
 import com.azrul.chenook.views.workflow.MyWorkPanel;
+import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.chenook.workflow.model.StartEvent;
 import com.azrul.smefinancing.service.FinApplicationService;
 import com.azrul.smefinancing.views.application.ApplicationForm;
-import com.azrul.smefinancing.service.BadgeUtils;
-import com.vaadin.flow.component.button.Button;
+import com.azrul.chenook.service.BadgeUtils;
+import com.azrul.chenook.views.workflow.WorklistPanel;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.AfterNavigationEvent;
@@ -71,32 +68,27 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
         this.workflowConfig = workflowConfig;
 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
-
+        final BizProcess bizProcess = workflowConfig.rootBizProcess();
         if (SecurityContextHolder.getContext().getAuthentication() instanceof OAuth2AuthenticationToken oauth2AuthToken) {
             DefaultOidcUser oidcUser = (DefaultOidcUser) oauth2AuthToken.getPrincipal();
              Map<String,String> sortableFields = Map.of(
                 "id","id"
-                
             );
             MyWorkPanel<FinApplication> workPanel = new MyWorkPanel<FinApplication>(
                     oidcUser,
                     workflowConfig.rootBizProcess(),
                     sortableFields,
                     finappService,
+                    badgeUtils,
                     (wp, startEvent) -> {
                         FinApplication finapp = new FinApplication();
                         finapp.setApplicationDate(LocalDateTime.now());
-                        finapp = finappService.save(finapp, oidcUser.getPreferredUsername());
-//                        WorkflowMemento<FinApplication> memento = new WorkflowMemento<>(
-//                                finapp,
-//                                finapp.getId(),
-//                                oidcUser,
-//                                workflowConfig.rootBizProcess(),
-//                                "SME_FIN");
+                        finapp = finappService.initAndSave(finapp, oidcUser, "SME_FIN", startEvent, bizProcess);
+                        
+//                        finapp = finappService.save(finapp, oidcUser.getPreferredUsername());
                         showApplicationDialog(
-                                //memento,
                                 startEvent,
-                                null,
+                                finapp,
                                 oidcUser,
                                 "SME_FIN",
                                 fa -> wp.refresh(),
@@ -104,7 +96,6 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                                 fa -> wp.refresh());
                     },
                     (wp, startEvent, finapp) -> {
-                       
                         showApplicationDialog(
                                 startEvent,
                                 finapp,
@@ -116,49 +107,64 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                     },
                     finapp -> {
                         VerticalLayout content = new VerticalLayout();
-                        content.add(new NativeLabel("Application date: " + finapp.getApplicationDate()));
+                        content.setSpacing(false);
+                        content.setPadding(false);
+                        if (finapp.getApplicationDate()!=null){
+                            content.add(new NativeLabel("Application date: " + dateTimeFormatter.format(finapp.getApplicationDate())));
+                        }
                         TextArea reason = new TextArea();
-                        reason.setValue(finapp.getReasonForFinancing());
+                        reason.setValue(finapp.getReasonForFinancing()!=null
+                                ?finapp.getReasonForFinancing()
+                                :"");
                         reason.setWidthFull();
                         reason.setMaxHeight("60px");
                         reason.setReadOnly(true);
                         content.add(reason);
+                        
                         return content;
                     }
             );
             this.add(workPanel);
-            //grid.setItems(finappService.getApplicationsByUsernameOrEmail(oidcUser.getPreferredUsername(), oidcUser.getEmail()));
+             
+            WorklistPanel<FinApplication> worklistPanel = new WorklistPanel<FinApplication>(
+                    oidcUser,
+                    workflowConfig.rootBizProcess(),
+                    sortableFields,
+                    finappService,
+                    badgeUtils,
+                    (wp, startEvent, finapp) -> {
+                        showApplicationDialog(
+                                startEvent,
+                                finapp,
+                                oidcUser,
+                                "SME_FIN",
+                                fa -> wp.refresh(),
+                                fa -> wp.refresh(),
+                                fa -> wp.refresh());
+                    },
+                    finapp -> {
+                        VerticalLayout content = new VerticalLayout();
+                        content.setSpacing(false);
+                        content.setPadding(false);
+                        if (finapp.getApplicationDate()!=null){
+                            content.add(new NativeLabel("Application date: " + dateTimeFormatter.format(finapp.getApplicationDate())));
+                        }
+                        TextArea reason = new TextArea();
+                        reason.setValue(finapp.getReasonForFinancing()!=null
+                                ?finapp.getReasonForFinancing()
+                                :"");
+                        reason.setWidthFull();
+                        reason.setMaxHeight("60px");
+                        reason.setReadOnly(true);
+                        content.add(reason);
+                        
+                        return content;
+                    }
+            );
+            this.add(workPanel);
         }
     }
 
-//    private Grid<WorkItem> createMyWorkflowPanel(
-//            final OidcUser oidcUser,
-//            final WorkflowService workflowService,
-//            final Consumer<Grid> showCreationDialog,
-//            final BiConsumer<Grid, WorkItem> showUpdateDialog) {
-//        Grid<WorkItem> grid = new Grid<>(WorkItem.class, false);
-//        grid.getStyle().set("max-width", "285px");
-//        grid.setAllRowsVisible(true);
-//        Button btnAddNew = new Button("Add new", e -> {
-//            showCreationDialog.accept(grid);
-//        });
-//        this.add(btnAddNew);
-//        this.add(grid);
-//        grid.addComponentColumn(work -> {
-//            Card card = new Card(work.getFields().get("TITLE")+": MYR " + work.getFields().get("FINANCING_REQUESTED"));
-//            card.add(new NativeLabel("Application date: " + work.getFields().get("APPLICATION_DATE")));
-//            card.add(work.getFields().get("REASON_FOR_FINANCING"));
-//            HorizontalLayout btnPanel = new HorizontalLayout();
-//            btnPanel.add(new Button("See more", e -> {
-//                showUpdateDialog.accept(grid,work);
-//            }));
-//            card.add(btnPanel);
-//            return card;
-//        });
-//        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
-//        grid.setItems(workflowService.getWorkByCreator(oidcUser.getPreferredUsername()));
-//        return grid;
-//    }
     private void showApplicationDialog(
             StartEvent startEvent,
             FinApplication work,

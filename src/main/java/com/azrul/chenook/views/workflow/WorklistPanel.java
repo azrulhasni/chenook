@@ -23,12 +23,14 @@ import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.data.util.Pair;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -37,73 +39,52 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
  *
  * @author azrul
  */
-public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
+public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
 
     private final int COUNT_PER_PAGE = 3;
-    private final Pair<Grid<T>, PageNav> myCreatedWork;
-    private final Pair<Grid<T>, PageNav> myOwnedWork;
-    private final FinApplicationService finappService;
+    private final List<Pair<Grid<T>, PageNav>> myWorklists = new ArrayList<>();
+    private final WorkflowService<T> workflowService;
     private final OidcUser oidcUser;
     private final Map<String, String> sortableFields;
     private final BadgeUtils badgeUtils;
 
-    public MyWorkPanel(
+    public WorklistPanel(
             final OidcUser oidcUser,
             final BizProcess bizProcess,
             final Map<String, String> sortableFields,
-            final FinApplicationService finappService,
+            final WorkflowService<T> workflowService,
             final BadgeUtils badgeUtils,
-            final BiConsumer<MyWorkPanel, StartEvent> showCreationDialog,
-            final TriConsumer<MyWorkPanel, StartEvent, T> showUpdateDialog,
+            final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
             final Function<T, VerticalLayout> cardBuilder
     ) {
 
         this.oidcUser = oidcUser;
         this.sortableFields = sortableFields;
-        this.finappService = finappService;
+        this.workflowService = workflowService;
         this.badgeUtils = badgeUtils;
         this.setWidth("-webkit-fill-available");
 
-        List<StartEvent> startEvents = finappService.whatUserCanStart(oidcUser, bizProcess);
-        if (!startEvents.isEmpty()) {
-            MenuBar menu = new MenuBar();
+        Set<String> roles = oidcUser
+                .getAuthorities()
+                .stream()
+                .map(a -> a.getAuthority())
+                .map(a -> a.replace("ROLE_", ""))
+                .collect(Collectors.toSet());
 
-            for (var startEvent : startEvents) {
-                menu.addItem("Add new " + startEvent.getDescription(), e -> {
-                    showCreationDialog.accept(this, startEvent);
-
-                });
-            }
-            menu.setWidth("-webkit-fill-available");
-            this.add(menu);
-            myCreatedWork = buildDataPanel(
-                    "Work items I've created",
+        for (String role : roles) {
+            Pair<Grid<T>, PageNav> panel = buildDataPanel(
+                    "Worklist:" + role,
                     oidcUser,
                     bizProcess,
-                    showCreationDialog,
                     showUpdateDialog,
                     cardBuilder,
                     sortableFields,
-                    (username) -> finappService.countWorkByCreator(username),
-                    (username, nav) -> finappService.getWorkByCreator(username, nav)
+                    (worklist) -> workflowService.countWorkByWorklist(worklist),
+                    (worklist, nav) -> workflowService.getWorkByWorklist(worklist, nav)
             );
-            addPair(myCreatedWork);
-        }else{
-            myCreatedWork = null;
+            myWorklists.add(panel);
+            addPair(panel);
         }
-
-        myOwnedWork = buildDataPanel(
-                "My work items",
-                oidcUser,
-                bizProcess,
-                showCreationDialog,
-                showUpdateDialog,
-                cardBuilder,
-                sortableFields,
-                (username) -> finappService.countWorkByOwner(username),
-                (username, nav) -> finappService.getWorkByOwner(username, nav)
-        );
-        addPair(myOwnedWork);
 
     }
 
@@ -116,8 +97,7 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
             final String title,
             final OidcUser oidcUser1,
             final BizProcess bizProcess,
-            final BiConsumer<MyWorkPanel, StartEvent> showCreationDialog,
-            final TriConsumer<MyWorkPanel, StartEvent, T> showUpdateDialog,
+            final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
             final Function<T, VerticalLayout> cardBuilder,
             final Map<String, String> sortableFields1,
             final Function<String, Integer> counter,
@@ -125,20 +105,18 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
         PageNav nav = new PageNav();
         Integer count = counter.apply(oidcUser1.getPreferredUsername());//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
         DataProvider dataProvider = dataProviderCreator.apply(oidcUser1.getPreferredUsername(), nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
-        Grid<T> grid = createGrid(title, oidcUser1, bizProcess, dataProvider, showCreationDialog, showUpdateDialog, cardBuilder);
+        Grid<T> grid = createGrid(title, oidcUser1, bizProcess, dataProvider, showUpdateDialog, cardBuilder);
         nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields1, false);
         Pair<Grid<T>, PageNav> pair = Pair.of(grid, nav);
         return pair;
     }
 
     public void refresh() {
-        myCreatedWork.getFirst().getDataProvider().refreshAll();
-        Integer countWorkByCreator = finappService.countWorkByCreator(oidcUser.getPreferredUsername());
-        myCreatedWork.getSecond().refreshPageNav(countWorkByCreator);
-        
-        myOwnedWork.getFirst().getDataProvider().refreshAll();
-        Integer countMyOwnedWork = finappService.countWorkByOwner(oidcUser.getPreferredUsername());
-        myOwnedWork.getSecond().refreshPageNav(countMyOwnedWork);
+        for (var pair : myWorklists) {
+            pair.getFirst().getDataProvider().refreshAll();
+            Integer countWorkByCreator = workflowService.countWorkByCreator(oidcUser.getPreferredUsername());
+            pair.getSecond().refreshPageNav(countWorkByCreator);
+        }
     }
 
     private Grid<T> createGrid(
@@ -146,8 +124,7 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
             final OidcUser oidcUser,
             final BizProcess bizProcess,
             final DataProvider dataProvider,
-            final BiConsumer<MyWorkPanel, StartEvent> showCreationDialog,
-            final TriConsumer<MyWorkPanel, StartEvent, T> showUpdateDialog,
+            final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
             final Function<T, VerticalLayout> cardBuilder) {
         Grid<T> grid = new Grid<>();
         H3 title = new H3(panelTitle);
@@ -163,9 +140,10 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
             Card card = new Card(work.getTitle(), badge);
             card.add(content);
             HorizontalLayout btnPanel = new HorizontalLayout();
-            btnPanel.add(new Button("See more", e -> {
+            btnPanel.add(new Button("Book this work", e -> {
+                work.getOwners().add(oidcUser.getPreferredUsername());
+                workflowService.save(work);
                 showUpdateDialog.accept(this, null, work);
-
             }));
             card.add(btnPanel);
             return card;

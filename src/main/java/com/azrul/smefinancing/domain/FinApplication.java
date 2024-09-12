@@ -14,7 +14,9 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Transient;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
@@ -47,11 +49,13 @@ public class FinApplication extends WorkItem {
     private String postalCode;
     private String state;
     private String mainBusinessActivity;
-    //private Status status;
     private BigDecimal financingRequested;
     private LocalDateTime applicationDate;
-    private String username;
     private String reasonForFinancing;
+    
+    @Transient 
+    protected NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(); 
+
 
     @OneToMany(mappedBy = "finApplication", orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<Applicant> applicants = new HashSet<>();
@@ -301,19 +305,7 @@ public class FinApplication extends WorkItem {
         this.postalCode = postalCode;
     }
 
-    /**
-     * @return the username
-     */
-    public String getUsername() {
-        return username;
-    }
 
-    /**
-     * @param username the username to set
-     */
-    public void setUsername(String username) {
-        this.username = username;
-    }
 
     /**
      * @return the reasonForFinancing
@@ -364,4 +356,13 @@ public class FinApplication extends WorkItem {
     public void setErrors(Set<String> errors) {
         this.errors = errors;
     }
+
+    @Override
+    public String getTitle() {
+        if (this.getFinancingRequested()!=null){
+          return "SME Financing ("+currencyFormatter.format(this.getFinancingRequested())+")";
+        }else{
+          return "SME Financing";
+        }
+   }
 }

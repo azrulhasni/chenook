@@ -7,6 +7,7 @@ import com.azrul.chenook.views.common.Card;
 import com.azrul.chenook.views.message.MessageButton;
 import com.azrul.chenook.views.workflow.WorkflowPanel;
 import com.azrul.chenook.config.WorkflowConfig;
+import com.azrul.chenook.domain.Approval;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.workflow.model.BizProcess;
 //import com.azrul.chenook.service.WorkflowService;
@@ -17,7 +18,7 @@ import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.service.ApplicantService;
 import com.azrul.smefinancing.service.FinApplicationService;
 import com.azrul.smefinancing.views.applicant.ApplicantForm;
-import com.azrul.smefinancing.service.BadgeUtils;
+import com.azrul.chenook.service.BadgeUtils;
 import com.azrul.smefinancing.views.common.Editable;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -42,6 +43,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
@@ -62,7 +64,7 @@ public class ApplicationForm extends Dialog {
     private static final String FINANCING_APPLIED_LABEL = "Financing Applied";
     private static final String REASON_FOR_FINANCING_LABEL = "Reason for financing";
     private String DATETIME_FORMAT;
-    private DateTimeFormatter formatter;
+    private DateTimeFormatter dateTimeFormatter;
 
     public ApplicationForm(
             StartEvent startEvent,
@@ -79,11 +81,9 @@ public class ApplicationForm extends Dialog {
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel
     ) {
-        if (work == null) {
-            return; // if finapp is null, this will not work
-        }
+
         this.DATETIME_FORMAT = dateTimeFormat;
-        this.formatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
+        this.dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
         BizProcess bizProcess = workflowConfig.rootBizProcess();
         Editable editable = isEditable(
                 work,
@@ -107,10 +107,8 @@ public class ApplicationForm extends Dialog {
         WorkflowPanel workflowPanel = new WorkflowPanel(
                 work,
                 false,
-                a -> {
-                },
-                a -> {
-                }
+                a -> {},
+                a -> {}
         );
 
         this.add(workflowPanel);
@@ -141,11 +139,10 @@ public class ApplicationForm extends Dialog {
                 startEvent,
                 oidcUser,
                 bizProcess,
-                //work,
                 editable,
+                workflowPanel,
                 finappService,
                 applicantService,
-                //workflowService,
                 onPostSave,
                 onPostRemove,
                 onPostCancel);
@@ -159,11 +156,13 @@ public class ApplicationForm extends Dialog {
         Set<String> applicantsEmail = applicantService.getApplicantsEmail(work);
 
         int state = 0;
-        if (oidcUser.getAuthorities().stream().anyMatch(sga -> StringUtils.equals(sga.getAuthority(), "ROLE_FINAPP_ADMIN"))) { // admin
+        if (oidcUser.getAuthorities().stream().anyMatch(sga -> {
+            return StringUtils.equals(sga.getAuthority(), "ROLE_FINAPP_ADMIN");
+        })) { // admin
             state = 1;
         } else if (applicantsEmail.contains(oidcUser.getEmail())) { // applicant
             state = 2;
-        } else if (StringUtils.equals(oidcUser.getPreferredUsername(), work.getUsername())) {
+        } else if (work.getOwners().contains(oidcUser.getPreferredUsername())) {
             state = 3;
         } else {
             state = 4;
@@ -429,6 +428,7 @@ public class ApplicationForm extends Dialog {
             OidcUser oidcUser,
             BizProcess bizProcess,
             Editable editable,
+            WorkflowPanel workflowPanel,
             FinApplicationService finappService,
             ApplicantService applicantService,
             Consumer<FinApplication> onPostSave,
@@ -440,6 +440,7 @@ public class ApplicationForm extends Dialog {
                 startEvent,
                 oidcUser,
                 bizProcess,
+                workflowPanel,
                 finappService,
                 applicantService,
                 onPostSave
@@ -468,23 +469,21 @@ public class ApplicationForm extends Dialog {
         buttonLayout.setSpacing(true);
         this.getFooter().add(buttonLayout);
 
-        btnSaveAndSubmitApp.setEnabled(false);
+        btnSaveAndSubmitApp.setEnabled(true);
         btnSaveDraft.setEnabled(false);
         btnRemove.setEnabled(false);
         btnCancel.setEnabled(false);
         //btnSave.setEnabled(false);
 
         if (editable == Editable.YES) {
-            btnSaveAndSubmitApp.setEnabled(true);
+            //btnSaveAndSubmitApp.setEnabled(true);
             btnSaveDraft.setEnabled(true);
             btnRemove.setEnabled(true);
             btnCancel.setEnabled(true);
         } else if (editable == Editable.YES_AS_APPLICANT) {
             btnSaveDraft.setEnabled(true);
             btnCancel.setEnabled(true);
-        } else if (editable == Editable.YES_AS_ADMIN) {
-            //btnSave.setEnabled(true);
-            btnSaveAndSubmitApp.setEnabled(true);
+            //btnSaveAndSubmitApp.setEnabled(true);
             btnCancel.setEnabled(true);
         } else {
             btnCancel.setEnabled(true);
@@ -495,38 +494,17 @@ public class ApplicationForm extends Dialog {
             Binder<FinApplication> binder,
             StartEvent startEvent,
             OidcUser oidcUser,
-            BizProcess bizProcess, 
+            BizProcess bizProcess,
             FinApplicationService finappService,
             ApplicantService applicantService,
             Consumer<FinApplication> onPostSave
     ) {
         Button btnSaveDraft = new Button("Save draft", e1 -> {
             FinApplication finapp = binder.getBean();
-            finapp.setStatus(Status.DRAFT);
-            finappService.save(finapp, oidcUser.getPreferredUsername());
-           
-//            String requestedAmount = finapp.getFinancingRequested()!=null
-//                            ?
-//                                NumberFormat.getCurrencyInstance().format(finapp.getFinancingRequested())
-//                            :
-//                                "";
-//            final Map<String, String> fields = Map.<String, String>of(
-//                    "TITLE", "SME Loan: "+ requestedAmount ,
-//                    "APPLICATION_DATE", finapp.getApplicationDate().format(formatter),
-//                    "REASON_FOR_FINANCING", finapp.getReasonForFinancing()
-//            );
-//            if (work == null) {
-//                FinApplication f = new FinApplication();
-//                WorkItem w = finappService.create(f,memento, startEvent.getId(), fields);
-//                w.setFields(fields);
-//                w.setStatus(Status.DRAFT);
-//                workflowService.save(w);
-//            } else {
-//                work.setFields(fields);
-//                work.setStatus(Status.DRAFT);
-//                workflowService.save(work);
-//            }
-
+            if (finapp.getStatus() == Status.NEWLY_CREATED) {
+                finapp.setStatus(Status.DRAFT);
+            }
+            finappService.save(finapp);
             onPostSave.accept(finapp);
             this.close();
         });
@@ -537,32 +515,25 @@ public class ApplicationForm extends Dialog {
             Binder<FinApplication> binder,
             StartEvent startEvent,
             OidcUser oidcUser,
-            BizProcess bizProcess, 
+            BizProcess bizProcess,
+            WorkflowPanel workflowPanel,
             FinApplicationService finappService,
             ApplicantService applicantService,
             Consumer<FinApplication> onPostSave
     ) {
         Button btnSaveFinApp = new Button("Save and submit", e1 -> {
-            Set<String> errors = validateApplication(applicantService, binder);
+            Set<String> errors = validateApplication(applicantService, workflowPanel,binder);
             if (errors.isEmpty()) {
                 FinApplication finapp = binder.getBean();
-                finapp.setStatus(Status.DRAFT);
-//                finapp = finappService.save(
-//                        finapp,
-//                        oidcUser.getPreferredUsername()
-//                );
-//                String requestedAmount = finapp.getFinancingRequested()!=null
-//                            ?
-//                                NumberFormat.getCurrencyInstance().format(finapp.getFinancingRequested())
-//                            :
-//                                "";
-//                final Map<String, String> fields = Map.<String, String>of(
-//                    "TITLE", "SME Loan: "+requestedAmount,
-//                    "APPLICATION_DATE", finapp.getApplicationDate().format(formatter),
-//                    "REASON_FOR_FINANCING", finapp.getReasonForFinancing()
-//            );
-
-                finappService.run(finapp,oidcUser.getPreferredUsername(),bizProcess, false);
+                if (finapp.getStatus() == Status.NEWLY_CREATED) {
+                    finapp.setStatus(Status.DRAFT);
+                }
+                Optional<Approval> oapproval = finapp.getApprovals().stream().filter(a->StringUtils.equals(oidcUser.getPreferredUsername(), a.getUsername())).findAny();
+                oapproval.ifPresent(approval->{
+                    approval.setApprovalDateTime(LocalDateTime.now());
+                    approval.setApproved(workflowPanel.getApproval());
+                });
+                finappService.run(finapp, oidcUser.getPreferredUsername(), bizProcess, false);
                 onPostSave.accept(finapp);
                 this.close();
             } else {
@@ -583,7 +554,7 @@ public class ApplicationForm extends Dialog {
             Consumer<FinApplication> onPostCancel
     ) {
         return new Button("Cancel", e1 -> {
-            
+
             FinApplication work = binder.getBean();
             if (work == null) {
                 finappService.remove(work);
@@ -625,6 +596,7 @@ public class ApplicationForm extends Dialog {
 
     private Set<String> validateApplication(
             ApplicantService applicantService,
+            WorkflowPanel workflowPanel,
             Binder<FinApplication> binder) {
         Set<String> errors = new HashSet<>();
         binder.validate().getValidationErrors().stream().forEach(e -> errors.add(e.getErrorMessage()));
@@ -633,6 +605,9 @@ public class ApplicationForm extends Dialog {
 
         if (applicantService.countApplicants(finapp) <= 0) {
             errors.add("No applicant");
+        }
+        if (workflowPanel.validate()==false){
+            errors.add("Approval not set");
         }
         applicantService.getApplicants(finapp).forEach(applicant -> {
             for (String err : applicant.getErrors()) {

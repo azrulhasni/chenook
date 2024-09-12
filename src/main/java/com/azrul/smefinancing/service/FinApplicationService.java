@@ -4,6 +4,7 @@
  */
 package com.azrul.smefinancing.service;
 
+import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.repository.WorkItemRepository;
 import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.views.common.PageNav;
@@ -27,7 +28,9 @@ import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
 import jakarta.persistence.criteria.Join;
+import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -132,23 +135,28 @@ public class FinApplicationService extends WorkflowService<FinApplication> {
         return dp;
     }
 
-    @Transactional
-    public FinApplication save(FinApplication app, String username) {
-            if (app.getUsername()==null){
-                app.setUsername(username);
-            }
-            for (Applicant a:app.getApplicants()){
-                a.setFinApplication(app);
-            }
-            return finAppRepo.save(app);
-    }
+//    @Transactional
+//    public FinApplication save(FinApplication finapp, String username) {
+//            if (finapp.getUsername()==null){
+//                finapp.setUsername(username);
+//            }
+//            for (Applicant a:finapp.getApplicants()){
+//                a.setFinApplication(finapp);
+//            }
+//            
+//            return finAppRepo.save(finapp);
+//    }
     
    
 
-    
+    @Override
     @Transactional
-    public FinApplication save(FinApplication app) {
-            return finAppRepo.save(app);
+    public FinApplication save(FinApplication finapp) {
+            for (Applicant a:finapp.getApplicants()){
+                a.setFinApplication(finapp);
+            }
+            
+            return finAppRepo.save(finapp);
     }
     
     @Transactional

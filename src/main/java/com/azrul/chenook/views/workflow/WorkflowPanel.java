@@ -9,17 +9,22 @@ import com.azrul.chenook.domain.Attachment;
 import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.BizUserService;
-import com.azrul.smefinancing.service.BadgeUtils;
+import com.azrul.chenook.service.BadgeUtils;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.data.renderer.Renderer;
+import java.util.Set;
 import java.util.function.Consumer;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  *
  * @author azrul
  */
-public class WorkflowPanel<T> extends VerticalLayout {
+public class WorkflowPanel<T> extends FormLayout {
 
 
     @Autowired
@@ -27,6 +32,8 @@ public class WorkflowPanel<T> extends VerticalLayout {
 
     @Autowired
     private BizUserService bizUserService;
+    
+    private ComboBox<String> cbApprove ;
 
     private static final String STATUS_LABEL = "Status";
 
@@ -47,8 +54,25 @@ public class WorkflowPanel<T> extends VerticalLayout {
             cbStatus.setValue(Status.NEWLY_CREATED);
         }
         this.add(cbStatus);
-
+        
+        cbApprove = new ComboBox<>("Approval needed");
+        cbApprove.setItems(Set.of("","APPROVE","REJECT"));
+        cbApprove.setItemLabelGenerator(a->"APPROVE".equals(a)?"Approve":"Reject");
+        this.add(cbApprove);
+        //cbApprove.
         //this.parentId = parentId;
+    }
+    
+    public Boolean validate(){
+        if (StringUtils.isEmpty(cbApprove.getValue())){
+            return false;
+        }else{
+            return true;
+        }
+    }
+    
+    public Boolean getApproval(){
+        return "APPROVE".equals(cbApprove.getValue());
     }
 
     private <T> Select<T> createSelect(

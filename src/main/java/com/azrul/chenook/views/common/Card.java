@@ -22,18 +22,34 @@ public class Card extends Composite<Div> implements HasComponents, HasSize {
         VerticalLayout content = new VerticalLayout();
         H4 title = new H4();
         String titleText;
+        Component titleComponent = null;
         
 
-        public Card(String titleText) {
+        public Card(String titleText, Component titleComponent) {
             this.titleText = titleText;
+            this.titleComponent=titleComponent;
+        }
+        
+         public Card(String titleText) {
+            this.titleText = titleText;
+            //this.titleComponent=titleComponent;
         }
 
         @Override
         public Div initContent() {
             title.setText(titleText);
-            title.addClassNames(LumoUtility.Background.CONTRAST_5,
+            Div status = new Div();
+            if (titleComponent!=null){
+                
+                status.add(titleComponent);
+                status.addClassNames(LumoUtility.Background.CONTRAST_5,
                     LumoUtility.TextColor.PRIMARY, LumoUtility.Padding.SMALL,
                     LumoUtility.Border.BOTTOM,
+                    LumoUtility.BorderColor.CONTRAST_10);
+            }
+            title.addClassNames(LumoUtility.Background.CONTRAST_5,
+                    LumoUtility.TextColor.PRIMARY, LumoUtility.Padding.SMALL,
+                    //LumoUtility.Border.BOTTOM,
                     LumoUtility.BorderColor.CONTRAST_10);
             div.addClassNames(LumoUtility.Display.FLEX,
                     LumoUtility.FlexDirection.COLUMN, LumoUtility.Border.ALL,
@@ -42,7 +58,9 @@ public class Card extends Composite<Div> implements HasComponents, HasSize {
                     LumoUtility.BoxShadow.SMALL);
 //            content.addClassNames(LumoUtility.Flex.GROW,
 //                    LumoUtility.Padding.SMALL);
-            div.add(title, content);
+            content.setSpacing(false);
+            content.setPadding(true);
+            div.add(title,status, content);
             return div;
         }
 

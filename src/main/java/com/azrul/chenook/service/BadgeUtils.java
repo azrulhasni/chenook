@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.azrul.smefinancing.service;
+package com.azrul.chenook.service;
 
 import com.azrul.chenook.domain.Status;
 import com.vaadin.flow.component.html.Span;
@@ -19,8 +19,9 @@ import org.vaadin.addons.badge.Badge;
 public class BadgeUtils{
      public Span createStatusBadge(Status status){
         Span badge = new Span(status.getHumanReadableText());
-        badge.getElement().getThemeList().add("badge primary");
+        badge.getElement().getThemeList().add("badge pill primary");
         badge.getStyle().set("background-color", status.getBackgroundColor());
+        badge.getStyle().set("border","1px solid grey");
         badge.getStyle().set("color", status.getColor());
         return badge;
     }

@@ -50,8 +50,16 @@ public class PageNav extends HorizontalLayout {
             Map<String,String> sortableFields,
             Boolean asc) {
         //this.dataProvider = dataProvider;
+        this.countPerPage = countPerPage;
+        this.setPage((Integer) 1);
+        this.totalDataCount=totalDataCount;
         this.grid = grid;
         this.sortableFields = sortableFields;
+        this.sortField = sortField; 
+        this.asc=asc;
+        
+        
+       
         String uniqueDisc = "PAGE_NAV";
         //this.setSpacing(false);
         firstPage = new Button("<<");
@@ -78,11 +86,13 @@ public class PageNav extends HorizontalLayout {
             });
         }
         
+        if (totalDataCount==null || totalDataCount<=0){
+            return;
+        }
         
-        this.sortField = sortField; 
-        this.asc=asc;
+       
         //currentPage.getStyle().set("font-size","12px");
-        currentPage.getStyle().set("line-height", "4");
+        currentPage.getStyle().set("line-height", "2");
         add(firstPage);
         add(previousPage);
         add(currentPage);
@@ -94,9 +104,7 @@ public class PageNav extends HorizontalLayout {
         getThemeList().add("spacing-xs");
         
         
-        this.countPerPage = countPerPage;
-        this.setPage((Integer) 1);
-        this.totalDataCount=totalDataCount;
+        
         this.totalPageCount = (int)Math.ceil((double)totalDataCount/this.getCountPerPage());
         calculateEnable();
         this.currentPage.setText(Integer.toString(page) + "/" + Integer.toString(totalPageCount));

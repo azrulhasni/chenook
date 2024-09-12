@@ -17,6 +17,7 @@ import jakarta.xml.bind.annotation.XmlSeeAlso;
 import jakarta.xml.bind.annotation.XmlType;
 import jakarta.xml.bind.annotation.adapters.CollapsedStringAdapter;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.util.Objects;
 
 
 /**
@@ -44,7 +45,7 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
     BaseActivity.class,
     XorActivity.class
 })
-public abstract class Activity {
+public abstract class Activity implements Comparable<Activity>{
 
     @XmlAttribute(name = "id")
     @XmlJavaTypeAdapter(CollapsedStringAdapter.class)
@@ -101,5 +102,34 @@ public abstract class Activity {
     public void setDescription(String value) {
         this.description = value;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 89 * hash + Objects.hashCode(this.id);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Activity other = (Activity) obj;
+        return Objects.equals(this.id, other.id);
+    }
+
+    @Override
+    public int compareTo(Activity o) {
+        return id.compareTo(o.getId());
+    }
+    
+    
 
 }

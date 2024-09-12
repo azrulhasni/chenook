@@ -21,6 +21,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.OneToMany;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,8 +42,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
         discriminatorType = DiscriminatorType.STRING)
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-public class WorkItem {
-
+public abstract class WorkItem {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     protected Long id;
@@ -314,5 +315,7 @@ public class WorkItem {
     public void setFields(Map<String, String> fields) {
         this.fields = fields;
     }
+    
+    public abstract String getTitle();
 
 }

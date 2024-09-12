@@ -37,6 +37,7 @@ import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 import com.vaadin.flow.data.provider.SortDirection;
 import jakarta.persistence.criteria.Join;
+import java.lang.reflect.ParameterizedType;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -697,7 +698,7 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     }
     
-     public Set<StartEvent> whatUserStart(OidcUser oidcUser, BizProcess bizProcess){
+     public List<StartEvent> whatUserCanStart(OidcUser oidcUser, BizProcess bizProcess){
         Set<String> roles =  oidcUser
                 .getAuthorities()
                 .stream()
@@ -706,7 +707,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                 .map(a->a.replace("role_", ""))
                 .collect(Collectors.toSet());
         
-        Set<StartEvent> startEvents =  bizProcess
+        List<StartEvent> startEvents =  bizProcess
                 .getStartEvents()
                 .stream()
                 .filter(e->{
@@ -714,7 +715,8 @@ public abstract class WorkflowService<T extends WorkItem> {
                     intersect.retainAll(roles);
                     return !intersect.isEmpty();
                  })
-                 .collect(Collectors.toSet());
+                .sorted()
+                .collect(Collectors.toList());
         return startEvents;
     }
     
@@ -810,28 +812,28 @@ public abstract class WorkflowService<T extends WorkItem> {
     }
 
     @Transactional
-     public T save(T work) {
-        return getWorkItemRepo().save((T)work);
-    }
+    public abstract T save(T work);
 
     @Transactional
-     public T create(
+    public T initAndSave(
              final T newwork,
              final OidcUser oidcUser,
              final String context,
-             final String startEventId, 
+             final StartEvent startEvent, 
              final BizProcess bizProcess) {
-
+        
+       
         //T newwork = ;
         newwork.setContext(context);
         newwork.setCreator(oidcUser.getPreferredUsername());
         newwork.setPriority(Priority.NONE);
         newwork.setStatus(Status.NEWLY_CREATED);
+        
         //newwork.setFields(fields);
         Set<String> owners = new HashSet<>();
         owners.add(oidcUser.getPreferredUsername());
         newwork.setOwners(owners);
-        newwork.setStartEventId(startEventId/*memento.getBizProcess().getStartEvents().iterator().next().getId()*/);
+        newwork.setStartEventId(startEvent.getId());
         newwork.setStartEventDescription(bizProcess.getStartEvents().iterator().next().getDescription());
         newwork.setWorklist(bizProcess.getStartEvents().iterator().next().getId());
         newwork.setWorklistUpdateTime(LocalDateTime.now());
@@ -859,6 +861,7 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     @Transactional
     private T archiveApprovalsAndSave(T work) {
+        
         work.getHistoricalApprovals().addAll(work.getApprovals());
         work.getApprovals().clear();
         T w = getWorkItemRepo().save(work);
@@ -872,7 +875,7 @@ public abstract class WorkflowService<T extends WorkItem> {
     }
     
      public Integer countWorkByOwner(String username){
-        Long count =  getWorkItemRepo().count(whereOwnersContains(username));
+        Long count =  getWorkItemRepo().countByOwner(username);//count(whereOwnersContains(username));
         return count.intValue();
     }
     
@@ -894,8 +897,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                                 ?"id"
                                 :so.getSorted();
                 query.getPage();
-                Page<T> finapps = getWorkItemRepo().findAll(
-                    whereOwnersContains(username),
+                Page<T> finapps = getWorkItemRepo().findByOwner(username,
                     PageRequest.of(
                             pageNav.getPage() - 1,
                             pageNav.getMaxCountPerPage(),
@@ -966,7 +968,7 @@ public abstract class WorkflowService<T extends WorkItem> {
     }
     
      public Integer countWorkByWorklist(String worklist){
-        Long count =  getWorkItemRepo().count(whereWorklistEquals(worklist));
+        Long count =  getWorkItemRepo().countByWorklistAndNoOwner(worklist);//count(whereWorklistEquals(worklist));
         return count.intValue();
     }
     
@@ -988,8 +990,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                                 ?"id"
                                 :so.getSorted();
                 query.getPage();
-                Page<T> finapps = getWorkItemRepo().findAll(
-                    whereWorklistEquals(worklist),
+                Page<T> finapps = getWorkItemRepo().findByWorklistAndNoOwner(worklist,
                     PageRequest.of(
                             pageNav.getPage() - 1,
                             pageNav.getMaxCountPerPage(),
@@ -1013,11 +1014,15 @@ public abstract class WorkflowService<T extends WorkItem> {
     }
  
 
-    private Specification<T> whereOwnersContains(String username) {
-        return (workItem, cq, cb) -> {
-            return cb.isMember(username, workItem.get("owners"));
-        };
-    }
+//    private Specification<T> whereOwnersContains(String username) {
+//        return (workItem, cq, cb) -> {
+//            //workItem.fetch("owners");
+//            //return cb.in(cb.workItem)isMember(username, workItem.get("owners"));
+//            Set<String> users = new HashSet<>();
+//            users.add(username);
+//            return cb.literal(users).in(workItem.get("owners").as(Set.class));
+//        };
+//    }
 
     private Specification<T> whereCreatorEquals(String username) {
         return (workItem, cq, cb) -> {
@@ -1025,11 +1030,14 @@ public abstract class WorkflowService<T extends WorkItem> {
         };
     }
 
-    private Specification<T> whereWorklistEquals(String worklist) {
-        return (workItem, cq, cb) -> {
-            return cb.equal(workItem.get("worklist"), worklist);
-        };
-    }
+//    private Specification<T> whereWorklistEquals(String worklist) {
+//        return (workItem, cq, cb) -> {
+//            return cb.and(
+//                    cb.equal(workItem.get("worklist"), worklist),
+//                    cb.isEmpty(workItem.get("owners"))
+//            );
+//        };
+//    }
 
     /**
      * @return the workItemRepo
