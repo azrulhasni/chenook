@@ -21,6 +21,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.OneToMany;
+import java.io.Serializable;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -43,6 +44,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 public abstract class WorkItem {
+
+   
     
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -78,7 +81,7 @@ public abstract class WorkItem {
     protected String supervisorApprovalLevel;
 
     @NotAudited //cannot be auditted. if not, WorkItem.id (hist_work_id) will be compulsorry when creating audit and when there is no historical approval, it should not
-    @OneToMany(fetch = FetchType.LAZY) //do not cascade. Will create problem due to 2 fields pointing to the same type i.e. Approvals
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL) //do not cascade. Will create problem due to 2 fields pointing to the same type i.e. Approvals
     @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
     protected Set<Approval> historicalApprovals = new HashSet<>();
     
@@ -88,7 +91,7 @@ public abstract class WorkItem {
         joinColumns=@JoinColumn(name="work_id"))
     @MapKeyColumn(name="key")
     @Column(name="value")
-    protected Map<String, String> fields = new HashMap<>();
+    private Map<String,Serializable> properties = new HashMap<>();
 
     /**
      * @return the id
@@ -302,20 +305,22 @@ public abstract class WorkItem {
         this.worklistUpdateTime = worklistUpdateTime;
     }
 
-    /**
-     * @return the fields
+   
+    
+    public abstract String getTitle();
+    
+     /**
+     * @return the properties
      */
-    public Map<String, String> getFields() {
-        return fields;
+    public Map<String, Serializable> getProperties() {
+        return properties;
     }
 
     /**
-     * @param fields the fields to set
+     * @param properties the properties to set
      */
-    public void setFields(Map<String, String> fields) {
-        this.fields = fields;
+    public void setProperties(Map<String, Serializable> properties) {
+        this.properties = properties;
     }
-    
-    public abstract String getTitle();
 
 }

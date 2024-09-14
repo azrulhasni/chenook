@@ -74,7 +74,11 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     private List<ApproverLookup<T>> approverLookups;
 
+    //Setter injection
     private BizUserService bizUserService;
+    
+    //Setter injection
+    private ApprovalService approvalService;
 
     private Expression<Boolean, T> expr;
     
@@ -104,8 +108,11 @@ public abstract class WorkflowService<T extends WorkItem> {
                 || activity.getClass().equals(XorMajorityApprovalActivity.class));
     }
     
+    public Boolean isWaitingApproval(WorkItem work){
+        return  (work.getSupervisorApprovalSeeker()!=null);
+    }
     
-
+    
      public T run(
             final T work,
             final String username,
@@ -113,10 +120,11 @@ public abstract class WorkflowService<T extends WorkItem> {
             final boolean isError
     ) {
         BizUser bizUser = getBizUserService().getUser(username);
-        return run(work, bizUser, bizProcess, isError);
+        T w =  runRecursive(work, bizUser, bizProcess, isError);
+        return getWorkItemRepo().save(w);
     }
 
-    private T run(
+    private T runRecursive(
             final T work,
             final BizUser bizUser,
             final BizProcess bizProcess,
@@ -146,7 +154,7 @@ public abstract class WorkflowService<T extends WorkItem> {
             );
         }
 
-        return save(work);
+        return work;
 
     }
 
@@ -167,14 +175,14 @@ public abstract class WorkflowService<T extends WorkItem> {
                 if (activity.getClass().equals(End.class)) {
                     //we reach the end, conclude
                     work.setStatus(Status.DONE);
-                    return run(work,bizUser, bizProcess, isError); //for post run script exec
+                    return runRecursive(work,bizUser, bizProcess, isError); //for post run script exec
 
                 } else if (activity.getClass().equals(ServiceActivity.class)) {
                     String script = ((ServiceActivity) activity).getScript();
                     getScripting().runScript(work, bizUser, script,bizProcess);
-                    return run(work, bizUser,bizProcess, isError);
+                    return runRecursive(work, bizUser,bizProcess, isError);
                 } else if (activity.getClass().equals(XorActivity.class)) {
-                    return run(work, bizUser, bizProcess,isError);
+                    return runRecursive(work, bizUser, bizProcess,isError);
                 } else {
                     return work; //<-- this is ok since nextStep will not contain more than 1 activity at one time
                 }
@@ -456,7 +464,7 @@ public abstract class WorkflowService<T extends WorkItem> {
             final List<String> supervisorHierarchy) {
         if (isSupervisorNeeded(root)) { //this was sent for approval before
             if (root.getApprovals().isEmpty() == Boolean.FALSE
-                    && Boolean.TRUE.equals(root.getApprovals().iterator().next().getApproved())) { //approved
+                    && Boolean.TRUE.equals(root.getApprovals().iterator().next().getApproved())) { //approved. This is supervisor so it should only have 1 approval
                 //see which level is the approval on
                 String currentApprLevel = root.getSupervisorApprovalLevel();
                 int indexOfNextApprLevel = getArrayIndexOfValue(supervisorHierarchy, currentApprLevel) + 1;
@@ -493,7 +501,11 @@ public abstract class WorkflowService<T extends WorkItem> {
                                         archiveApprovals(root);
                                         //then add the new approver
                                         //loadUserIntoApprovalList(approver.getLoginName(), activity, tenant, root);//for apperovals, we log the current activity for supervisor approval
-                                        loadUserIntoApprovalList(approver.getUsername(), root);
+                                        loadUserIntoApprovalList(
+                                                approver.getUsername(), 
+                                                approver.getFirstName(),
+                                                approver.getLastName(), 
+                                                root);
                                         nextSteps.add(activity); //if need supervisor, stay in the same activity first
 
                                     });
@@ -536,14 +548,20 @@ public abstract class WorkflowService<T extends WorkItem> {
                         archiveApprovals(root);
                         //then add the new approver
                         //loadUserIntoApprovalList(approver.getLoginName(), activity, tenant, root);//for apperovals, we log the current activity for supervisor approval
-                        loadUserIntoApprovalList(approver.getUsername(), root);
+                        loadUserIntoApprovalList(
+                                approver.getUsername(), 
+                                approver.getFirstName(),
+                                approver.getLastName(), 
+                                root);
 
                         nextSteps.add(activity); //if need supervisor, stay in the same activity first
                     });
                 });
             }
             root.setSupervisorApprovalSeeker(user.getUsername());
+            
         }
+       
     }
 
     private void dealWithNextStep(T work, String tenant, Activity nextActivity, List<Activity> nextSteps) {
@@ -551,7 +569,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         work.getOwners().clear(); //so that the next folks can pick it up
 
         work.setSupervisorApprovalSeeker(null);//nullify the approval seeker too
-        getWorkItemRepo().save(work);
+        
         //only current activity ids in wait states
         if (nextActivity == null) { //nextActivity==END
             nextSteps.add(nextActivity);
@@ -571,9 +589,11 @@ public abstract class WorkflowService<T extends WorkItem> {
         }
     }
 
-    private void loadUserIntoApprovalList(String loginName, T work) {
+    private void loadUserIntoApprovalList(String loginName,String firstName, String lastName,  T work) {
         Approval approval = new Approval();
         approval.setUsername(loginName);
+        approval.setFirstName(firstName);
+        approval.setLastName(lastName);
         work.getApprovals().add(approval);
     }
 
@@ -601,7 +621,11 @@ public abstract class WorkflowService<T extends WorkItem> {
 //                w -> ((WorkElement) w).getApprovals().clear());
         archiveApprovalsAndSave(work);
         for (BizUser user : users) {
-            loadUserIntoApprovalList(user.getUsername(), work);
+            loadUserIntoApprovalList(
+                    user.getUsername(), 
+                    user.getFirstName(),
+                    user.getLastName(), 
+                    work);
         }
 
     }
@@ -642,7 +666,8 @@ public abstract class WorkflowService<T extends WorkItem> {
         Approval approval = new Approval();
         if (user.isEnabled()) {
             approval.setUsername(user.getUsername());
-
+            approval.setFirstName(user.getFirstName());
+            approval.setUsername(user.getLastName());
 //                approval.setWorklist(((BaseActivity) nextActivity).getId());
 //                if (work.getStartEventDescription() != null) {
 //                    approval.setStartEventDescription(work.getStartEventDescription());
@@ -729,6 +754,18 @@ public abstract class WorkflowService<T extends WorkItem> {
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList()));
     }
+    
+    public Map<String,String> findWorklistsByRoles(Set<String> roles,BizProcess bizProcess){
+         Map<String, Activity> activities = getActivities(bizProcess);
+         Map<String,String>  worklists = activities
+                 .values()
+                 .stream()
+                 .filter(a->a.getClass().equals(HumanActivity.class))
+                 .map(HumanActivity.class::cast)
+                 .filter(ha->roles.contains(ha.getHandledBy()))
+                 .collect(Collectors.toMap(HumanActivity::getId, HumanActivity::getDescription));
+         return worklists;
+    }
 
     private Set<String> whoCanStart(T work, BizProcess bizProcess) {
         Map<String, Activity> activities = getActivities(bizProcess);
@@ -811,10 +848,8 @@ public abstract class WorkflowService<T extends WorkItem> {
         return activities;
     }
 
-    @Transactional
     public abstract T save(T work);
 
-    @Transactional
     public T initAndSave(
              final T newwork,
              final OidcUser oidcUser,
@@ -842,7 +877,6 @@ public abstract class WorkflowService<T extends WorkItem> {
         return w;
     }
 
-    @Transactional
      public T findById(final Long id, final String context) {
         T work = findById(
                 id,
@@ -850,25 +884,24 @@ public abstract class WorkflowService<T extends WorkItem> {
         return work;
     }
 
-    @Transactional
-     public T createApprovalAndSave(T work) {
+//     public T createApprovalAndSave(T work) {
+//
+//        work.getHistoricalApprovals().addAll(work.getApprovals());
+//        work.getApprovals().clear();
+//        T w = getWorkItemRepo().save(work);
+//        return w;
+//    }
+     
+     
 
-        work.getHistoricalApprovals().addAll(work.getApprovals());
-        work.getApprovals().clear();
-        T w = getWorkItemRepo().save(work);
-        return w;
-    }
-
-    @Transactional
+ 
     private T archiveApprovalsAndSave(T work) {
-        
         work.getHistoricalApprovals().addAll(work.getApprovals());
         work.getApprovals().clear();
-        T w = getWorkItemRepo().save(work);
-        return w;
+        //T w = getWorkItemRepo().save(work);
+        return work;
     }
 
-    @Transactional
     private T findById(Long id) {
         Optional<T> work = getWorkItemRepo().findById(id);
         return work.orElse(null);
@@ -878,6 +911,8 @@ public abstract class WorkflowService<T extends WorkItem> {
         Long count =  getWorkItemRepo().countByOwner(username);//count(whereOwnersContains(username));
         return count.intValue();
     }
+     
+     
     
      public DataProvider getWorkByOwner(String username, PageNav pageNav) {
         //build data provider
@@ -1104,6 +1139,21 @@ public abstract class WorkflowService<T extends WorkItem> {
     @Autowired
     public final void setExpr(Expression<Boolean, T> expr) {
         this.expr = expr;
+    }
+
+    /**
+     * @return the approvalService
+     */
+    public ApprovalService getApprovalService() {
+        return approvalService;
+    }
+
+    /**
+     * @param approvalService the approvalService to set
+     */
+    @Autowired
+    public void setApprovalService(ApprovalService approvalService) {
+        this.approvalService = approvalService;
     }
 
 }

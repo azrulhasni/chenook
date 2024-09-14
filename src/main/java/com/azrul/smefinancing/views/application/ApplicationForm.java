@@ -9,6 +9,7 @@ import com.azrul.chenook.views.workflow.WorkflowPanel;
 import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.Approval;
 import com.azrul.chenook.domain.WorkItem;
+import com.azrul.chenook.service.ApprovalService;
 import com.azrul.chenook.workflow.model.BizProcess;
 //import com.azrul.chenook.service.WorkflowService;
 //import com.azrul.chenook.value.WorkflowMemento;
@@ -74,6 +75,7 @@ public class ApplicationForm extends Dialog {
             String context,
             ApplicantService applicantService,
             FinApplicationService finappService,
+            ApprovalService approvalService,
             MessageService msgService,
             BadgeUtils badgeUtils,
             WorkflowConfig workflowConfig,
@@ -106,6 +108,7 @@ public class ApplicationForm extends Dialog {
 
         WorkflowPanel workflowPanel = new WorkflowPanel(
                 work,
+                oidcUser,
                 false,
                 a -> {},
                 a -> {}
@@ -142,6 +145,7 @@ public class ApplicationForm extends Dialog {
                 editable,
                 workflowPanel,
                 finappService,
+                approvalService,
                 applicantService,
                 onPostSave,
                 onPostRemove,
@@ -430,6 +434,7 @@ public class ApplicationForm extends Dialog {
             Editable editable,
             WorkflowPanel workflowPanel,
             FinApplicationService finappService,
+            ApprovalService approvalService,
             ApplicantService applicantService,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
@@ -442,6 +447,7 @@ public class ApplicationForm extends Dialog {
                 bizProcess,
                 workflowPanel,
                 finappService,
+                approvalService,
                 applicantService,
                 onPostSave
         );
@@ -518,6 +524,7 @@ public class ApplicationForm extends Dialog {
             BizProcess bizProcess,
             WorkflowPanel workflowPanel,
             FinApplicationService finappService,
+            ApprovalService approvalService,
             ApplicantService applicantService,
             Consumer<FinApplication> onPostSave
     ) {
@@ -532,6 +539,7 @@ public class ApplicationForm extends Dialog {
                 oapproval.ifPresent(approval->{
                     approval.setApprovalDateTime(LocalDateTime.now());
                     approval.setApproved(workflowPanel.getApproval());
+                   
                 });
                 finappService.run(finapp, oidcUser.getPreferredUsername(), bizProcess, false);
                 onPostSave.accept(finapp);

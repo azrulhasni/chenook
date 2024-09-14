@@ -67,20 +67,24 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
         Set<String> roles = oidcUser
                 .getAuthorities()
                 .stream()
-                .map(a -> a.getAuthority())
+                .map(o -> o.getAuthority())
+                .filter(a->a.startsWith("ROLE"))
                 .map(a -> a.replace("ROLE_", ""))
                 .collect(Collectors.toSet());
+        
+        Map<String,String> worklists = workflowService.findWorklistsByRoles(roles, bizProcess);
 
-        for (String role : roles) {
+        for (Map.Entry<String,String> worklist : worklists.entrySet()) {
             Pair<Grid<T>, PageNav> panel = buildDataPanel(
-                    "Worklist:" + role,
+                    "Worklist:" + worklist.getValue(),
+                    worklist.getKey(),
                     oidcUser,
                     bizProcess,
                     showUpdateDialog,
                     cardBuilder,
                     sortableFields,
-                    (worklist) -> workflowService.countWorkByWorklist(worklist),
-                    (worklist, nav) -> workflowService.getWorkByWorklist(worklist, nav)
+                    (w) -> workflowService.countWorkByWorklist(w),
+                    (w, nav) -> workflowService.getWorkByWorklist(w, nav)
             );
             myWorklists.add(panel);
             addPair(panel);
@@ -95,6 +99,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
 
     private Pair<Grid<T>, PageNav> buildDataPanel(
             final String title,
+            final String w,
             final OidcUser oidcUser1,
             final BizProcess bizProcess,
             final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
@@ -103,8 +108,8 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             final Function<String, Integer> counter,
             final BiFunction<String, PageNav, DataProvider> dataProviderCreator) {
         PageNav nav = new PageNav();
-        Integer count = counter.apply(oidcUser1.getPreferredUsername());//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
-        DataProvider dataProvider = dataProviderCreator.apply(oidcUser1.getPreferredUsername(), nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
+        Integer count = counter.apply(w);//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
+        DataProvider dataProvider = dataProviderCreator.apply(w, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
         Grid<T> grid = createGrid(title, oidcUser1, bizProcess, dataProvider, showUpdateDialog, cardBuilder);
         nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields1, false);
         Pair<Grid<T>, PageNav> pair = Pair.of(grid, nav);

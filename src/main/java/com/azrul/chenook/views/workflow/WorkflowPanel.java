@@ -10,8 +10,10 @@ import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.BizUserService;
 import com.azrul.chenook.service.BadgeUtils;
+import com.azrul.chenook.service.WorkflowService;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.data.renderer.Renderer;
@@ -19,6 +21,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 /**
  *
@@ -30,8 +33,9 @@ public class WorkflowPanel<T> extends FormLayout {
     @Autowired
     private BadgeUtils badgeUtils;
 
-    @Autowired
-    private BizUserService bizUserService;
+    
+     @Autowired
+    private WorkflowService workflowService;
     
     private ComboBox<String> cbApprove ;
 
@@ -39,6 +43,7 @@ public class WorkflowPanel<T> extends FormLayout {
 
     public WorkflowPanel(
             final WorkItem work,
+            final OidcUser user,
             final Boolean editable,
             final Consumer<Attachment> onPostSave,
             final Consumer<Attachment> onPostRemove
@@ -55,15 +60,41 @@ public class WorkflowPanel<T> extends FormLayout {
         }
         this.add(cbStatus);
         
-        cbApprove = new ComboBox<>("Approval needed");
-        cbApprove.setItems(Set.of("","APPROVE","REJECT"));
-        cbApprove.setItemLabelGenerator(a->"APPROVE".equals(a)?"Approve":"Reject");
-        this.add(cbApprove);
+        HorizontalLayout apprrovalPanel = new HorizontalLayout();
+        if (workflowService.isWaitingApproval(work) 
+                && work.getApprovals().stream().filter(
+                        a->StringUtils.equals(
+                                a.getUsername(), 
+                                user.getPreferredUsername()
+                        )).count()>0){
+            cbApprove = new ComboBox<>("Approval needed");
+            cbApprove.setItems(Set.of("","APPROVE","REJECT"));
+            cbApprove.setItemLabelGenerator(a->{
+                if (StringUtils.equals(a, "REJECT")){
+                    return "Reject";
+                }else if  (StringUtils.equals(a, "APPROVE")){
+                    return "Approve";
+                }else{
+                    return "";
+                }
+            });
+            apprrovalPanel.add(cbApprove);
+        }
+        
+        this.add(apprrovalPanel);
         //cbApprove.
         //this.parentId = parentId;
     }
     
+    public void createApprovalInfoDialog(WorkItem work){
+        
+    }
+    
     public Boolean validate(){
+        if (cbApprove==null){
+            return true;
+        }
+        
         if (StringUtils.isEmpty(cbApprove.getValue())){
             return false;
         }else{
@@ -72,6 +103,9 @@ public class WorkflowPanel<T> extends FormLayout {
     }
     
     public Boolean getApproval(){
+         if (cbApprove==null){
+            return null;
+        }
         return "APPROVE".equals(cbApprove.getValue());
     }
 

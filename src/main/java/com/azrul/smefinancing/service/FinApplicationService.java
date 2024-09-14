@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author azrul
  */
 @Service
+@Transactional
 public class FinApplicationService extends WorkflowService<FinApplication> {
 
     private final FinApplicationRepository finAppRepo;
@@ -150,7 +151,6 @@ public class FinApplicationService extends WorkflowService<FinApplication> {
    
 
     @Override
-    @Transactional
     public FinApplication save(FinApplication finapp) {
             for (Applicant a:finapp.getApplicants()){
                 a.setFinApplication(finapp);
@@ -159,7 +159,6 @@ public class FinApplicationService extends WorkflowService<FinApplication> {
             return finAppRepo.save(finapp);
     }
     
-    @Transactional
     public void remove(FinApplication app) {
             finAppRepo.delete(app);
     }

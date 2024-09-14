@@ -18,8 +18,8 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
     <workflow>
         <startEvent
             id='S0.MY'
-            description="SME Financing (MY)"
-            canBeStartedBy='Relationship-Manager Branch-Staff'
+            description='SME Financing (MY)'
+            canBeStartedBy='RELATIONSHIP-MANAGER BRANCH-STAFF'
             next='S1.CALL_BUREAU'
             supervisoryApprovalHierarchy='Manager HOD'
             >
@@ -35,8 +35,8 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
 
         <startEvent
             id='S0.PH'
-            description="SME Financing (PH)"
-            canBeStartedBy='Relationship-Manager Branch-Staff'
+            description='SME Financing (PH)'
+            canBeStartedBy='RELATIONSHIP-MANAGER BRANCH-STAFF'
             next='S1.CALL_BUREAU'
             supervisoryApprovalHierarchy='Manager HOD'>
             <preRunScript>
@@ -54,10 +54,10 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
             next='S1.1.CALL_BUREAU_DECISION'
             description='Call bureau'>
             <script><![CDATA[
-                import com.azrul.langkuik.loanorigsystem.bizlogic.*;
+                import com.azrul.smefinancing.integration.*;
 
                 ExperianBureauLogic logic = new ExperianBureauLogic();
-                logic.run(user,tenant,current);
+                logic.run(user,current);
                 current.getProperties().put("BUREAU_SCORE",1000);
                 ;]]>
             </script>
@@ -66,7 +66,7 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
             id='S1.1.CALL_BUREAU_DECISION'
             description='Call bureau'>
                 <byDefault next='S1.1.1.BUREAU_DISAPPROVE'/>
-                <branch condition='current.getProperties()["BUREAU_SCORE"]>new Integer(dataQuery.queryBizConfig(tenant,"SCORE_THRESHOLD"))' next='S1.1.2.BUREAU_APPROVE'/>
+                <branch condition='current.getProperties()["BUREAU_SCORE"]>500' next='S1.1.2.BUREAU_APPROVE'/>
         </xor>
          <service
             id='S1.1.1.BUREAU_DISAPPROVE'
@@ -97,20 +97,20 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
             id='S3.VALUATION'
             next='S4.UNDERWRITING'
             description='Valuation'
-            handledBy='Valuator'/>
+            handledBy='VALUATOR'/>
         <human
             id='S4.UNDERWRITING'
             description='Underwriting'
             next='S5.UW_CHECKER'
-            handledBy='Underwriter-Maker'
+            handledBy='UNDERWRITER-MAKER'
             supervisoryApprovalHierarchy='Manager HOD'
             slaInHours='24'/>
 
         <xor-atleast-one-approval
             id='S5.UW_CHECKER'
-            handledBy='Underwriter-Checker'>
-            <byDefault next="S51.SET_DISAPPROVED"/>
-            <onApproved  next="S50.SET_APPROVED"/>
+            handledBy='UNDERWRITER-CHECKER'>
+            <byDefault next='S51.SET_DISAPPROVED'/>
+            <onApproved  next='S50.SET_APPROVED'/>
         </xor-atleast-one-approval>
 
         <service
@@ -141,25 +141,25 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
             id='S6.DISBURSEMENT_PROCESS'
             next='S7.DISBURSEMENT_DECISION'
             description='Disbursement Process'
-            handledBy='Disbursement-Officer-Maker'/>
+            handledBy='DISBURSEMENT-OFFICER-MAKER'/>
 
         <xor-majority-approval
             id='S7.DISBURSEMENT_DECISION'
             description='Disbursement Decision'
-            handledBy='Disbursement-Officer-Checker'
+            handledBy='DISBURSEMENT-OFFICER-CHECKER'
         >
-            <byDefault next="S9.CORRECT_DISBURSEMENT"/>
-            <onApproved next="S8.DO_DISBURSEMENT"/>
-            <onTieBreaker next="S11.DISBURSEMENT_TIE_BREAK"/>
+            <byDefault next='S9.CORRECT_DISBURSEMENT'/>
+            <onApproved next='S8.DO_DISBURSEMENT'/>
+            <onTieBreaker next='S11.DISBURSEMENT_TIE_BREAK'/>
         </xor-majority-approval>
 
          <xor-unanimous-approval
             id='S11.DISBURSEMENT_TIE_BREAK'
             description='Disbursement Tie-Breaker'
-            handledBy='Supervisor'
+            handledBy='SUPERVISOR'
          >
-             <byDefault next="S12.CORRECT_DISBURSEMENT_II"/>
-             <onApproved next="S8.DO_DISBURSEMENT"/>
+             <byDefault next='S12.CORRECT_DISBURSEMENT_II'/>
+             <onApproved next='S8.DO_DISBURSEMENT'/>
             
          </xor-unanimous-approval>
 
@@ -178,17 +178,17 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
             id='S9.CORRECT_DISBURSEMENT'
             next='S7.DISBURSEMENT_DECISION'
             description='Correct Disbursement'
-            handledBy='Disbursement-Officer-Maker'/>
+            handledBy='DISBURSEMENT-OFFICER-MAKER'/>
         <human
             id='S12.CORRECT_DISBURSEMENT_II'
             next='S11.DISBURSEMENT_TIE_BREAK'
             description='Correct Disbursement After Tie'
-            handledBy='Disbursement-Officer-Maker'/>
+            handledBy='DISBURSEMENT-OFFICER-MAKER'/>
         <human
             id='S10.INFORM_CUSTOMER'
             next='END'
             description='Inform customer'
-            handledBy='Relationship-Manager'/>
+            handledBy='RELATIONSHIP-MANAGER'/>
         <end id='END'>
             <postRunScript>
                 <![CDATA[

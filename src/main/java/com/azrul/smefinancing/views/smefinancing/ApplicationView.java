@@ -9,6 +9,7 @@ import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.service.ApplicantService;
 import com.azrul.chenook.service.MessageService;
 import com.azrul.chenook.config.WorkflowConfig;
+import com.azrul.chenook.service.ApprovalService;
 import com.azrul.chenook.views.workflow.MyWorkPanel;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.chenook.workflow.model.StartEvent;
@@ -51,6 +52,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
     private final BadgeUtils badgeUtils;
     private final String DATETIME_FORMAT;
     private final WorkflowConfig workflowConfig;
+    private final ApprovalService approvalService;
 
     public ApplicationView(
             @Autowired FinApplicationService finappService,
@@ -58,6 +60,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
             @Autowired MessageService msgService,
             @Autowired BadgeUtils badgeUtils,
             @Autowired WorkflowConfig workflowConfig,
+            @Autowired ApprovalService approvalService,
             @Value("${finapp.datetime.format}") String dateTimeFormat
     ) {
         this.finappService = finappService;
@@ -66,6 +69,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
         this.badgeUtils = badgeUtils;
         this.DATETIME_FORMAT = dateTimeFormat;
         this.workflowConfig = workflowConfig;
+        this.approvalService=approvalService;
 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
         final BizProcess bizProcess = workflowConfig.rootBizProcess();
@@ -162,6 +166,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                     }
             );
             this.add(workPanel);
+            this.add(worklistPanel);
         }
     }
 
@@ -182,6 +187,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                 context,
                 applicantService,
                 finappService,
+                approvalService,
                 msgService,
                 badgeUtils,
                 workflowConfig,

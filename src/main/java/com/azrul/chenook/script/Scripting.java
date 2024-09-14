@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class Scripting /*implements Scripting*/ {
-    ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("groovy");
+    private static ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("groovy");
     
   
 
@@ -33,6 +33,10 @@ public class Scripting /*implements Scripting*/ {
             BizProcess bizProcess) {
         if (script==null){
             return;
+        }
+        
+         if (scriptEngine==null){
+            scriptEngine = new ScriptEngineManager().getEngineByName("groovy");
         }
         
         try {
