@@ -4,6 +4,10 @@
  */
 package com.azrul.smefinancing.domain;
 
+import com.azrul.chenook.annotation.Matcher;
+import com.azrul.chenook.annotation.NotBlankValue;
+import com.azrul.chenook.annotation.NotNullValue;
+import com.azrul.chenook.annotation.WorkField;
 import jakarta.persistence.Basic;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
@@ -49,14 +53,37 @@ public class Applicant {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="id")
     private Long id;
+    
+    @NotBlankValue
+    @WorkField(displayName = "Full name")
     private String fullName;
+    
+    @NotBlankValue
+    @Matcher(regexp="((\\d{2}(?!0229))|([02468][048]|[13579][26])(?=0229))(0[1-9]|1[0-2])(0[1-9]|[12]\\d|(?<!02)30|(?<!02|4|6|9|11)31)\\-(\\d{2})\\-(\\d{4})",
+            message="The NRIC number must of correct format (E.g. 781231-14-0123")
+    @WorkField(displayName = "NRIC number")
     private String icNumber;
+    
+    @NotNullValue
+    @WorkField(displayName = "Date of birth")
     private LocalDate dateOfBirth;
+    
+    @NotBlankValue
+    @WorkField(displayName = "Position")
     private String position;
+    
+    @NotBlankValue
+    @WorkField(displayName = "Phone number")
     private String phoneNumber;
+    
+    @NotBlankValue
+    @Matcher(regexp="([!#-'*+/-9=?A-Z^-~-]+(\\.[!#-'*+/-9=?A-Z^-~-]+)*|\"([]!#-[^-~ \\t]|(\\\\[\\t -~]))+\")@([!#-'*+/-9=?A-Z^-~-]+(\\.[!#-'*+/-9=?A-Z^-~-]+)*|\\[[\\t -Z^-~]*])",message="The email address must be valid")
+    @WorkField(displayName = "Email")
     private String email;
-    private String username;
+
     private Boolean main;
+    
+    @WorkField(displayName = "Applicant type")
     private ApplicantType type;
     
     @ElementCollection(fetch = FetchType.EAGER)
@@ -273,19 +300,7 @@ public class Applicant {
         this.main = main;
     }
 
-    /**
-     * @return the username
-     */
-    public String getUsername() {
-        return username;
-    }
 
-    /**
-     * @param username the username to set
-     */
-    public void setUsername(String username) {
-        this.username = username;
-    }
 
     /**
      * @return the dateOfBirth

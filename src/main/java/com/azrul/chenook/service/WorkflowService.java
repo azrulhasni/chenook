@@ -5,6 +5,7 @@
  */
 package com.azrul.chenook.service;
 
+import com.azrul.chenook.annotation.WorkField;
 import com.azrul.chenook.domain.Approval;
 import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.Priority;
@@ -37,6 +38,10 @@ import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 import com.vaadin.flow.data.provider.SortDirection;
 import jakarta.persistence.criteria.Join;
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.ParameterizedType;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -52,7 +57,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -60,15 +70,14 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.typesense.model.Field;
 
 /**
  *
  * @author azrul
  * @param <T>
  */
-
 public abstract class WorkflowService<T extends WorkItem> {
-
 
     private Scripting scripting;
 
@@ -76,12 +85,11 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     //Setter injection
     private BizUserService bizUserService;
-    
+
     //Setter injection
     private ApprovalService approvalService;
 
     private Expression<Boolean, T> expr;
-    
 
     private Map<String, List<HumanActivity>> getRoleActivityMap(BizProcess bizProcess) {
         return getActivities(bizProcess)
@@ -107,20 +115,19 @@ public abstract class WorkflowService<T extends WorkItem> {
                 || activity.getClass().equals(XorUnanimousApprovalActivity.class)
                 || activity.getClass().equals(XorMajorityApprovalActivity.class));
     }
-    
-    public Boolean isWaitingApproval(WorkItem work){
-        return  (work.getSupervisorApprovalSeeker()!=null);
+
+    public Boolean isWaitingApproval(WorkItem work) {
+        return (work.getSupervisorApprovalSeeker() != null);
     }
-    
-    
-     public T run(
+
+    public T run(
             final T work,
             final String username,
             final BizProcess bizProcess,
             final boolean isError
     ) {
         BizUser bizUser = getBizUserService().getUser(username);
-        T w =  runRecursive(work, bizUser, bizProcess, isError);
+        T w = runRecursive(work, bizUser, bizProcess, isError);
         return getWorkItemRepo().save(w);
     }
 
@@ -175,14 +182,14 @@ public abstract class WorkflowService<T extends WorkItem> {
                 if (activity.getClass().equals(End.class)) {
                     //we reach the end, conclude
                     work.setStatus(Status.DONE);
-                    return runRecursive(work,bizUser, bizProcess, isError); //for post run script exec
+                    return runRecursive(work, bizUser, bizProcess, isError); //for post run script exec
 
                 } else if (activity.getClass().equals(ServiceActivity.class)) {
                     String script = ((ServiceActivity) activity).getScript();
-                    getScripting().runScript(work, bizUser, script,bizProcess);
-                    return runRecursive(work, bizUser,bizProcess, isError);
+                    getScripting().runScript(work, bizUser, script, bizProcess);
+                    return runRecursive(work, bizUser, bizProcess, isError);
                 } else if (activity.getClass().equals(XorActivity.class)) {
-                    return runRecursive(work, bizUser, bizProcess,isError);
+                    return runRecursive(work, bizUser, bizProcess, isError);
                 } else {
                     return work; //<-- this is ok since nextStep will not contain more than 1 activity at one time
                 }
@@ -502,9 +509,9 @@ public abstract class WorkflowService<T extends WorkItem> {
                                         //then add the new approver
                                         //loadUserIntoApprovalList(approver.getLoginName(), activity, tenant, root);//for apperovals, we log the current activity for supervisor approval
                                         loadUserIntoApprovalList(
-                                                approver.getUsername(), 
+                                                approver.getUsername(),
                                                 approver.getFirstName(),
-                                                approver.getLastName(), 
+                                                approver.getLastName(),
                                                 root);
                                         nextSteps.add(activity); //if need supervisor, stay in the same activity first
 
@@ -549,9 +556,9 @@ public abstract class WorkflowService<T extends WorkItem> {
                         //then add the new approver
                         //loadUserIntoApprovalList(approver.getLoginName(), activity, tenant, root);//for apperovals, we log the current activity for supervisor approval
                         loadUserIntoApprovalList(
-                                approver.getUsername(), 
+                                approver.getUsername(),
                                 approver.getFirstName(),
-                                approver.getLastName(), 
+                                approver.getLastName(),
                                 root);
 
                         nextSteps.add(activity); //if need supervisor, stay in the same activity first
@@ -559,9 +566,9 @@ public abstract class WorkflowService<T extends WorkItem> {
                 });
             }
             root.setSupervisorApprovalSeeker(user.getUsername());
-            
+
         }
-       
+
     }
 
     private void dealWithNextStep(T work, String tenant, Activity nextActivity, List<Activity> nextSteps) {
@@ -569,7 +576,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         work.getOwners().clear(); //so that the next folks can pick it up
 
         work.setSupervisorApprovalSeeker(null);//nullify the approval seeker too
-        
+
         //only current activity ids in wait states
         if (nextActivity == null) { //nextActivity==END
             nextSteps.add(nextActivity);
@@ -589,7 +596,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         }
     }
 
-    private void loadUserIntoApprovalList(String loginName,String firstName, String lastName,  T work) {
+    private void loadUserIntoApprovalList(String loginName, String firstName, String lastName, T work) {
         Approval approval = new Approval();
         approval.setUsername(loginName);
         approval.setFirstName(firstName);
@@ -622,9 +629,9 @@ public abstract class WorkflowService<T extends WorkItem> {
         archiveApprovalsAndSave(work);
         for (BizUser user : users) {
             loadUserIntoApprovalList(
-                    user.getUsername(), 
+                    user.getUsername(),
                     user.getFirstName(),
-                    user.getLastName(), 
+                    user.getLastName(),
                     work);
         }
 
@@ -722,29 +729,28 @@ public abstract class WorkflowService<T extends WorkItem> {
         }
 
     }
-    
-     public List<StartEvent> whatUserCanStart(OidcUser oidcUser, BizProcess bizProcess){
-        Set<String> roles =  oidcUser
+
+    public List<StartEvent> whatUserCanStart(OidcUser oidcUser, BizProcess bizProcess) {
+        Set<String> roles = oidcUser
                 .getAuthorities()
                 .stream()
-                .map(a->a.getAuthority())
+                .map(a -> a.getAuthority())
                 .map(String::toLowerCase)
-                .map(a->a.replace("role_", ""))
+                .map(a -> a.replace("role_", ""))
                 .collect(Collectors.toSet());
-        
-        List<StartEvent> startEvents =  bizProcess
+
+        List<StartEvent> startEvents = bizProcess
                 .getStartEvents()
                 .stream()
-                .filter(e->{
+                .filter(e -> {
                     Set<String> intersect = e.getCanBeStartedBy().stream().map(String::toLowerCase).collect(Collectors.toSet());
                     intersect.retainAll(roles);
                     return !intersect.isEmpty();
-                 })
+                })
                 .sorted()
                 .collect(Collectors.toList());
         return startEvents;
     }
-    
 
     private Set<String> whoCanStart(BizProcess bizProcess) {
         return new HashSet<String>(bizProcess
@@ -754,17 +760,17 @@ public abstract class WorkflowService<T extends WorkItem> {
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList()));
     }
-    
-    public Map<String,String> findWorklistsByRoles(Set<String> roles,BizProcess bizProcess){
-         Map<String, Activity> activities = getActivities(bizProcess);
-         Map<String,String>  worklists = activities
-                 .values()
-                 .stream()
-                 .filter(a->a.getClass().equals(HumanActivity.class))
-                 .map(HumanActivity.class::cast)
-                 .filter(ha->roles.contains(ha.getHandledBy()))
-                 .collect(Collectors.toMap(HumanActivity::getId, HumanActivity::getDescription));
-         return worklists;
+
+    public Map<String, String> findWorklistsByRoles(Set<String> roles, BizProcess bizProcess) {
+        Map<String, Activity> activities = getActivities(bizProcess);
+        Map<String, String> worklists = activities
+                .values()
+                .stream()
+                .filter(a -> a.getClass().equals(HumanActivity.class))
+                .map(HumanActivity.class::cast)
+                .filter(ha -> roles.contains(ha.getHandledBy()))
+                .collect(Collectors.toMap(HumanActivity::getId, HumanActivity::getDescription));
+        return worklists;
     }
 
     private Set<String> whoCanStart(T work, BizProcess bizProcess) {
@@ -825,7 +831,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         //state=2: multiple activities has condition == true (in this case, we have no guarantee which branch is executed)
         Activity nextStep = null;
         for (var branch : getBranches.get()) {
-            Boolean result = getExpr().evaluate(branch.getCondition(),  work, user, bizProces);
+            Boolean result = getExpr().evaluate(branch.getCondition(), work, user, bizProces);
             if (result == true) {
                 nextStep = (Activity) branch.getNext(); //deal with state=1
                 break; //deal with state=2
@@ -850,20 +856,19 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     public abstract T save(T work);
 
-    public T initAndSave(
-             final T newwork,
-             final OidcUser oidcUser,
-             final String context,
-             final StartEvent startEvent, 
-             final BizProcess bizProcess) {
-        
-       
+    public T init(
+            final T newwork,
+            final OidcUser oidcUser,
+            final String context,
+            final StartEvent startEvent,
+            final BizProcess bizProcess) {
+
         //T newwork = ;
         newwork.setContext(context);
         newwork.setCreator(oidcUser.getPreferredUsername());
         newwork.setPriority(Priority.NONE);
         newwork.setStatus(Status.NEWLY_CREATED);
-        
+
         //newwork.setFields(fields);
         Set<String> owners = new HashSet<>();
         owners.add(oidcUser.getPreferredUsername());
@@ -873,11 +878,11 @@ public abstract class WorkflowService<T extends WorkItem> {
         newwork.setWorklist(bizProcess.getStartEvents().iterator().next().getId());
         newwork.setWorklistUpdateTime(LocalDateTime.now());
 
-        T w =  save(newwork);
+        T w = save(newwork);
         return w;
     }
 
-     public T findById(final Long id, final String context) {
+    public T findById(final Long id, final String context) {
         T work = findById(
                 id,
                 context);
@@ -891,10 +896,6 @@ public abstract class WorkflowService<T extends WorkItem> {
 //        T w = getWorkItemRepo().save(work);
 //        return w;
 //    }
-     
-     
-
- 
     private T archiveApprovalsAndSave(T work) {
         work.getHistoricalApprovals().addAll(work.getApprovals());
         work.getApprovals().clear();
@@ -906,37 +907,33 @@ public abstract class WorkflowService<T extends WorkItem> {
         Optional<T> work = getWorkItemRepo().findById(id);
         return work.orElse(null);
     }
-    
-     public Integer countWorkByOwner(String username){
-        Long count =  getWorkItemRepo().countByOwner(username);//count(whereOwnersContains(username));
+
+    public Integer countWorkByOwner(String username) {
+        Long count = getWorkItemRepo().countByOwner(username);//count(whereOwnersContains(username));
         return count.intValue();
     }
-     
-     
-    
-     public DataProvider getWorkByOwner(String username, PageNav pageNav) {
+
+    public DataProvider getWorkByOwner(String username, PageNav pageNav) {
         //build data provider
         var dp = new AbstractBackEndDataProvider<T, Void>() {
             @Override
             protected Stream<T> fetchFromBackEnd(Query<T, Void> query) {
                 QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
-                
-                Sort.Direction sort =   so==null
-                                        ?Sort.Direction.DESC
-                                        :(
-                                            SortDirection.ASCENDING.equals(so.getDirection())
-                                            ?Sort.Direction.ASC
-                                            :Sort.Direction.DESC
-                                        );
-                String sorted = so==null
-                                ?"id"
-                                :so.getSorted();
+
+                Sort.Direction sort = so == null
+                        ? Sort.Direction.DESC
+                        : (SortDirection.ASCENDING.equals(so.getDirection())
+                        ? Sort.Direction.ASC
+                        : Sort.Direction.DESC);
+                String sorted = so == null
+                        ? "id"
+                        : so.getSorted();
                 query.getPage();
                 Page<T> finapps = getWorkItemRepo().findByOwner(username,
-                    PageRequest.of(
-                            pageNav.getPage() - 1,
-                            pageNav.getMaxCountPerPage(),
-                            Sort.by(sort, sorted))
+                        PageRequest.of(
+                                pageNav.getPage() - 1,
+                                pageNav.getMaxCountPerPage(),
+                                Sort.by(sort, sorted))
                 );
                 return finapps.stream();
             }
@@ -954,36 +951,34 @@ public abstract class WorkflowService<T extends WorkItem> {
         };
         return dp;
     }
-    
-     public Integer countWorkByCreator(String username){
-        Long count =  getWorkItemRepo().count(whereCreatorEquals(username));
+
+    public Integer countWorkByCreator(String username) {
+        Long count = getWorkItemRepo().count(whereCreatorEquals(username));
         return count.intValue();
     }
 
-     public DataProvider getWorkByCreator(String username, PageNav pageNav) {
+    public DataProvider getWorkByCreator(String username, PageNav pageNav) {
         //build data provider
         var dp = new AbstractBackEndDataProvider<T, Void>() {
             @Override
             protected Stream<T> fetchFromBackEnd(Query<T, Void> query) {
                 QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
-                
-                Sort.Direction sort =   so==null
-                                        ?Sort.Direction.DESC
-                                        :(
-                                            SortDirection.ASCENDING.equals(so.getDirection())
-                                            ?Sort.Direction.ASC
-                                            :Sort.Direction.DESC
-                                        );
-                String sorted = so==null
-                                ?"id"
-                                :so.getSorted();
+
+                Sort.Direction sort = so == null
+                        ? Sort.Direction.DESC
+                        : (SortDirection.ASCENDING.equals(so.getDirection())
+                        ? Sort.Direction.ASC
+                        : Sort.Direction.DESC);
+                String sorted = so == null
+                        ? "id"
+                        : so.getSorted();
                 query.getPage();
                 Page<T> finapps = getWorkItemRepo().findAll(
-                    whereCreatorEquals(username),
-                    PageRequest.of(
-                            pageNav.getPage() - 1,
-                            pageNav.getMaxCountPerPage(),
-                            Sort.by(sort, sorted))
+                        whereCreatorEquals(username),
+                        PageRequest.of(
+                                pageNav.getPage() - 1,
+                                pageNav.getMaxCountPerPage(),
+                                Sort.by(sort, sorted))
                 );
                 return finapps.stream();
             }
@@ -1001,35 +996,33 @@ public abstract class WorkflowService<T extends WorkItem> {
         };
         return dp;
     }
-    
-     public Integer countWorkByWorklist(String worklist){
-        Long count =  getWorkItemRepo().countByWorklistAndNoOwner(worklist);//count(whereWorklistEquals(worklist));
+
+    public Integer countWorkByWorklist(String worklist) {
+        Long count = getWorkItemRepo().countByWorklistAndNoOwner(worklist);//count(whereWorklistEquals(worklist));
         return count.intValue();
     }
-    
-     public DataProvider getWorkByWorklist(String worklist, PageNav pageNav) {
+
+    public DataProvider getWorkByWorklist(String worklist, PageNav pageNav) {
         //build data provider
         var dp = new AbstractBackEndDataProvider<T, Void>() {
             @Override
             protected Stream<T> fetchFromBackEnd(Query<T, Void> query) {
                 QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
-                
-                Sort.Direction sort =   so==null
-                                        ?Sort.Direction.DESC
-                                        :(
-                                            SortDirection.ASCENDING.equals(so.getDirection())
-                                            ?Sort.Direction.ASC
-                                            :Sort.Direction.DESC
-                                        );
-                String sorted = so==null
-                                ?"id"
-                                :so.getSorted();
+
+                Sort.Direction sort = so == null
+                        ? Sort.Direction.DESC
+                        : (SortDirection.ASCENDING.equals(so.getDirection())
+                        ? Sort.Direction.ASC
+                        : Sort.Direction.DESC);
+                String sorted = so == null
+                        ? "id"
+                        : so.getSorted();
                 query.getPage();
                 Page<T> finapps = getWorkItemRepo().findByWorklistAndNoOwner(worklist,
-                    PageRequest.of(
-                            pageNav.getPage() - 1,
-                            pageNav.getMaxCountPerPage(),
-                            Sort.by(sort, sorted))
+                        PageRequest.of(
+                                pageNav.getPage() - 1,
+                                pageNav.getMaxCountPerPage(),
+                                Sort.by(sort, sorted))
                 );
                 return finapps.stream();
             }
@@ -1047,7 +1040,6 @@ public abstract class WorkflowService<T extends WorkItem> {
         };
         return dp;
     }
- 
 
 //    private Specification<T> whereOwnersContains(String username) {
 //        return (workItem, cq, cb) -> {
@@ -1058,7 +1050,6 @@ public abstract class WorkflowService<T extends WorkItem> {
 //            return cb.literal(users).in(workItem.get("owners").as(Set.class));
 //        };
 //    }
-
     private Specification<T> whereCreatorEquals(String username) {
         return (workItem, cq, cb) -> {
             return cb.equal(workItem.get("creator"), username);
@@ -1073,12 +1064,13 @@ public abstract class WorkflowService<T extends WorkItem> {
 //            );
 //        };
 //    }
+   
 
     /**
      * @return the workItemRepo
      */
     public abstract WorkItemRepository<T> getWorkItemRepo();
-    
+
     /**
      * @return the scripting
      */
@@ -1123,8 +1115,6 @@ public abstract class WorkflowService<T extends WorkItem> {
     public final void setBizUserService(BizUserService bizUserService) {
         this.bizUserService = bizUserService;
     }
-
-   
 
     /**
      * @return the expr

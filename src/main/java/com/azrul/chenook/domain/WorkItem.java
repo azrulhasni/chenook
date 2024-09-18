@@ -21,6 +21,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
@@ -38,6 +39,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * @author azrul
  */
 @Entity
+@Table(name = "work_item")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "item_type",
         discriminatorType = DiscriminatorType.STRING)

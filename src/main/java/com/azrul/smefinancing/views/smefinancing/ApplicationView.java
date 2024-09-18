@@ -87,7 +87,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                     (wp, startEvent) -> {
                         FinApplication finapp = new FinApplication();
                         finapp.setApplicationDate(LocalDateTime.now());
-                        finapp = finappService.initAndSave(finapp, oidcUser, "SME_FIN", startEvent, bizProcess);
+                        finapp = finappService.init(finapp, oidcUser, "SME_FIN", startEvent, bizProcess);
                         
 //                        finapp = finappService.save(finapp, oidcUser.getPreferredUsername());
                         showApplicationDialog(

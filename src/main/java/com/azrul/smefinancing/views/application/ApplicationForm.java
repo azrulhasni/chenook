@@ -20,6 +20,13 @@ import com.azrul.smefinancing.service.ApplicantService;
 import com.azrul.smefinancing.service.FinApplicationService;
 import com.azrul.smefinancing.views.applicant.ApplicantForm;
 import com.azrul.chenook.service.BadgeUtils;
+import com.azrul.chenook.views.common.WorkflowAwareBigDecimalField;
+import com.azrul.chenook.views.common.WorkflowAwareComboBox;
+import com.azrul.chenook.views.common.WorkflowAwareDateTimePicker;
+import com.azrul.chenook.views.common.WorkflowAwareMoneyField;
+import com.azrul.chenook.views.common.WorkflowAwareSelect;
+import com.azrul.chenook.views.common.WorkflowAwareTextArea;
+import com.azrul.chenook.views.common.WorkflowAwareTextField;
 import com.azrul.smefinancing.views.common.Editable;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -37,6 +44,7 @@ import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.converter.StringToLongConverter;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
@@ -49,23 +57,24 @@ import java.util.Set;
 import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.vaadin.addons.MoneyField;
 
 public class ApplicationForm extends Dialog {
 
-    private static final String PREFIX_MYR = "MYR ";
+//    private static final String PREFIX_MYR = "MYR ";
     private static final String ADD_APPLICANT = "Add applicant";
-    private static final String APPLICATION_ID_LABEL = "Application ID (AA Number)";
-    private static final String BUSINESS_NAME_LABEL = "Business Name";
-    private static final String ADDRESS_LABEL = "Address";
-    private static final String POSTAL_CODE_LABEL = "Postal code";
-    private static final String STATE_LABEL = "State";
-    private static final String APPLICATION_DATE_LABEL = "Application date";
-    private static final String SSM_REGISTRATION_LABEL = "SSM Registration";
-    //private static final String STATUS_LABEL = "Status";
-    private static final String FINANCING_APPLIED_LABEL = "Financing Applied";
-    private static final String REASON_FOR_FINANCING_LABEL = "Reason for financing";
+//    private static final String APPLICATION_ID_LABEL = "Application ID (AA Number)";
+//    private static final String BUSINESS_NAME_LABEL = "Business Name";
+//    private static final String ADDRESS_LABEL = "Address";
+//    private static final String POSTAL_CODE_LABEL = "Postal code";
+//    private static final String STATE_LABEL = "State";
+//    private static final String APPLICATION_DATE_LABEL = "Application date";
+//    private static final String SSM_REGISTRATION_LABEL = "SSM Registration";
+//    //private static final String STATUS_LABEL = "Status";
+//    private static final String FINANCING_APPLIED_LABEL = "Financing Applied";
+//    private static final String REASON_FOR_FINANCING_LABEL = "Reason for financing";
     private String DATETIME_FORMAT;
-    private DateTimeFormatter dateTimeFormatter;
+    //private DateTimeFormatter dateTimeFormatter;
 
     public ApplicationForm(
             StartEvent startEvent,
@@ -85,7 +94,7 @@ public class ApplicationForm extends Dialog {
     ) {
 
         this.DATETIME_FORMAT = dateTimeFormat;
-        this.dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
+        //this.dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
         BizProcess bizProcess = workflowConfig.rootBizProcess();
         Editable editable = isEditable(
                 work,
@@ -110,8 +119,10 @@ public class ApplicationForm extends Dialog {
                 work,
                 oidcUser,
                 false,
-                a -> {},
-                a -> {}
+                a -> {
+                },
+                a -> {
+                }
         );
 
         this.add(workflowPanel);
@@ -158,7 +169,7 @@ public class ApplicationForm extends Dialog {
             OidcUser oidcUser
     ) {
         Set<String> applicantsEmail = applicantService.getApplicantsEmail(work);
-
+        
         int state = 0;
         if (oidcUser.getAuthorities().stream().anyMatch(sga -> {
             return StringUtils.equals(sga.getAuthority(), "ROLE_FINAPP_ADMIN");
@@ -227,24 +238,19 @@ public class ApplicationForm extends Dialog {
         Boolean enabled = (editable == Editable.YES);
         Boolean enabledForStatus = (editable == Editable.YES_AS_ADMIN);
 
-        TextField tfID = createTextField(APPLICATION_ID_LABEL, enabled, false);
-        binder.forField(tfID).bindReadOnly(fa -> fa.getId().toString());
+        var tfID = WorkflowAwareTextField.create("id", false, binder, new StringToLongConverter("Not a number"));
         form.add(tfID);
 
-        TextField tfName = createTextField(BUSINESS_NAME_LABEL, enabled, true);
-        binder.forField(tfName).asRequired().bind(FinApplication::getName, FinApplication::setName);
+        TextField tfName = WorkflowAwareTextField.create("name", true, binder);
         form.add(tfName);
 
-        TextArea tfAddress = createTextArea(ADDRESS_LABEL, enabled);
-        binder.bind(tfAddress, FinApplication::getAddress, FinApplication::setAddress);
+        TextArea tfAddress = WorkflowAwareTextArea.create("address", binder);
         form.add(tfAddress);
 
-        TextField tfPostalCode = createTextField(POSTAL_CODE_LABEL, enabled, true);
-        binder.bind(tfPostalCode, FinApplication::getPostalCode, FinApplication::setPostalCode);
+        TextField tfPostalCode = WorkflowAwareTextField.create("postalCode", true, binder);
         form.add(tfPostalCode);
 
-        ComboBox<String> cbState = createComboBox(STATE_LABEL, enabled);
-        cbState.setItems(List.of(
+        ComboBox<String> cbState = WorkflowAwareComboBox.create("state", binder,Set.of(
                 "Johor",
                 "Kedah",
                 "Kelantan",
@@ -262,70 +268,61 @@ public class ApplicationForm extends Dialog {
                 "W. Persekutuan Labuan",
                 "W. Persekutuan Putrajaya"
         ));
-        binder.bind(cbState, FinApplication::getState, FinApplication::setState);
+        //cbState.setItems();
         form.add(cbState);
 
-        DateTimePicker dtpApplicationDate = createDateTimePicker(APPLICATION_DATE_LABEL, false);
-        binder.bind(dtpApplicationDate, FinApplication::getApplicationDate, FinApplication::setApplicationDate);
+        DateTimePicker dtpApplicationDate = WorkflowAwareDateTimePicker.create("applicationDate", binder);
         form.add(dtpApplicationDate);
 
-        TextField tfBizRegNumber = createTextField(SSM_REGISTRATION_LABEL, enabled, true);
-        binder.bind(tfBizRegNumber, FinApplication::getSsmRegistrationNumber, FinApplication::setSsmRegistrationNumber);
+        TextField tfBizRegNumber = WorkflowAwareTextField.create("ssmRegistrationNumber", true, binder);
         form.add(tfBizRegNumber);
 
-        BigDecimalField tfFinRequested = createBigDecimalField(FINANCING_APPLIED_LABEL, enabled);
-        binder.bind(tfFinRequested, FinApplication::getFinancingRequested, FinApplication::setFinancingRequested);
+        MoneyField tfFinRequested = WorkflowAwareMoneyField.create("financingRequested", "MYR", binder);
         form.add(tfFinRequested);
 
-        TextArea taReasonForFinancing = createTextArea(REASON_FOR_FINANCING_LABEL, enabled);
-        binder.bind(taReasonForFinancing, FinApplication::getReasonForFinancing, FinApplication::setReasonForFinancing);
+        TextArea taReasonForFinancing = WorkflowAwareTextArea.create("reasonForFinancing", binder);
         form.add(taReasonForFinancing);
 
         return form;
     }
 
-    private TextField createTextField(String label, boolean editable, boolean required) {
-        TextField textField = new TextField(label);
-        textField.setReadOnly(!editable);
-        if (required) {
-            textField.setRequiredIndicatorVisible(true);
-        }
-        return textField;
-    }
-
-    private TextArea createTextArea(String label, boolean editable) {
-        TextArea textArea = new TextArea(label);
-        textArea.setMaxLength(255);
-        textArea.setReadOnly(!editable);
-        return textArea;
-    }
-
-    private <T> ComboBox<T> createComboBox(String label, boolean editable) {
-        ComboBox<T> comboBox = new ComboBox<>(label);
-        comboBox.setReadOnly(!editable);
-        return comboBox;
-    }
-
-    private <T> Select<T> createSelect(String label, boolean editable) {
-        Select<T> select = new Select<>();
-        select.setLabel(label);
-        select.setReadOnly(!editable);
-        return select;
-    }
-
-    private DateTimePicker createDateTimePicker(String label, boolean editable) {
-        DateTimePicker dateTimePicker = new DateTimePicker(label);
-        dateTimePicker.setReadOnly(!editable);
-        return dateTimePicker;
-    }
-
-    private BigDecimalField createBigDecimalField(String label, boolean editable) {
-        BigDecimalField bigDecimalField = new BigDecimalField(label);
-        bigDecimalField.setPrefixComponent(new NativeLabel(PREFIX_MYR));
-        bigDecimalField.setReadOnly(!editable);
-        return bigDecimalField;
-    }
-
+//    private TextField createTextField(String label, boolean editable, boolean required) {
+//        TextField textField = new TextField(label);
+//        textField.setReadOnly(!editable);
+//        if (required) {
+//            textField.setRequiredIndicatorVisible(true);
+//        }
+//        return textField;
+//    }
+//    private <T extends WorkItem> TextArea createTextArea(Binder<T> binder,String  fieldName, boolean editable) {
+//        WorkflowAwareTextArea textArea = new WorkflowAwareTextArea(fieldName, binder);
+//        textArea.setReadOnly(!editable);
+//        return textArea;
+//    }
+//
+//    private <T extends WorkItem> ComboBox<T> createComboBox(Binder<T> binder,String  fieldName, boolean editable) {
+//        WorkflowAwareComboBox<T> comboBox = new  WorkflowAwareComboBox<>(fieldName, binder);
+//        comboBox.setReadOnly(!editable);
+//        return comboBox;
+//    }
+//
+//    private <T extends WorkItem> Select<T> createSelect(Binder<T> binder,String  fieldName, boolean editable) {
+//        WorkflowAwareSelect<T> select = new WorkflowAwareSelect<>(fieldName, binder);
+//        select.setReadOnly(!editable);
+//        return select;
+//    }
+//
+//    private  <T extends WorkItem> DateTimePicker createDateTimePicker(Binder<T> binder,String  fieldName, boolean editable) {
+//        WorkflowAwareDateTimePicker<T> dateTimePicker = new WorkflowAwareDateTimePicker(fieldName, binder);
+//        dateTimePicker.setReadOnly(!editable);
+//        return dateTimePicker;
+//    }
+//
+//    private  <T extends WorkItem> BigDecimalField createBigDecimalField(Binder<T> binder,String  fieldName, boolean editable) {
+//        WorkflowAwareBigDecimalField<T> bigDecimalField = new WorkflowAwareBigDecimalField<>(fieldName, binder);
+//        bigDecimalField.setReadOnly(!editable);
+//        return bigDecimalField;
+//    }
     private VerticalLayout createApplicantPanel(
             FinApplication finapp,
             ApplicantService applicantService,
@@ -529,28 +526,25 @@ public class ApplicationForm extends Dialog {
             Consumer<FinApplication> onPostSave
     ) {
         Button btnSaveFinApp = new Button("Save and submit", e1 -> {
-            Set<String> errors = validateApplication(applicantService, workflowPanel,binder);
+            Set<String> errors = validateApplication(applicantService, workflowPanel, binder);
             if (errors.isEmpty()) {
                 FinApplication finapp = binder.getBean();
                 if (finapp.getStatus() == Status.NEWLY_CREATED) {
                     finapp.setStatus(Status.DRAFT);
                 }
-                Optional<Approval> oapproval = finapp.getApprovals().stream().filter(a->StringUtils.equals(oidcUser.getPreferredUsername(), a.getUsername())).findAny();
-                oapproval.ifPresent(approval->{
+                Optional<Approval> oapproval = finapp.getApprovals().stream().filter(a -> StringUtils.equals(oidcUser.getPreferredUsername(), a.getUsername())).findAny();
+                oapproval.ifPresent(approval -> {
                     approval.setApprovalDateTime(LocalDateTime.now());
                     approval.setApproved(workflowPanel.getApproval());
-                   
+
                 });
                 finappService.run(finapp, oidcUser.getPreferredUsername(), bizProcess, false);
                 onPostSave.accept(finapp);
                 this.close();
             } else {
-                StringBuilder errMsg = new StringBuilder();
                 for (String err : errors) {
-                    errMsg.append(err);
-                    errMsg.append("\n");
+                   Notification.show(err);
                 }
-                Notification.show(errMsg.toString());
             }
         });
         return btnSaveFinApp;
@@ -614,7 +608,7 @@ public class ApplicationForm extends Dialog {
         if (applicantService.countApplicants(finapp) <= 0) {
             errors.add("No applicant");
         }
-        if (workflowPanel.validate()==false){
+        if (workflowPanel.validate() == false) {
             errors.add("Approval not set");
         }
         applicantService.getApplicants(finapp).forEach(applicant -> {

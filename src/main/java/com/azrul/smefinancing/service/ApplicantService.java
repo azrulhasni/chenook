@@ -78,8 +78,10 @@ public class ApplicantService {
     }
     
     public Set<String> getApplicantsEmail(FinApplication finapp){
-         List<Applicant> applicants =  this.applicantRepo.findAll(whereApplicationEquals(finapp));
-         return applicants.stream().map(a->a.getEmail()).collect(Collectors.toSet());
+        
+            List<Applicant> applicants =  this.applicantRepo.findAll(whereApplicationEquals(finapp));
+            return applicants.stream().map(a->a.getEmail()).collect(Collectors.toSet());
+       
     }
     
     public Set<Applicant> getApplicants(FinApplication finapp){
