@@ -4,14 +4,21 @@
  */
 package com.azrul.chenook.views.common;
 
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.contextmenu.ContextMenu;
+import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.NativeLabel;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.DataProvider;
+import com.vaadin.flow.theme.lumo.LumoIcon;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -57,33 +64,61 @@ public class PageNav extends HorizontalLayout {
         this.sortableFields = sortableFields;
         this.sortField = sortField; 
         this.asc=asc;
-        
+        this.setPadding(true);
+        this.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         
        
         String uniqueDisc = "PAGE_NAV";
         //this.setSpacing(false);
-        firstPage = new Button("<<");
+        firstPage = new Button();
+        firstPage.setIcon(VaadinIcon.FAST_BACKWARD.create());
         firstPage.setId("btnFirstPage-"+uniqueDisc);
         firstPage.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        finalPage = new Button(">>");
+        finalPage = new Button();
+        finalPage.setIcon(VaadinIcon.FAST_FORWARD.create());
         finalPage.setId("btnFinalStage-"+uniqueDisc);
         finalPage.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        nextPage = new Button(">");
+        nextPage = new Button();
+        nextPage.setIcon(VaadinIcon.CARET_RIGHT.create());
         nextPage.setId("btnNextPage-"+uniqueDisc);
         nextPage.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        previousPage = new Button("<");
+        previousPage = new Button();
+        previousPage.setIcon(VaadinIcon.CARET_LEFT.create());
         previousPage.setId("btnLastPage-"+uniqueDisc);
         previousPage.addThemeVariants(ButtonVariant.LUMO_SMALL);
         currentPage = new NativeLabel();
-        sortBy = new Button("=");
+        sortBy = new Button();
+        sortBy.setIcon(LumoIcon.ORDERED_LIST.create());
+        sortBy.addThemeVariants(ButtonVariant.LUMO_SMALL);
         ContextMenu sortMenu = new ContextMenu();
         
         sortMenu.setTarget(sortBy);
         sortMenu.setOpenOnClick(true);
+       
+        
+        List<TextField> sortLabels = new ArrayList<>(); 
         for (var sortItem:sortableFields.entrySet()){
-            sortMenu.addItem(sortItem.getValue(),e->{
-            
+            TextField label = new TextField();
+            label.setValue(sortItem.getValue());
+            label.setReadOnly(true);
+            sortLabels.add(label);
+            MenuItem mi = sortMenu.addItem(label,e->{
+                this.sortField = sortItem.getKey();
+                //reset
+                for (var l:sortLabels){
+                    l.setSuffixComponent(new Div());
+                }
+                //depending on asc or desc - change icon
+                if (this.asc){
+                    this.asc=false;
+                    label.setSuffixComponent(VaadinIcon.ANGLE_DOWN.create());
+                }else{
+                    this.asc=true;
+                    label.setSuffixComponent(VaadinIcon.ANGLE_UP.create());
+                }
+                grid.getDataProvider().refreshAll();//this will use sortField and asc
             });
+            
         }
         
         if (totalDataCount==null || totalDataCount<=0){
@@ -99,9 +134,10 @@ public class PageNav extends HorizontalLayout {
         currentPage.setText("0");
         add(nextPage);
         add(finalPage);
+        add(sortBy);
         setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        getThemeList().removeAll(List.of("spacing-xs", "spacing-s", "spacing", "spacing-l", "spacing-xl"));
-        getThemeList().add("spacing-xs");
+//        getThemeList().removeAll(List.of("spacing-xs", "spacing-s", "spacing", "spacing-l", "spacing-xl"));
+//        getThemeList().add("spacing-xs");
         
         
         

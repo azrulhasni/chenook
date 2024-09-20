@@ -12,8 +12,8 @@ import java.lang.annotation.RetentionPolicy;
  * @author azrul
  */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface WorkField {
-    String displayName();
-    String[] prefix() default {};
-    boolean sortable() default false;
+public @interface NumberRange {
+    long min() default -1;
+    long max() default -1;
+    String[] message() default {};
 }

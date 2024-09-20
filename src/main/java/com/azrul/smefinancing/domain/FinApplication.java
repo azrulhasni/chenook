@@ -8,7 +8,6 @@ import com.azrul.chenook.annotation.DateTimeFormat;
 import com.azrul.chenook.annotation.Matcher;
 import com.azrul.chenook.annotation.NotBlankValue;
 import com.azrul.chenook.annotation.NotNullValue;
-import com.azrul.chenook.annotation.Range;
 import com.azrul.chenook.annotation.WorkField;
 import com.azrul.chenook.domain.WorkItem;
 import io.hypersistence.utils.hibernate.type.money.MonetaryAmountType;
@@ -37,6 +36,9 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import com.azrul.chenook.annotation.NumberRange;
+import com.azrul.chenook.domain.Status;
+import java.text.NumberFormat;
 
 /**
  *
@@ -78,8 +80,8 @@ public class FinApplication extends WorkItem {
     private String mainBusinessActivity;
 
     @NotNullValue
-    @Range(min = 1000, max=50000, message = "Financing requested should be more than MYR 1000 and less than MYR50000")
-    @WorkField(displayName = "Financing requested", prefix = "MYR")
+    @NumberRange(min = 1000, max=50000, message = "Financing requested should be more than MYR 1000 and less than MYR50000")
+    @WorkField(displayName = "Financing requested", prefix = "MYR", sortable = true)
     @AttributeOverride(
             name = "amount",
             column = @Column(name = "financing_amount")
@@ -93,7 +95,7 @@ public class FinApplication extends WorkItem {
     private MonetaryAmount financingRequested;
 
     @NotNullValue
-    @WorkField(displayName = "Application date")
+    @WorkField(displayName = "Application date", sortable=true)
     @DateTimeFormat(format = "${finapp.datetime.format}")
     private LocalDateTime applicationDate;
 
@@ -257,6 +259,12 @@ public class FinApplication extends WorkItem {
     public LocalDateTime getWorklistUpdateTime() {
         return super.getWorklistUpdateTime();
     }
+    
+    @Override
+    @WorkField(displayName = "Status", sortable=true)
+    public Status getStatus() {
+        return super.getStatus();
+    }
 
     /**
      * @return the createdBy
@@ -408,8 +416,13 @@ public class FinApplication extends WorkItem {
 
     @Override
     public String getTitle() {
+        
         if (this.getFinancingRequested() != null) {
-            return "SME Financing (" + this.getFinancingRequested().getCurrency().getCurrencyCode()+ this.getFinancingRequested().getNumber().toString()+")";
+            return "SME Financing ("
+                    + this.getFinancingRequested().getCurrency().getCurrencyCode()
+                    + " "
+                    + NumberFormat.getInstance().format(this.getFinancingRequested().getNumber())
+                    + ")";
         } else {
             return "SME Financing";
         }

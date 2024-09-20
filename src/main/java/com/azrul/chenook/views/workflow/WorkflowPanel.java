@@ -11,6 +11,7 @@ import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.BizUserService;
 import com.azrul.chenook.service.BadgeUtils;
 import com.azrul.chenook.service.WorkflowService;
+import com.azrul.chenook.utils.WorkflowUtils;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -39,8 +40,6 @@ public class WorkflowPanel<T> extends FormLayout {
     
     private ComboBox<String> cbApprove ;
 
-    private static final String STATUS_LABEL = "Status";
-
     public WorkflowPanel(
             final WorkItem work,
             final OidcUser user,
@@ -49,8 +48,8 @@ public class WorkflowPanel<T> extends FormLayout {
             final Consumer<Attachment> onPostRemove
     ) {
         ApplicationContextHolder.autowireBean(this);
-
-        Select<Status> cbStatus = createSelect(STATUS_LABEL, editable);
+        var fieldDisplayMap = WorkflowUtils.getFieldNameDisplayNameMap(work.getClass());
+        Select<Status> cbStatus = createSelect(fieldDisplayMap.get("status"), editable);
         cbStatus.setItems(Status.values());
         cbStatus.setRenderer(badgeUtils.createStatusBadgeRenderer());
         if (work!=null){

@@ -889,17 +889,9 @@ public abstract class WorkflowService<T extends WorkItem> {
         return work;
     }
 
-//     public T createApprovalAndSave(T work) {
-//
-//        work.getHistoricalApprovals().addAll(work.getApprovals());
-//        work.getApprovals().clear();
-//        T w = getWorkItemRepo().save(work);
-//        return w;
-//    }
     private T archiveApprovalsAndSave(T work) {
         work.getHistoricalApprovals().addAll(work.getApprovals());
         work.getApprovals().clear();
-        //T w = getWorkItemRepo().save(work);
         return work;
     }
 
@@ -918,19 +910,30 @@ public abstract class WorkflowService<T extends WorkItem> {
         var dp = new AbstractBackEndDataProvider<T, Void>() {
             @Override
             protected Stream<T> fetchFromBackEnd(Query<T, Void> query) {
-                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
+//                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
 
-                Sort.Direction sort = so == null
-                        ? Sort.Direction.DESC
-                        : (SortDirection.ASCENDING.equals(so.getDirection())
-                        ? Sort.Direction.ASC
-                        : Sort.Direction.DESC);
-                String sorted = so == null
-                        ? "id"
-                        : so.getSorted();
+//                Sort.Direction sort = so == null
+//                        ? Sort.Direction.DESC
+//                        : (SortDirection.ASCENDING.equals(so.getDirection())
+//                        ? Sort.Direction.ASC
+//                        : Sort.Direction.DESC);
+//                String sorted = so == null
+//                        ? "id"
+//                        : so.getSorted();
+//                query.getPage();
+//                Page<T> finapps = getWorkItemRepo().findByOwner(username,
+//                        PageRequest.of(
+//                                pageNav.getPage() - 1,
+//                                pageNav.getMaxCountPerPage(),
+//                                Sort.by(sort, sorted))
+//                );
+//                return finapps.stream();
+                Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
+                String sorted = pageNav.getSortField();
                 query.getPage();
+
                 Page<T> finapps = getWorkItemRepo().findByOwner(username,
-                        PageRequest.of(
+                       PageRequest.of(
                                 pageNav.getPage() - 1,
                                 pageNav.getMaxCountPerPage(),
                                 Sort.by(sort, sorted))
@@ -962,20 +965,13 @@ public abstract class WorkflowService<T extends WorkItem> {
         var dp = new AbstractBackEndDataProvider<T, Void>() {
             @Override
             protected Stream<T> fetchFromBackEnd(Query<T, Void> query) {
-                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
-
-                Sort.Direction sort = so == null
-                        ? Sort.Direction.DESC
-                        : (SortDirection.ASCENDING.equals(so.getDirection())
-                        ? Sort.Direction.ASC
-                        : Sort.Direction.DESC);
-                String sorted = so == null
-                        ? "id"
-                        : so.getSorted();
+                Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
+                String sorted = pageNav.getSortField();
                 query.getPage();
+
                 Page<T> finapps = getWorkItemRepo().findAll(
                         whereCreatorEquals(username),
-                        PageRequest.of(
+                       PageRequest.of(
                                 pageNav.getPage() - 1,
                                 pageNav.getMaxCountPerPage(),
                                 Sort.by(sort, sorted))
@@ -1009,17 +1005,28 @@ public abstract class WorkflowService<T extends WorkItem> {
             protected Stream<T> fetchFromBackEnd(Query<T, Void> query) {
                 QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
 
-                Sort.Direction sort = so == null
-                        ? Sort.Direction.DESC
-                        : (SortDirection.ASCENDING.equals(so.getDirection())
-                        ? Sort.Direction.ASC
-                        : Sort.Direction.DESC);
-                String sorted = so == null
-                        ? "id"
-                        : so.getSorted();
+//                Sort.Direction sort = so == null
+//                        ? Sort.Direction.DESC
+//                        : (SortDirection.ASCENDING.equals(so.getDirection())
+//                        ? Sort.Direction.ASC
+//                        : Sort.Direction.DESC);
+//                String sorted = so == null
+//                        ? "id"
+//                        : so.getSorted();
+//                query.getPage();
+//                Page<T> finapps = getWorkItemRepo().findByWorklistAndNoOwner(worklist,
+//                        PageRequest.of(
+//                                pageNav.getPage() - 1,
+//                                pageNav.getMaxCountPerPage(),
+//                                Sort.by(sort, sorted))
+//                );
+//                return finapps.stream();
+                 Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
+                String sorted = pageNav.getSortField();
                 query.getPage();
+
                 Page<T> finapps = getWorkItemRepo().findByWorklistAndNoOwner(worklist,
-                        PageRequest.of(
+                       PageRequest.of(
                                 pageNav.getPage() - 1,
                                 pageNav.getMaxCountPerPage(),
                                 Sort.by(sort, sorted))
@@ -1064,8 +1071,6 @@ public abstract class WorkflowService<T extends WorkItem> {
 //            );
 //        };
 //    }
-   
-
     /**
      * @return the workItemRepo
      */

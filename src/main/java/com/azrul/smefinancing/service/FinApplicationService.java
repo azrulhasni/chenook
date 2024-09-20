@@ -59,27 +59,27 @@ public class FinApplicationService extends WorkflowService<FinApplication> {
         return ofinapp.orElse(null);
     }
 
-    public FetchCallback<FinApplication, Void> getApplicationsByUsernameOrEmail(String username, String email) {
-        return query -> {
-            var vaadinSortOrders = query.getSortOrders();
-            var springSortOrders = new ArrayList<Sort.Order>();
-            for (QuerySortOrder so : vaadinSortOrders) {
-                String colKey = so.getSorted();
-                if (so.getDirection() == SortDirection.ASCENDING) {
-                    springSortOrders.add(Sort.Order.asc(colKey));
-                }
-            }
-            return finAppRepo.findAll(
-                    //whereUsernameEquals(username),
-                    whereUsernameEqualsOrApplicantEmailEquals(username,email),
-                    PageRequest.of(
-                            query.getPage(),
-                            query.getPageSize(),
-                            Sort.by(springSortOrders)
-                    )
-            ).stream();
-        };
-    }
+//    public FetchCallback<FinApplication, Void> getApplicationsByUsernameOrEmail(String username, String email) {
+//        return query -> {
+//            var vaadinSortOrders = query.getSortOrders();
+//            var springSortOrders = new ArrayList<Sort.Order>();
+//            for (QuerySortOrder so : vaadinSortOrders) {
+//                String colKey = so.getSorted();
+//                if (so.getDirection() == SortDirection.ASCENDING) {
+//                    springSortOrders.add(Sort.Order.asc(colKey));
+//                }
+//            }
+//            return finAppRepo.findAll(
+//                    //whereUsernameEquals(username),
+//                    whereUsernameEqualsOrApplicantEmailEquals(username,email),
+//                    PageRequest.of(
+//                            query.getPage(),
+//                            query.getPageSize(),
+//                            Sort.by(springSortOrders)
+//                    )
+//            ).stream();
+//        };
+//    }
     
     private Page<FinApplication> getFinApplications(
             Integer page,
@@ -93,48 +93,50 @@ public class FinApplicationService extends WorkflowService<FinApplication> {
         return finAppRepo.count();
     }
     
-    public DataProvider buildFinApplicationsDataProvider(PageNav pageNav) {
-        //build data provider
-        var dp = new AbstractBackEndDataProvider<FinApplication, Void>() {
-            @Override
-            protected Stream<FinApplication> fetchFromBackEnd(Query<FinApplication, Void> query) {
-                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
-                
-                Sort.Direction sort =   so==null
-                                        ?Sort.Direction.DESC
-                                        :(
-                                            SortDirection.ASCENDING.equals(so.getDirection())
-                                            ?Sort.Direction.ASC
-                                            :Sort.Direction.DESC
-                                        );
-                String sorted = so==null
-                                ?"id"
-                                :so.getSorted();
-                query.getPage();
-
-                Page<FinApplication> finapps = getFinApplications(
-                        pageNav.getPage() - 1,
-                        pageNav.getMaxCountPerPage(),
-                        Sort.by(sort, sorted)
-                );
-                return finapps.stream();
-            }
-
-            @Override
-            protected int sizeInBackEnd(Query<FinApplication, Void> query) {
-
-                return pageNav.getDataCountPerPage();
-            }
-
-            @Override
-            public String getId(FinApplication item) {
-
-                return item.getId().toString();
-            }
-
-        };
-        return dp;
-    }
+//    public DataProvider buildFinApplicationsDataProvider(PageNav pageNav) {
+//        //build data provider
+//        var dp = new AbstractBackEndDataProvider<FinApplication, Void>() {
+//            @Override
+//            protected Stream<FinApplication> fetchFromBackEnd(Query<FinApplication, Void> query) {
+//                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
+//                
+//                Sort.Direction sort =   so==null
+//                                        ?Sort.Direction.DESC
+//                                        :(
+//                                            SortDirection.ASCENDING.equals(so.getDirection())
+//                                            ?Sort.Direction.ASC
+//                                            :Sort.Direction.DESC
+//                                        );
+//                String sorted = so==null
+//                                ?"id"
+//                                :so.getSorted();
+//                Sort.Direction sort = pageNav.getAsc()?Sort.Direction.ASC:Sort.Direction.DESC;
+//                String sorted = pageNav.getSortField();
+//                query.getPage();
+//
+//                Page<FinApplication> finapps = getFinApplications(
+//                        pageNav.getPage() - 1,
+//                        pageNav.getMaxCountPerPage(),
+//                        Sort.by(sort, sorted)
+//                );
+//                return finapps.stream();
+//            }
+//
+//            @Override
+//            protected int sizeInBackEnd(Query<FinApplication, Void> query) {
+//
+//                return pageNav.getDataCountPerPage();
+//            }
+//
+//            @Override
+//            public String getId(FinApplication item) {
+//
+//                return item.getId().toString();
+//            }
+//
+//        };
+//        return dp;
+//    }
 
 //    @Transactional
 //    public FinApplication save(FinApplication finapp, String username) {

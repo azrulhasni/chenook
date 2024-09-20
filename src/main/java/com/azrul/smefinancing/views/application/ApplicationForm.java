@@ -20,6 +20,8 @@ import com.azrul.smefinancing.service.ApplicantService;
 import com.azrul.smefinancing.service.FinApplicationService;
 import com.azrul.smefinancing.views.applicant.ApplicantForm;
 import com.azrul.chenook.service.BadgeUtils;
+import com.azrul.chenook.utils.WorkflowUtils;
+import com.azrul.chenook.views.common.StringToUngroupLongConverter;
 import com.azrul.chenook.views.common.WorkflowAwareBigDecimalField;
 import com.azrul.chenook.views.common.WorkflowAwareComboBox;
 import com.azrul.chenook.views.common.WorkflowAwareDateTimePicker;
@@ -238,7 +240,7 @@ public class ApplicationForm extends Dialog {
         Boolean enabled = (editable == Editable.YES);
         Boolean enabledForStatus = (editable == Editable.YES_AS_ADMIN);
 
-        var tfID = WorkflowAwareTextField.create("id", false, binder, new StringToLongConverter("Not a number"));
+        var tfID = WorkflowAwareTextField.create("id", false, binder, new StringToUngroupLongConverter("Not a number"));
         form.add(tfID);
 
         TextField tfName = WorkflowAwareTextField.create("name", true, binder);
@@ -367,10 +369,15 @@ public class ApplicationForm extends Dialog {
             Editable editable,
             Grid<Applicant> gridApplicants
     ) {
-        Card card = new Card("Name: " + app.getFullName());
-        card.add(new NativeLabel("Email: " + app.getEmail()));
-        card.add(new NativeLabel("Position: " + app.getPosition()));
-        card.add(new NativeLabel("Phone: " + app.getPhoneNumber()));
+        Map<String,String> fieldNameDisplayNameMap = WorkflowUtils.getFieldNameDisplayNameMap(app.getClass());
+        Card card = new Card(
+                fieldNameDisplayNameMap.get("fullName")+
+                ": " + 
+                app.getFullName()!=null?app.getFullName():"");
+        
+        card.add(new NativeLabel(fieldNameDisplayNameMap.get("email")+": "+(app.getEmail()!=null?app.getEmail():"")));
+        card.add(new NativeLabel(fieldNameDisplayNameMap.get("type")+": "+(app.getType()!=null?app.getType().getText():"")));
+        card.add(new NativeLabel(fieldNameDisplayNameMap.get("phoneNumber")+": "+(app.getPhoneNumber()!=null?app.getPhoneNumber():"")));
 
         Button btnSeeMore = new Button("See more", e -> buildApplicantDialog(app, finapp, applicantService, user, editable, gridApplicants));
         Button btnRemove = new Button("Remove", e -> createRemoveApplicantDialog(app, applicantService, gridApplicants).open());

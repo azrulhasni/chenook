@@ -156,8 +156,7 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
         grid.setAllRowsVisible(true);
 
         this.add(grid);
-        grid.addComponentColumn(work
-                -> {
+        grid.addComponentColumn(work-> {
             VerticalLayout content = cardBuilder.apply(work);
             Span badge = badgeUtils.createStatusBadge(work.getStatus());
             Card card = new Card(work.getTitle(), badge);
@@ -165,7 +164,6 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
             HorizontalLayout btnPanel = new HorizontalLayout();
             btnPanel.add(new Button("See more", e -> {
                 showUpdateDialog.accept(this, null, work);
-
             }));
             card.add(btnPanel);
             return card;

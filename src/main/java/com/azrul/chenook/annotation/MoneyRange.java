@@ -12,7 +12,7 @@ import java.lang.annotation.RetentionPolicy;
  * @author azrul
  */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Range {
+public @interface MoneyRange {
     long min() default -1;
     long max() default -1;
     String[] message() default {};

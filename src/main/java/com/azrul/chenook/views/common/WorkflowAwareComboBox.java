@@ -4,7 +4,6 @@
  */
 package com.azrul.chenook.views.common;
 
-
 import com.azrul.chenook.annotation.NotNullValue;
 import com.azrul.chenook.annotation.WorkField;
 import com.azrul.chenook.utils.WorkflowUtils;
@@ -12,50 +11,60 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.Validator;
+import com.vaadin.flow.data.provider.BackEndDataProvider;
+import com.vaadin.flow.data.provider.DataProvider;
+import com.vaadin.flow.data.provider.ListDataProvider;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  *
  * @author azrul
  */
-public class WorkflowAwareComboBox<T,C> extends ComboBox<C>{
-    private WorkflowAwareComboBox(){}
+public class WorkflowAwareComboBox<T, C> extends ComboBox<C> {
+
+    private WorkflowAwareComboBox() {
+    }
     
-     public static <T,C> WorkflowAwareComboBox create(String fieldName, Binder<T> binder, Set<C> data) {
+    public static <T, C> WorkflowAwareComboBox create(String fieldName, Binder<T> binder, Set<C> data){
+        return create(fieldName, binder, field->field.setItems(data));
+    }
+    
+     public static <T, C> WorkflowAwareComboBox create(String fieldName, Binder<T> binder, BackEndDataProvider<String, Void> dp){
+        return create(fieldName, binder, field->field.setItems(dp));
+    }
+    
+   
+
+    public static <T, C> WorkflowAwareComboBox create(String fieldName, Binder<T> binder, Consumer<WorkflowAwareComboBox> dataSetter) {
         T workItem = binder.getBean();
         var field = new WorkflowAwareComboBox();
 
         List<Validator> validators = new ArrayList<>();
-       var annotations = WorkflowUtils.getAnnotations(workItem, fieldName);
-        if (annotations.containsKey(WorkField.class)) {
-            WorkField wf = (WorkField) annotations.get(WorkField.class);
-            field.setLabel(wf.displayName());
-            if (wf.prefix().length > 0) {
-                field.setPrefixComponent(new NativeLabel(wf.prefix()[0]));
-            }
-        }
-        if (annotations.containsKey(NotNullValue.class)) {
-            NotNullValue nb = (NotNullValue) annotations.get(NotNullValue.class);
-            field.setRequiredIndicatorVisible(true);
-
-            if (nb.message().length > 0) {
-                validators.add(new PresenceValidator(nb.message()[0]));
-            } else {
-                if (annotations.containsKey(WorkField.class)) {
-                    WorkField wf = (WorkField) annotations.get(WorkField.class);
-                    validators.add(new PresenceValidator("Field " + wf.displayName() + " is empty"));
-                } else {
-                    validators.add(new PresenceValidator("Field " + fieldName + " is empty"));
-                }
-            }
-        }
-        field.setItems(data);
-        var bindingBuilder = binder.forField(field);
+        var annoFieldDisplayMap = WorkflowUtils.getAnnotations(
+                workItem.getClass(), 
+                fieldName);
+        
+        var workfieldMap = WorkflowUtils.applyWorkField(
+                annoFieldDisplayMap,
+                field);
+        
+        validators.addAll(
+                WorkflowUtils.applyNotNull(
+                        annoFieldDisplayMap, 
+                        field, 
+                        workfieldMap, 
+                        fieldName));
        
-        for (var validator:validators){
+        dataSetter.accept(field);
+        var bindingBuilder = binder.forField(field);
+
+        for (var validator : validators) {
             bindingBuilder.withValidator(validator);
         }
         bindingBuilder.bind(fieldName);

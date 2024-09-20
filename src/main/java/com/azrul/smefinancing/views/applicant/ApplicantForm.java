@@ -1,5 +1,6 @@
 package com.azrul.smefinancing.views.applicant;
 
+import com.azrul.chenook.views.common.StringToUngroupLongConverter;
 import com.azrul.chenook.views.common.WorkflowAwareComboBox;
 import com.azrul.chenook.views.common.WorkflowAwareTextField;
 import com.azrul.smefinancing.domain.Applicant;
@@ -65,7 +66,7 @@ public class ApplicantForm extends Dialog {
         
         
         // Create form fields
-        TextField tfID = WorkflowAwareTextField.create("id", false, binder, new StringToLongConverter("Not a number"));
+        TextField tfID = WorkflowAwareTextField.create("id", false, binder, new StringToUngroupLongConverter("Not a number"));
         form.add(tfID);
         
         TextField tfFullName = WorkflowAwareTextField.create("fullName", true, binder);

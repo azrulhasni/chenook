@@ -33,29 +33,21 @@ public class WorkflowAwareSelect<T> extends Select {
         T workItem = binder.getBean();
         var field = new WorkflowAwareSelect();
          List<Validator> validators = new ArrayList<>();
-       var annotations = WorkflowUtils.getAnnotations(workItem, fieldName);
-        if (annotations.containsKey(WorkField.class)) {
-            WorkField wf = (WorkField) annotations.get(WorkField.class);
-            field.setLabel(wf.displayName());
-            if (wf.prefix().length > 0) {
-                field.setPrefixComponent(new NativeLabel(wf.prefix()[0]));
-            }
-        }
-        if (annotations.containsKey(NotNullValue.class)) {
-            NotNullValue nb = (NotNullValue) annotations.get(NotNullValue.class);
-            field.setRequiredIndicatorVisible(true);
-
-            if (nb.message().length > 0) {
-                validators.add(new PresenceValidator(nb.message()[0]));
-            } else {
-                if (annotations.containsKey(WorkField.class)) {
-                    WorkField wf = (WorkField) annotations.get(WorkField.class);
-                    validators.add(new PresenceValidator("Field " + wf.displayName() + " is empty"));
-                } else {
-                    validators.add(new PresenceValidator("Field " + fieldName + " is empty"));
-                }
-            }
-        }
+       var annoFieldDisplayMap = WorkflowUtils.getAnnotations(
+                workItem.getClass(), 
+                fieldName);
+        
+        var workfieldMap = WorkflowUtils.applyWorkField(
+                annoFieldDisplayMap,
+                field);
+        
+        validators.addAll(
+                WorkflowUtils.applyNotNull(
+                        annoFieldDisplayMap, 
+                        field, 
+                        workfieldMap, 
+                        fieldName));
+        
         var bindingBuilder = binder.forField(field);
         //bindingBuilder.withNullRepresentation("");
         for (var validator:validators){

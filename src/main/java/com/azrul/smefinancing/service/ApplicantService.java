@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author azrul
  */
 @Service
+@Transactional
 public class ApplicantService {
     
     private final ApplicantRepository applicantRepo;
@@ -52,7 +53,11 @@ public class ApplicantService {
     }
     
      public void remove(Applicant applicant){
+        FinApplication finapp =  applicant.getFinApplication();
+        finapp.getApplicants().remove(applicant);
+        this.finappRepo.save(finapp);
         this.applicantRepo.delete(applicant);
+        
     }
      
     public CallbackDataProvider.FetchCallback<Applicant, Void> getApplicantsByApplication(FinApplication finapp) {

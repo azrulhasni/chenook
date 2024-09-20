@@ -7,35 +7,37 @@ package com.azrul.chenook.views.common;
 import com.vaadin.flow.data.binder.ValidationResult;
 import com.vaadin.flow.data.binder.ValueContext;
 import com.vaadin.flow.data.validator.AbstractValidator;
+import com.vaadin.flow.data.validator.RangeValidator;
+import java.math.BigDecimal;
 import javax.money.MonetaryAmount;
 
 /**
  *
  * @author azrul
  */
-public class NumberRangeValidator extends AbstractValidator<Number> {
-    private Long min;
-    private Long max;
-    
+public class NumberRangeValidator extends RangeValidator<Number> {
     public NumberRangeValidator(String message, Long min, Long max){
-        super(message);
-        this.min=min;
-        this.max=max;
+        super(
+                message,
+                (Number n1,Number n2)->Double.compare(n1.doubleValue(), n2.doubleValue()),
+                min,
+                max
+        );
     }
     
-    @Override
-    public ValidationResult apply(Number t, ValueContext vc) {
-        if (t==null){
-            return ValidationResult.ok();
-        }
-        
-        if (t.longValue()<min){
-            return ValidationResult.error(this.getMessage(t));
-        }
-        if (t.longValue()>max){
-            return ValidationResult.error(this.getMessage(t));
-        }
-        return ValidationResult.ok();
-    }
+//    @Override
+//    public ValidationResult apply(Number t, ValueContext vc) {
+//        if (t==null){
+//            return ValidationResult.ok();
+//        }
+//        
+//        if (t.longValue()<min){
+//            return ValidationResult.error(this.getMessage(t));
+//        }
+//        if (t.longValue()>max){
+//            return ValidationResult.error(this.getMessage(t));
+//        }
+//        return ValidationResult.ok();
+//    }
     
 }

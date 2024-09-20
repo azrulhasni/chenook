@@ -16,6 +16,7 @@ import com.azrul.chenook.workflow.model.StartEvent;
 import com.azrul.smefinancing.service.FinApplicationService;
 import com.azrul.smefinancing.views.application.ApplicationForm;
 import com.azrul.chenook.service.BadgeUtils;
+import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.workflow.WorklistPanel;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.icon.Icon;
@@ -27,6 +28,7 @@ import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -75,9 +77,9 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
         final BizProcess bizProcess = workflowConfig.rootBizProcess();
         if (SecurityContextHolder.getContext().getAuthentication() instanceof OAuth2AuthenticationToken oauth2AuthToken) {
             DefaultOidcUser oidcUser = (DefaultOidcUser) oauth2AuthToken.getPrincipal();
-             Map<String,String> sortableFields = Map.of(
-                "id","id"
-            );
+            
+            Map<String,String> sortableFields = WorkflowUtils.getSortableFields(FinApplication.class);
+            Map<String,String> fieldNameDisplayNameMap = WorkflowUtils.getFieldNameDisplayNameMap(FinApplication.class);
             MyWorkPanel<FinApplication> workPanel = new MyWorkPanel<FinApplication>(
                     oidcUser,
                     workflowConfig.rootBizProcess(),
@@ -88,8 +90,6 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                         FinApplication finapp = new FinApplication();
                         finapp.setApplicationDate(LocalDateTime.now());
                         finapp = finappService.init(finapp, oidcUser, "SME_FIN", startEvent, bizProcess);
-                        
-//                        finapp = finappService.save(finapp, oidcUser.getPreferredUsername());
                         showApplicationDialog(
                                 startEvent,
                                 finapp,
@@ -114,7 +114,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                         content.setSpacing(false);
                         content.setPadding(false);
                         if (finapp.getApplicationDate()!=null){
-                            content.add(new NativeLabel("Application date: " + dateTimeFormatter.format(finapp.getApplicationDate())));
+                            content.add(new NativeLabel(fieldNameDisplayNameMap.get("applicationDate")+": " + dateTimeFormatter.format(finapp.getApplicationDate())));
                         }
                         TextArea reason = new TextArea();
                         reason.setValue(finapp.getReasonForFinancing()!=null

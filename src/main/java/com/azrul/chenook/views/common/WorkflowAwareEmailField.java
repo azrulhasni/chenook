@@ -12,8 +12,10 @@ import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.Validator;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -28,26 +30,26 @@ public class WorkflowAwareEmailField<T> extends EmailField{
         var field = new WorkflowAwareEmailField();
 
         List<Validator> validators = new ArrayList<>();
-        var annotations = WorkflowUtils.getAnnotations(workItem, fieldName);
-        if (annotations.containsKey(WorkField.class)) {
-            WorkField wf = (WorkField) annotations.get(WorkField.class);
-            field.setLabel(wf.displayName());
-        }
-        if (annotations.containsKey(NotNullValue.class)) {
-            NotBlankValue nb = (NotBlankValue) annotations.get(NotBlankValue.class);
-            field.setRequiredIndicatorVisible(true);
-
-            if (nb.message().length > 0) {
-                validators.add(new PresenceValidator(nb.message()[0]));
-            } else {
-                if (annotations.containsKey(WorkField.class)) {
-                    WorkField wf = (WorkField) annotations.get(WorkField.class);
-                    validators.add(new PresenceValidator("Field " + wf.displayName() + " is empty"));
-                } else {
-                    validators.add(new PresenceValidator("Field " + fieldName + " is empty"));
-                }
-            }
-        }
+        
+        var annoFieldDisplayMap = WorkflowUtils.getAnnotations(
+                workItem.getClass(), 
+                fieldName
+        );
+        
+        var workfieldMap = WorkflowUtils.applyWorkField(
+                annoFieldDisplayMap, 
+                field
+        );
+        
+        validators.addAll(
+                WorkflowUtils.applyNotBlank(
+                        annoFieldDisplayMap, 
+                        field, 
+                        workfieldMap, 
+                        fieldName
+                )
+        );
+        
         var bindingBuilder = binder.forField(field);
          bindingBuilder.withNullRepresentation("");
         for (var validator:validators){

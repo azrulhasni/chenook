@@ -52,6 +52,7 @@ public class Applicant {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="id")
+    @WorkField(displayName = "User id number")
     private Long id;
     
     @NotBlankValue
@@ -68,9 +69,9 @@ public class Applicant {
     @WorkField(displayName = "Date of birth")
     private LocalDate dateOfBirth;
     
-    @NotBlankValue
-    @WorkField(displayName = "Position")
-    private String position;
+//    @NotBlankValue
+//    @WorkField(displayName = "Position")
+//    private String position;
     
     @NotBlankValue
     @WorkField(displayName = "Phone number")
@@ -83,7 +84,7 @@ public class Applicant {
 
     private Boolean main;
     
-    @WorkField(displayName = "Applicant type")
+    @WorkField(displayName = "Position")
     private ApplicantType type;
     
     @ElementCollection(fetch = FetchType.EAGER)
@@ -107,7 +108,7 @@ public class Applicant {
     private LocalDateTime lastModifiedDate;
     
     
-    @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+    @ManyToOne
     @JoinColumn(name = "fk_finApplication")
     private FinApplication finApplication;
     
@@ -156,19 +157,19 @@ public class Applicant {
         this.icNumber = icNumber;
     }
 
-    /**
-     * @return the position
-     */
-    public String getPosition() {
-        return position;
-    }
-
-    /**
-     * @param position the position to set
-     */
-    public void setPosition(String position) {
-        this.position = position;
-    }
+//    /**
+//     * @return the position
+//     */
+//    public String getPosition() {
+//        return position;
+//    }
+//
+//    /**
+//     * @param position the position to set
+//     */
+//    public void setPosition(String position) {
+//        this.position = position;
+//    }
 
     /**
      * @return the phoneNumber

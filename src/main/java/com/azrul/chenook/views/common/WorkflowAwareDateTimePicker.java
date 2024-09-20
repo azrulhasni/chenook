@@ -14,8 +14,10 @@ import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.Validator;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
@@ -31,32 +33,14 @@ public class WorkflowAwareDateTimePicker<T> extends DateTimePicker{
         var field = new WorkflowAwareDateTimePicker();
 
         List<Validator> validators = new ArrayList<>();
-        var annotations = WorkflowUtils.getAnnotations(workItem, fieldName);
-        if (annotations.containsKey(WorkField.class)) {
-            WorkField wf = (WorkField) annotations.get(WorkField.class);
-            field.setLabel(wf.displayName());
-        }
-        if (annotations.containsKey(NotNullValue.class)) {
-            NotNullValue nb = (NotNullValue) annotations.get(NotNullValue.class);
-            field.setRequiredIndicatorVisible(true);
+       Map<Class<? extends Annotation>,Map<String,Object>> annoFieldDisplayMap = WorkflowUtils.getAnnotations(workItem.getClass(), fieldName);
+     
+        Map<String,Object> workfieldMap = WorkflowUtils.applyWorkField(annoFieldDisplayMap,field);
+        
+        validators.addAll(WorkflowUtils.applyNotNull(annoFieldDisplayMap, field, workfieldMap, fieldName));
 
-            if (nb.message().length > 0) {
-                validators.add(new PresenceValidator(nb.message()[0]));
-            } else {
-                if (annotations.containsKey(WorkField.class)) {
-                    WorkField wf = (WorkField) annotations.get(WorkField.class);
-                    validators.add(new PresenceValidator("Field " + wf.displayName() + " is empty"));
-                } else {
-                    validators.add(new PresenceValidator("Field " + fieldName + " is empty"));
-                }
-            }
-        }
-        if (annotations.containsKey(DateTimeFormat.class)) {
-            DateTimeFormat df = (DateTimeFormat) annotations.get(DateTimeFormat.class);
-            DatePickerI18n i18n = new DatePickerI18n();
-            i18n.setDateFormat(df.format());
-            field.setDatePickerI18n(i18n);
-        }
+        WorkflowUtils.applyDateTimeFormat(annoFieldDisplayMap, field);
+        
         var bindingBuilder = binder.forField(field);
         
         for (var validator:validators){
