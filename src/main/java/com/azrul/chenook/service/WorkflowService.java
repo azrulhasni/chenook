@@ -5,7 +5,6 @@
  */
 package com.azrul.chenook.service;
 
-import com.azrul.chenook.annotation.WorkField;
 import com.azrul.chenook.domain.Approval;
 import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.Priority;
@@ -29,20 +28,11 @@ import com.azrul.chenook.workflow.model.XorActivity;
 import com.azrul.chenook.workflow.model.XorAtleastOneApprovalActivity;
 import com.azrul.chenook.workflow.model.XorMajorityApprovalActivity;
 import com.azrul.chenook.workflow.model.XorUnanimousApprovalActivity;
-import com.azrul.smefinancing.domain.Applicant;
-import com.azrul.smefinancing.domain.FinApplication;
 import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
-import com.vaadin.flow.data.provider.CallbackDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
-import com.vaadin.flow.data.provider.SortDirection;
-import jakarta.persistence.criteria.Join;
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.ParameterizedType;
+import jakarta.persistence.EntityManagerFactory;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -57,20 +47,16 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
+import org.hibernate.SessionFactory;
+import org.hibernate.mapping.Column;
+import org.hibernate.metamodel.MappingMetamodel;
+import org.hibernate.persister.entity.AbstractEntityPersister;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.typesense.model.Field;
 
 /**
  *
@@ -78,6 +64,9 @@ import org.typesense.model.Field;
  * @param <T>
  */
 public abstract class WorkflowService<T extends WorkItem> {
+
+    //setter injection
+    private EntityManagerFactory emFactory;
 
     private Scripting scripting;
 
@@ -905,35 +894,21 @@ public abstract class WorkflowService<T extends WorkItem> {
         return count.intValue();
     }
 
-    public DataProvider getWorkByOwner(String username, PageNav pageNav) {
+    public DataProvider getWorkByOwner(Class<T> workItemClass, String username, PageNav pageNav) {
         //build data provider
         var dp = new AbstractBackEndDataProvider<T, Void>() {
             @Override
             protected Stream<T> fetchFromBackEnd(Query<T, Void> query) {
-//                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
-
-//                Sort.Direction sort = so == null
-//                        ? Sort.Direction.DESC
-//                        : (SortDirection.ASCENDING.equals(so.getDirection())
-//                        ? Sort.Direction.ASC
-//                        : Sort.Direction.DESC);
-//                String sorted = so == null
-//                        ? "id"
-//                        : so.getSorted();
-//                query.getPage();
-//                Page<T> finapps = getWorkItemRepo().findByOwner(username,
-//                        PageRequest.of(
-//                                pageNav.getPage() - 1,
-//                                pageNav.getMaxCountPerPage(),
-//                                Sort.by(sort, sorted))
-//                );
-//                return finapps.stream();
                 Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
-                String sorted = pageNav.getSortField();
+                String sortedField = pageNav.getSortField();
+                SessionFactory sessionFactory = getEmFactory().unwrap(SessionFactory.class);
+                AbstractEntityPersister persister = ((AbstractEntityPersister) ((MappingMetamodel) sessionFactory.getMetamodel()).getEntityDescriptor(workItemClass));
+                String sorted = persister.getPropertyColumnNames(sortedField)[0];
+
                 query.getPage();
 
                 Page<T> finapps = getWorkItemRepo().findByOwner(username,
-                       PageRequest.of(
+                        PageRequest.of(
                                 pageNav.getPage() - 1,
                                 pageNav.getMaxCountPerPage(),
                                 Sort.by(sort, sorted))
@@ -971,7 +946,7 @@ public abstract class WorkflowService<T extends WorkItem> {
 
                 Page<T> finapps = getWorkItemRepo().findAll(
                         whereCreatorEquals(username),
-                       PageRequest.of(
+                        PageRequest.of(
                                 pageNav.getPage() - 1,
                                 pageNav.getMaxCountPerPage(),
                                 Sort.by(sort, sorted))
@@ -998,35 +973,20 @@ public abstract class WorkflowService<T extends WorkItem> {
         return count.intValue();
     }
 
-    public DataProvider getWorkByWorklist(String worklist, PageNav pageNav) {
+    public DataProvider getWorkByWorklist(Class<T> workItemClass, String worklist, PageNav pageNav) {
         //build data provider
         var dp = new AbstractBackEndDataProvider<T, Void>() {
             @Override
             protected Stream<T> fetchFromBackEnd(Query<T, Void> query) {
-                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
-
-//                Sort.Direction sort = so == null
-//                        ? Sort.Direction.DESC
-//                        : (SortDirection.ASCENDING.equals(so.getDirection())
-//                        ? Sort.Direction.ASC
-//                        : Sort.Direction.DESC);
-//                String sorted = so == null
-//                        ? "id"
-//                        : so.getSorted();
-//                query.getPage();
-//                Page<T> finapps = getWorkItemRepo().findByWorklistAndNoOwner(worklist,
-//                        PageRequest.of(
-//                                pageNav.getPage() - 1,
-//                                pageNav.getMaxCountPerPage(),
-//                                Sort.by(sort, sorted))
-//                );
-//                return finapps.stream();
-                 Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
-                String sorted = pageNav.getSortField();
+                Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
+                String sortedField = pageNav.getSortField();
+                SessionFactory sessionFactory = getEmFactory().unwrap(SessionFactory.class);
+                AbstractEntityPersister persister = ((AbstractEntityPersister) ((MappingMetamodel) sessionFactory.getMetamodel()).getEntityDescriptor(workItemClass));
+                String sorted = persister.getPropertyColumnNames(sortedField)[0];
                 query.getPage();
 
                 Page<T> finapps = getWorkItemRepo().findByWorklistAndNoOwner(worklist,
-                       PageRequest.of(
+                        PageRequest.of(
                                 pageNav.getPage() - 1,
                                 pageNav.getMaxCountPerPage(),
                                 Sort.by(sort, sorted))
@@ -1149,6 +1109,21 @@ public abstract class WorkflowService<T extends WorkItem> {
     @Autowired
     public void setApprovalService(ApprovalService approvalService) {
         this.approvalService = approvalService;
+    }
+
+    /**
+     * @return the emFactory
+     */
+    public EntityManagerFactory getEmFactory() {
+        return emFactory;
+    }
+
+    /**
+     * @param emFactory the emFactory to set
+     */
+    @Autowired
+    public void setEmFactory(EntityManagerFactory emFactory) {
+        this.emFactory = emFactory;
     }
 
 }

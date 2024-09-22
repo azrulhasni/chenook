@@ -49,6 +49,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
     private final BadgeUtils badgeUtils;
 
     public WorklistPanel(
+            final Class workItemClass,
             final OidcUser oidcUser,
             final BizProcess bizProcess,
             final Map<String, String> sortableFields,
@@ -84,7 +85,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
                     cardBuilder,
                     sortableFields,
                     (w) -> workflowService.countWorkByWorklist(w),
-                    (w, nav) -> workflowService.getWorkByWorklist(w, nav)
+                    (w, nav) -> workflowService.getWorkByWorklist(workItemClass,w, nav)
             );
             myWorklists.add(panel);
             addPair(panel);

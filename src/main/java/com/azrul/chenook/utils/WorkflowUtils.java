@@ -1,11 +1,13 @@
 package com.azrul.chenook.utils;
 
 import com.azrul.chenook.annotation.DateTimeFormat;
+import com.azrul.chenook.annotation.Matcher;
 import com.azrul.chenook.annotation.MoneyRange;
 import com.azrul.chenook.annotation.NotBlankValue;
 import com.azrul.chenook.annotation.NotNullValue;
 import com.azrul.chenook.annotation.NumberRange;
 import com.azrul.chenook.annotation.WorkField;
+import com.azrul.chenook.views.common.MatcherValidator;
 import com.azrul.chenook.views.common.MoneyRangeValidator;
 import com.azrul.chenook.views.common.NumberRangeValidator;
 import com.azrul.chenook.views.common.PresenceValidator;
@@ -260,8 +262,8 @@ public class WorkflowUtils {
         }
         return validators;
     }
-    
-    public static List<Validator> applyNumberRange(
+     
+     public static List<Validator> applyNumberRange(
             Map<Class<? extends Annotation>, Map<String, Object>> annoFieldDisplayMap, 
             Map<String, Object> workfieldMap, 
             String fieldName
@@ -284,7 +286,29 @@ public class WorkflowUtils {
         return validators;
     }
     
-    public static  List<Validator> applyNotBlank(Map<Class<? extends Annotation>, Map<String, Object>> annoFieldDisplayMap, AbstractField field,  Map<String, Object> workfieldMap, String fieldName) {
+    public static List<Validator> applyMatcher(
+            Map<Class<? extends Annotation>, Map<String, Object>> annoFieldDisplayMap
+    ) {
+        List<Validator> validators = new ArrayList<>();
+        
+        Map<String,Object> matcherMap = annoFieldDisplayMap.get(Matcher.class);
+        if (matcherMap!=null) {
+            if (((String[])matcherMap.get("message")).length>0){
+                validators.add(new MatcherValidator(((String[])matcherMap.get("message"))[0],(String)matcherMap.get("regexp")));
+            }else{
+                validators.add(new MatcherValidator("Problem matching",(String)matcherMap.get("regexp")));
+         
+            }
+        }
+        return validators;
+    }
+    
+    public static  List<Validator> applyNotBlank(
+            Map<Class<? extends Annotation>, Map<String, Object>> annoFieldDisplayMap, 
+            AbstractField field, 
+            Map<String, Object> workfieldMap, 
+            String fieldName
+    ) {
          List<Validator> validators = new ArrayList<>();
        
         Map<String,Object> notblankMap = annoFieldDisplayMap.get(NotBlankValue.class);
@@ -305,7 +329,12 @@ public class WorkflowUtils {
         return validators;
     }
 
-    public static  List<Validator> applyNotNull(Map<Class<? extends Annotation>, Map<String, Object>> annoFieldDisplayMap, Component field,  Map<String, Object> workfieldMap, String fieldName) {
+    public static  List<Validator> applyNotNull(
+            Map<Class<? extends Annotation>, Map<String, Object>> annoFieldDisplayMap,
+            Component field,  
+            Map<String, Object> workfieldMap, 
+            String fieldName
+    ) {
          List<Validator> validators = new ArrayList<>();
        
         Map<String,Object> notnullMap = annoFieldDisplayMap.get(NotNullValue.class);

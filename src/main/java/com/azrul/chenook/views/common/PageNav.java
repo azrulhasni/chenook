@@ -73,23 +73,23 @@ public class PageNav extends HorizontalLayout {
         firstPage = new Button();
         firstPage.setIcon(VaadinIcon.FAST_BACKWARD.create());
         firstPage.setId("btnFirstPage-"+uniqueDisc);
-        firstPage.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        //firstPage.addThemeVariants(ButtonVariant.LUMO_SMALL);
         finalPage = new Button();
         finalPage.setIcon(VaadinIcon.FAST_FORWARD.create());
         finalPage.setId("btnFinalStage-"+uniqueDisc);
-        finalPage.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        //finalPage.addThemeVariants(ButtonVariant.LUMO_SMALL);
         nextPage = new Button();
         nextPage.setIcon(VaadinIcon.CARET_RIGHT.create());
         nextPage.setId("btnNextPage-"+uniqueDisc);
-        nextPage.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        //nextPage.addThemeVariants(ButtonVariant.LUMO_SMALL);
         previousPage = new Button();
         previousPage.setIcon(VaadinIcon.CARET_LEFT.create());
         previousPage.setId("btnLastPage-"+uniqueDisc);
-        previousPage.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        //previousPage.addThemeVariants(ButtonVariant.LUMO_SMALL);
         currentPage = new NativeLabel();
         sortBy = new Button();
         sortBy.setIcon(LumoIcon.ORDERED_LIST.create());
-        sortBy.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        //sortBy.addThemeVariants(ButtonVariant.LUMO_SMALL);
         ContextMenu sortMenu = new ContextMenu();
         
         sortMenu.setTarget(sortBy);

@@ -81,6 +81,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
             Map<String,String> sortableFields = WorkflowUtils.getSortableFields(FinApplication.class);
             Map<String,String> fieldNameDisplayNameMap = WorkflowUtils.getFieldNameDisplayNameMap(FinApplication.class);
             MyWorkPanel<FinApplication> workPanel = new MyWorkPanel<FinApplication>(
+                    FinApplication.class,
                     oidcUser,
                     workflowConfig.rootBizProcess(),
                     sortableFields,
@@ -131,6 +132,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
             this.add(workPanel);
              
             WorklistPanel<FinApplication> worklistPanel = new WorklistPanel<FinApplication>(
+                    FinApplication.class,
                     oidcUser,
                     workflowConfig.rootBizProcess(),
                     sortableFields,

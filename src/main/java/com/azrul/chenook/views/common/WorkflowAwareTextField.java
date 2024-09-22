@@ -18,57 +18,64 @@ import java.util.List;
  */
 public class WorkflowAwareTextField<T> extends TextField {
 
-    public WorkflowAwareTextField(){}
-    
+    public WorkflowAwareTextField() {
+    }
 
     public static <T> WorkflowAwareTextField create(String fieldName, Boolean editable, Binder<T> binder, Converter converter) {
         T workItem = binder.getBean();
         var field = new WorkflowAwareTextField();
         List<Validator> validators = new ArrayList<>();
 
-         var annoFieldDisplayMap = WorkflowUtils.getAnnotations(
-                workItem.getClass(), 
+        var annoFieldDisplayMap = WorkflowUtils.getAnnotations(
+                workItem.getClass(),
                 fieldName
         );
-        
+
         var workfieldMap = WorkflowUtils.applyWorkField(
-                annoFieldDisplayMap, 
+                annoFieldDisplayMap,
                 field
         );
-        
+
         validators.addAll(
                 WorkflowUtils.applyNotBlank(
-                        annoFieldDisplayMap, 
-                        field, 
-                        workfieldMap, 
+                        annoFieldDisplayMap,
+                        field,
+                        workfieldMap,
                         fieldName
+                )
+        );
+
+        validators.addAll(
+                WorkflowUtils.applyMatcher(
+                        annoFieldDisplayMap
                 )
         );
         
         var bindingBuilder = binder.forField(field);
         bindingBuilder.withNullRepresentation("");
-        for (var validator:validators){
+        for (var validator : validators) {
             bindingBuilder.withValidator(validator);
         }
+        
         if (!editable) {
-            if (converter!=null){
+            if (converter != null) {
                 bindingBuilder.withConverter(converter).bindReadOnly(fieldName);
-            }else{
+            } else {
                 bindingBuilder.bindReadOnly(fieldName);
             }
         } else {
-            if (converter!=null){
+            if (converter != null) {
                 bindingBuilder.withConverter(converter).bind(fieldName);
-            }else{
+            } else {
                 bindingBuilder.bind(fieldName);
             }
         }
-        
+
         return field;
     }
-    
-     public static <T> WorkflowAwareTextField create(String fieldName, Boolean readOnly, Binder<T> binder) {
-         return create(fieldName, readOnly, binder, null);
-     }
-   
+
+    public static <T> WorkflowAwareTextField create(String fieldName, Boolean readOnly, Binder<T> binder) {
+        return create(fieldName, readOnly, binder, null);
+    }
+
 }

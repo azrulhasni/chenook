@@ -48,6 +48,7 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
     private final BadgeUtils badgeUtils;
 
     public MyWorkPanel(
+            final Class workItemClass,  
             final OidcUser oidcUser,
             final BizProcess bizProcess,
             final Map<String, String> sortableFields,
@@ -101,7 +102,7 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
                 cardBuilder,
                 sortableFields,
                 (username) -> finappService.countWorkByOwner(username),
-                (username, nav) -> finappService.getWorkByOwner(username, nav)
+                (username, nav) -> finappService.getWorkByOwner(workItemClass, username, nav)
         );
         addPair(myOwnedWork);
 
