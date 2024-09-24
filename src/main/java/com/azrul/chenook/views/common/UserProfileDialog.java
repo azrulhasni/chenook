@@ -4,18 +4,20 @@
  */
 package com.azrul.chenook.views.common;
 
+import com.azrul.chenook.domain.BizUser;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 /**
  *
  * @author azrul
  */
 public class UserProfileDialog extends Dialog{
-    public UserProfileDialog(DefaultOidcUser user){
+    public UserProfileDialog(BizUser user){
          UserProfile up = new UserProfile(user);
                 this.setWidth("50%");
                 this.setHeaderTitle("User profile");

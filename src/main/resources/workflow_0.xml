@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
-Relationship-Manager: user111
-Valuator: user112
-Underwriter-Maker: user211
-Underwriter-Checker: user212,user213
-Disbursement-Officer-Maker: user311
-Disbursement-Officer-Checker: user312,user313
-Supervisor: user310
+Relationship-Manager: yuser111->yuser110->yuser100
+Valuator: yuser112
+Underwriter-Maker: yuser211->yuser210->yuser200
+Underwriter-Checker: yuser212,yuser213
+Disbursement-Officer-Maker: yuser311
+Disbursement-Officer-Checker: yuser312,yuser313
+Supervisor: yuser310
 
-
+Role names must be CAPITALIZE both inb here and Keycloak
 -->
 <bizProcess xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:noNamespaceSchemaLocation="workflow.xsd">

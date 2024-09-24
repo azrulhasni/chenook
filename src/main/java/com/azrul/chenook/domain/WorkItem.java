@@ -67,8 +67,10 @@ public abstract class WorkItem {
     protected String startEventId;
 
     protected String startEventDescription;
-
-    protected Set<String> owners;
+    
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "work_id", referencedColumnName = "id")
+    protected Set<BizUser> owners;
 
     protected String worklist;
 
@@ -268,14 +270,14 @@ public abstract class WorkItem {
     /**
      * @return the owners
      */
-    public Set<String> getOwners() {
+    public Set<BizUser> getOwners() {
         return owners;
     }
 
     /**
      * @param owners the owners to set
      */
-    public void setOwners(Set<String> owners) {
+    public void setOwners(Set<BizUser> owners) {
         this.owners = owners;
     }
 

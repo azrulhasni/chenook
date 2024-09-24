@@ -4,14 +4,35 @@
  */
 package com.azrul.chenook.domain;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import java.util.ArrayList;
 import java.util.List;
+import org.hibernate.envers.Audited;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  *
  * @author azrul
  */
+@Entity
+@Audited 
+@EntityListeners(AuditingEntityListener.class)
 public class BizUser {
+
+    /**
+     * @return the enabled
+     */
+    public Boolean getEnabled() {
+        return enabled;
+    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+    
     private String username;
     private String firstName;
     private String lastName;
@@ -118,7 +139,7 @@ public class BizUser {
      * @return the enabled
      */
     public Boolean isEnabled() {
-        return enabled;
+        return getEnabled();
     }
 
     /**
@@ -140,6 +161,20 @@ public class BizUser {
      */
     public void setClientRoles(List<String> roles) {
         this.clientRoles = roles;
+    }
+
+    /**
+     * @return the id
+     */
+    public Long getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(Long id) {
+        this.id = id;
     }
 
    

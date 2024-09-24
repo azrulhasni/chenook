@@ -4,9 +4,8 @@
  */
 package com.azrul.chenook.repository;
 
-import com.azrul.chenook.domain.Signature;
+import com.azrul.chenook.domain.Approval;
 import com.azrul.chenook.domain.WorkItem;
-import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,15 +20,17 @@ import org.springframework.data.repository.NoRepositoryBean;
 @NoRepositoryBean
 public interface WorkItemRepository<T extends WorkItem> extends JpaRepository<T, Long>, JpaSpecificationExecutor<T> {
     //public T findOneByParentIdAndContext(Long parentId,String context);
-    @Query(value = "SELECT * FROM work_item WHERE :username = ANY(work_item.owners)", nativeQuery = true)    
-    public Page<T> findByOwner(String username,  Pageable pageable);
+//    @Query(value = "SELECT * FROM work_item WHERE :username = ANY(work_item.owners)", nativeQuery = true)    
+//    public Page<T> findByOwner(String username,  Pageable pageable);
+//    
+//    @Query(value = "SELECT COUNT(*) FROM work_item WHERE :username = ANY(work_item.owners)", nativeQuery = true)    
+//    public Long countByOwner(String username);
+//    
+//    @Query(value = "SELECT * FROM work_item WHERE owners = '{}' AND worklist = :worklist", nativeQuery = true)    
+//    public Page<T> findByWorklistAndNoOwner(String worklist,  Pageable pageable);
+//    
+//     @Query(value = "SELECT COUNT(*) FROM work_item WHERE owners = '{}' AND worklist = :worklist", nativeQuery = true)    
+//    public Long countByWorklistAndNoOwner(String worklist);
     
-    @Query(value = "SELECT COUNT(*) FROM work_item WHERE :username = ANY(work_item.owners)", nativeQuery = true)    
-    public Long countByOwner(String username);
-    
-    @Query(value = "SELECT * FROM work_item WHERE owners = '{}' AND worklist = :worklist", nativeQuery = true)    
-    public Page<T> findByWorklistAndNoOwner(String worklist,  Pageable pageable);
-    
-     @Query(value = "SELECT COUNT(*) FROM work_item WHERE owners = '{}' AND worklist = :worklist", nativeQuery = true)    
-    public Long countByWorklistAndNoOwner(String worklist);
+  
 }

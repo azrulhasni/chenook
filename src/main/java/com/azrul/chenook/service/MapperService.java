@@ -26,46 +26,84 @@ import org.springframework.stereotype.Service;
 public class MapperService {
 
     private final ModelMapper basicMapper;
+
+   // private final Pattern uidMatcher = Pattern.compile("(?<=uid=)([^,]+)");
+    private Pattern userPattern =  Pattern.compile("(?i:(?<=uid=)).*?(?=,[A-Za-z]{0,2}=|$)", Pattern.CASE_INSENSITIVE);
+
+    private final String LDAP_MANAGEER_ATTRIBUTE_NAME = "manager";
     
-    private final Pattern uidMatcher = Pattern.compile("(?<=uid=)([^,]+)");
-    private final String LDAP_MANAGEER_ATTRIBUTE_NAME="manager";
 
     public MapperService(
             @Autowired @Qualifier("BasicMapper") ModelMapper basicMapper) {
         this.basicMapper = basicMapper;
+        
+        this.basicMapper.createTypeMap(UserRepresentation.class, BizUser.class)
+                            .addMappings(mapper -> mapper.skip(BizUser::setId));
     }
 
-  
-    
-    public BizUser map(OidcUser oidcUser){
-        BizUser user = new BizUser();
-        user.setEmail(oidcUser.getEmail());
-        user.setFirstName(oidcUser.getGivenName());
-        user.setLastName(oidcUser.getFamilyName());
-        user.setUsername(oidcUser.getPreferredUsername());
-        return user;
+    public BizUser map(OidcUser oidcUser) {
+//        BizUser user = new BizUser();
+//        user.setEmail(oidcUser.getEmail());
+//        user.setFirstName(oidcUser.getGivenName());
+//        user.setLastName(oidcUser.getFamilyName());
+//        user.setUsername(oidcUser.getPreferredUsername());
+//        return user;
+         BizUser bizUser = new BizUser();
+        
+        List<String> roles = oidcUser
+                .getAuthorities()
+                .stream()
+                .map(a -> a.getAuthority())
+                .map(String::toLowerCase)
+                .map(a -> a.replace("role_", ""))
+                .collect(Collectors.toList());
+        bizUser.setUsername(oidcUser.getPreferredUsername());
+        bizUser.setClientRoles(roles);
+        bizUser.setEmail(oidcUser.getEmail());
+        bizUser.setEnabled(Boolean.TRUE);
+        bizUser.setFirstName(oidcUser.getGivenName());
+        
+        bizUser.setLastName(oidcUser.getFamilyName());
+        String manager = oidcUser.getAttribute("manager");
+        setManager(manager, bizUser);
+        return bizUser;
     }
     
-    public BizUser map(UserRepresentation userRep){
-        BizUser user = basicMapper.map(userRep, BizUser.class);
+     public void setManager(String manager, BizUser bizUser) {
+         if (manager == null) {
+            return;
+        }
+        if (manager.contains("uid=")){//ldap exprreession
+            Matcher matcher =userPattern.matcher(manager);
+            if (matcher.find()){
+                bizUser.setManager(matcher.group(0));
+            }
+        }else{
+            bizUser.setManager(manager);
+        }
+    }
+
+    public BizUser map(UserRepresentation userRep) {
+        BizUser user = basicMapper
+                .getTypeMap(UserRepresentation.class, BizUser.class)
+                .addMappings(mapper -> mapper.skip(BizUser::setId))
+                .map(userRep);
+
         return user;
     }
-    
-    public Set<BizUser> mapBizUsers(List<UserRepresentation> userReps){
+
+    public Set<BizUser> mapBizUsers(List<UserRepresentation> userReps) {
         return userReps.stream()
                 .map(ur -> {
-                    BizUser user = basicMapper.map(ur, BizUser.class);
+                    BizUser user = basicMapper
+                            .getTypeMap(UserRepresentation.class, BizUser.class)
+                            .addMappings(mapper -> mapper.skip(BizUser::setId))
+                            .map(ur);
                     String manager = ur.firstAttribute(LDAP_MANAGEER_ATTRIBUTE_NAME);
-                    if (StringUtils.isNotBlank(manager)){
-                        Matcher matcher =uidMatcher.matcher(manager);
-                        if (matcher.find(1)){
-                            user.setManager(matcher.group(1));
-                        }
-                    }
-                    return user;    
+                    setManager(manager,user);
+                    return user;
                 })
                 .collect(Collectors.toSet());
     }
 
-    
 }

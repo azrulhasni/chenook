@@ -5,40 +5,41 @@
 package com.azrul.chenook.service;
 
 import com.azrul.chenook.domain.BizUser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.azrul.chenook.domain.WorkItem;
+import com.azrul.chenook.repository.BizUserRepository;
+import com.azrul.chenook.views.common.PageNav;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
+import com.vaadin.flow.data.provider.DataProvider;
+import com.vaadin.flow.data.provider.Query;
+import jakarta.persistence.EntityManagerFactory;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.hibernate.SessionFactory;
+import org.hibernate.metamodel.MappingMetamodel;
+import org.hibernate.persister.entity.AbstractEntityPersister;
 import org.keycloak.admin.client.Keycloak;
-import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
-import org.typesense.api.Client;
-import org.typesense.api.Document;
-import org.typesense.api.Documents;
-import org.typesense.model.CollectionSchema;
-import org.typesense.model.ImportDocumentsParameters;
-import org.typesense.model.SearchParameters;
-import org.typesense.model.SearchResult;
-import org.typesense.model.SearchResultHit;
 
 /**
  *
  * @author azrul
  */
 @Service
-public class BizUserService {
+public class BizUserService<T extends WorkItem> {
 
     private final MapperService mapperService;
     private final ObjectMapper objectToKeyValueMaper = new ObjectMapper();
@@ -48,12 +49,14 @@ public class BizUserService {
     private final Keycloak keycloak;
     private final String clientId;
     private final Integer queryBatchSize;
-    
-    private Pattern userPattern =  Pattern.compile("(?i:(?<=uid=)).*?(?=,[A-Za-z]{0,2}=|$)", Pattern.CASE_INSENSITIVE);
+    private final EntityManagerFactory emFactory;
+    private final BizUserRepository bizUserRepo;
 
     public BizUserService(
             @Autowired MapperService mapperService,
             @Autowired Keycloak keycloak,
+            @Autowired EntityManagerFactory emFactory,
+            @Autowired BizUserRepository bizUserRepo,
             @Value("${chenook.keycloak.realm}") String keycloakRealm,
             @Value("${chenook.keycloak.client-id}") String clientId,
             @Value("${chenook.keycloak.query-batch-size}") Integer queryBatchSize,
@@ -65,72 +68,32 @@ public class BizUserService {
         this.clientId = clientId;
         this.keycloak = keycloak;
         this.queryBatchSize = queryBatchSize;
-        //this.searchEngine=searchEngine;
+        this.emFactory = emFactory;
+        this.bizUserRepo = bizUserRepo;
     }
 
-//    public void reloadUsers(List<UserRepresentation> userReps){
-//        try {
-//            objectToKeyValueMaper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-//            Set<BizUser> users = mapperService.mapBizUsers(userReps);
-//            List<Map<String,Object>> usersAsMaps = new ArrayList<>();
-//            for (BizUser u:users){
-//                Map<String, Object> map = objectToKeyValueMaper.convertValue(u, new TypeReference<Map<String, Object>>() {});
-//                map.put("id",u.getUsername());
-//                usersAsMaps.add(map);
-//            }
-//           
-//            
-//            ImportDocumentsParameters importDocumentsParameters = new ImportDocumentsParameters();
-//            importDocumentsParameters.action("create");
-//            searchEngine.get4Users().import_(usersAsMaps, importDocumentsParameters);
-//        } catch (Exception ex) {
-//            Logger.getLogger(BizUserService.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//    }
-//    public BizUser getUser(String username){
-//        try {
-//            objectToKeyValueMaper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-//            var userMap = searchEngine.get4Users(username).retrieve();
-//            return objectToKeyValueMaper.convertValue(userMap, BizUser.class);
-//        } catch (Exception ex) {
-//            Logger.getLogger(BizUserService.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//        return null;
-//    }
-    
-    
-    public BizUser getUser(String username){
+    public BizUser getUser(String username) {
         List<UserRepresentation> users = keycloak.realm(keycloakRealm).users().searchByUsername(username, true);
-        
-        if (users.isEmpty() || users.size()>1){
+
+        if (users.isEmpty() || users.size() > 1) {
             return null;
         }
         UserRepresentation userRep = users.iterator().next();
         List<RoleRepresentation> roles = keycloak.realm(keycloakRealm).users().get(userRep.getId()).roles().clientLevel(clientId).listAll();
         BizUser bizUser = mapperService.map(userRep);
-        for (var r:roles){
+        for (var r : roles) {
             bizUser.getClientRoles().add(r.getName());
         }
-        List<String> lmanager = userRep.getAttributes().get("manager");
-        if (lmanager!=null && !lmanager.isEmpty()){
-            String manager = lmanager.get(0);
-            if (manager.contains("uid=")){//ldap exprreession
-                Matcher matcher =userPattern.matcher(manager);
-                if (matcher.find()){
-                    bizUser.setManager(matcher.group(0));
-                }
-            }else{
-                bizUser.setManager(manager);
+        if (userRep.getAttributes() != null) {
+            List<String> lmanager = userRep.getAttributes().get("manager");
+            if (lmanager != null && !lmanager.isEmpty()) {
+                String manager = lmanager.get(0);
+                mapperService.setManager(manager, bizUser);
             }
         }
         return bizUser;
-//        UserResource ur = keycloak
-//                .realm(keycloakRealm)
-//                .users()
-//                .get(username);
-//        return mapperService.map(ur.toRepresentation());
     }
-    
+
     public List<BizUser> getUsersByRole(String role) {
         int p = 0;
         List<BizUser> bizUsers = new ArrayList<>();
@@ -146,54 +109,51 @@ public class BizUserService {
         }
         return bizUsers;
     }
-    
- 
 
     public String getFullName(String username) {
         BizUser user = getUser(username);
         return user.getFirstName() + " " + user.getLastName();
     }
 
-//    public Set<BizUser> getUsers(Set<String> usernames){
-//        try {
-//            objectToKeyValueMaper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-//            Set<BizUser> users = new HashSet<>();
-//            String usernameFilter = "id:[" + String.join(", ",usernames) +  "]";
-//            SearchParameters searchParameters = new SearchParameters()
-//                                        .q("*")
-//                                        .filterBy(usernameFilter);
-//            
-//            SearchResult searchResult = searchEngine.get4Users().search(searchParameters);
-//            for (SearchResultHit hit:searchResult.getHits()){
-//                users.add(objectToKeyValueMaper.convertValue(hit.getDocument(), BizUser.class));
-//            }
-//            return users;
-//        } catch (Exception ex) {
-//            Logger.getLogger(BizUserService.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//        return null;
-//    }
-//    
-//    public Set<BizUser> searchUsers(String queryString, Set<String> filteredOutUsernames){
-//        try {
-//            objectToKeyValueMaper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-//            Set<BizUser> users = new HashSet<>();
-//            SearchParameters searchParameters = new SearchParameters()
-//                                        .q(queryString)
-//                                        .filterBy("id:!=["+ String.join(", ",filteredOutUsernames)+"]")
-//                                        .queryBy("username,firstName,lastName,email")
-//                                        .sortBy("username:asc")
-//                                        .limit(allUsersMaxCount);
-//            
-//            SearchResult searchResult = searchEngine.get4Users().search(searchParameters);
-//            for (SearchResultHit hit:searchResult.getHits()){
-//                users.add(objectToKeyValueMaper.convertValue(hit.getDocument(), BizUser.class));
-//            }
-//            return users;
-//        } catch (Exception ex) {
-//            Logger.getLogger(BizUserService.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//        return null;
-//    }
-//    
+    public DataProvider getOwnersByWork(T work, PageNav pageNav) {
+        //build data provider
+        var dp = new AbstractBackEndDataProvider<BizUser, Void>() {
+            @Override
+            protected Stream<BizUser> fetchFromBackEnd(Query<BizUser, Void> query) {
+
+                Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
+                String sortedField = pageNav.getSortField();
+                SessionFactory sessionFactory = emFactory.unwrap(SessionFactory.class);
+                AbstractEntityPersister persister = ((AbstractEntityPersister) ((MappingMetamodel) sessionFactory.getMetamodel()).getEntityDescriptor(WorkItem.class));
+                String sorted = persister.getPropertyColumnNames(sortedField)[0];
+
+                query.getPage();
+                Page<BizUser> finapps = bizUserRepo.findOwnersByWork(work.getId(),
+                        PageRequest.of(
+                                pageNav.getPage() - 1,
+                                pageNav.getMaxCountPerPage(),
+                                Sort.by(sort, sorted))
+                );
+                return finapps.stream();
+            }
+
+            @Override
+            protected int sizeInBackEnd(Query<BizUser, Void> query) {
+                return pageNav.getDataCountPerPage();
+            }
+
+            @Override
+            public String getId(BizUser item) {
+                return item.getId().toString();
+            }
+
+        };
+        return dp;
+    }
+
+    public Integer countWorkByOwner(T work) {
+        Long count = bizUserRepo.countOwnersByWork(work.getId());
+        return count.intValue();
+    }
+
 }

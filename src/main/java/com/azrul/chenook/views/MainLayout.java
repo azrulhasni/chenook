@@ -1,13 +1,14 @@
 package com.azrul.chenook.views;
 
+import com.azrul.chenook.domain.BizUser;
+import com.azrul.chenook.service.MapperService;
 import com.azrul.chenook.views.about.AboutView;
+import com.azrul.chenook.views.common.UserField;
 import com.azrul.smefinancing.views.admin.AdminView;
 import com.azrul.smefinancing.views.smefinancing.ApplicationView;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
-import com.vaadin.flow.component.avatar.Avatar;
-import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.html.Div;
@@ -17,12 +18,15 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Header;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.menubar.MenuBar;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,6 +43,8 @@ public class MainLayout extends AppLayout {
 
     private H2 viewTitle;
     private final String BETWEEN_BRACKETS = "\\((.*?)\\)";
+
+    private Pattern userPattern = Pattern.compile("(?i:(?<=uid=)).*?(?=,[A-Za-z]{0,2}=|$)", Pattern.CASE_INSENSITIVE);
 
     public MainLayout() {
 
@@ -101,19 +107,9 @@ public class MainLayout extends AppLayout {
 
             MenuItem userName = userMenu.addItem("");
             Div div = new Div();
+            UserField userField = new UserField(mapUser(oidcUser), true);
 
-            String name = oidcUser.getGivenName() + " " + oidcUser.getFamilyName() + " (" + oidcUser.getPreferredUsername() + ")";
-            Avatar avUser = new Avatar(name.replaceAll(BETWEEN_BRACKETS, ""));
-            int index = Math.abs(name.hashCode() % 7 + 1);
-            avUser.setColorIndex(index);
-            avUser.addThemeVariants(AvatarVariant.LUMO_XSMALL);
-            HorizontalLayout userPane = new HorizontalLayout();
-            Div divName = new Div(name);
-            divName.getStyle().set("display", "flex");
-            divName.getStyle().set("align-items", "center");
-
-            userPane.add(avUser, divName);
-            div.add(userPane);
+            div.add(userField);
             div.add(new Icon("lumo", "dropdown"));
             div.getElement().getStyle().set("display", "flex");
             div.getElement().getStyle().set("align-items", "center");
@@ -144,4 +140,45 @@ public class MainLayout extends AppLayout {
         return title == null ? "" : title.value();
     }
 
+    private BizUser mapUser(OidcUser oidcUser) {
+//        BizUser user = new BizUser();
+//        user.setEmail(oidcUser.getEmail());
+//        user.setFirstName(oidcUser.getGivenName());
+//        user.setLastName(oidcUser.getFamilyName());
+//        user.setUsername(oidcUser.getPreferredUsername());
+//        return user;
+        BizUser bizUser = new BizUser();
+
+        List<String> roles = oidcUser
+                .getAuthorities()
+                .stream()
+                .map(a -> a.getAuthority())
+                .map(String::toLowerCase)
+                .map(a -> a.replace("role_", ""))
+                .collect(Collectors.toList());
+        bizUser.setUsername(oidcUser.getPreferredUsername());
+        bizUser.setClientRoles(roles);
+        bizUser.setEmail(oidcUser.getEmail());
+        bizUser.setEnabled(Boolean.TRUE);
+        bizUser.setFirstName(oidcUser.getGivenName());
+
+        bizUser.setLastName(oidcUser.getFamilyName());
+        String manager = oidcUser.getAttribute("manager");
+        setManager(manager, bizUser);
+        return bizUser;
+    }
+
+    private void setManager(String manager, BizUser bizUser) {
+        if (manager == null) {
+            return;
+        }
+        if (manager.contains("uid=")) {//ldap exprreession
+            Matcher matcher = userPattern.matcher(manager);
+            if (matcher.find()) {
+                bizUser.setManager(matcher.group(0));
+            }
+        } else {
+            bizUser.setManager(manager);
+        }
+    }
 }

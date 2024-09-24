@@ -5,19 +5,35 @@
 package com.azrul.chenook.views.workflow;
 
 import com.azrul.chenook.config.ApplicationContextHolder;
+import com.azrul.chenook.domain.Approval;
 import com.azrul.chenook.domain.Attachment;
+import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.domain.WorkItem;
+import com.azrul.chenook.service.ApprovalService;
 import com.azrul.chenook.service.BizUserService;
 import com.azrul.chenook.service.BadgeUtils;
 import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.utils.WorkflowUtils;
+import com.azrul.chenook.views.common.PageNav;
+import com.azrul.chenook.views.common.UserField;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.H4;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.renderer.Renderer;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
@@ -34,9 +50,16 @@ public class WorkflowPanel<T> extends FormLayout {
     @Autowired
     private BadgeUtils badgeUtils;
 
+    @Autowired
+    private ApprovalService approvalService;
     
-     @Autowired
+    @Autowired
+    private BizUserService bizUserService;
+    
+    @Autowired
     private WorkflowService workflowService;
+    
+    private Integer COUNT_PER_PAGE=3;
     
     private ComboBox<String> cbApprove ;
 
@@ -57,11 +80,17 @@ public class WorkflowPanel<T> extends FormLayout {
         }else{
             cbStatus.setValue(Status.NEWLY_CREATED);
         }
-        this.add(cbStatus);
+        Button btnWorkflow = new Button("...",e->createWorkflowInfoDialog(work, user));
+        btnWorkflow.getStyle().set("align-self","end");
+        btnWorkflow.setHeight(cbStatus.getHeight());
+        HorizontalLayout workflowField = new HorizontalLayout();
+        workflowField.add(cbStatus);
+        workflowField.add(btnWorkflow);
+        this.add(workflowField);
         
-        HorizontalLayout apprrovalPanel = new HorizontalLayout();
+        HorizontalLayout approvalPanel = new HorizontalLayout();
         if (workflowService.isWaitingApproval(work) 
-                && work.getApprovals().stream().filter(
+                || work.getApprovals().stream().filter(
                         a->StringUtils.equals(
                                 a.getUsername(), 
                                 user.getPreferredUsername()
@@ -77,16 +106,104 @@ public class WorkflowPanel<T> extends FormLayout {
                     return "";
                 }
             });
-            apprrovalPanel.add(cbApprove);
+            approvalPanel.add(cbApprove);
+          
         }
         
-        this.add(apprrovalPanel);
+        this.add(approvalPanel);
+       
         //cbApprove.
         //this.parentId = parentId;
     }
     
-    public void createApprovalInfoDialog(WorkItem work){
+    public void createWorkflowInfoDialog(WorkItem work, OidcUser oidcUser){
+        Dialog workflowDialog = new Dialog();
+        TextField tf = new TextField();
+        tf.setLabel("Current worklist");
+        tf.setValue(work.getWorklist());
+        tf.setReadOnly(true);
+        workflowDialog.add(tf);
+        VerticalLayout approvalPanel = buildApprovalPanel(work, workflowDialog);
+        workflowDialog.add(approvalPanel);
+        VerticalLayout ownerPanel = buildOwnerPanel(work, workflowDialog);
+        workflowDialog.add(ownerPanel);
+        workflowDialog.add(new Button("Done", e->workflowDialog.close()));
+        workflowDialog.open();
+    }
+
+    private VerticalLayout buildApprovalPanel(WorkItem work, Dialog approvalDialog) {
+        VerticalLayout approvalPanel = new VerticalLayout();
+        PageNav nav = new PageNav();
+        Integer count = approvalService.countApprovalsByWork(work);//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
+        DataProvider dataProvider = approvalService.getApprovalsByWork(work, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
+        Grid<Approval> grid = new Grid<>();
+        grid.setItems(dataProvider);
+        grid.addComponentColumn(approval->{
+            BizUser user = new BizUser();
+            user.setFirstName(approval.getFirstName());
+            user.setLastName(approval.getLastName());
+            user.setUsername(approval.getUsername());
+            
+            UserField userField = new UserField(user);
+            HorizontalLayout panel = new HorizontalLayout();
+            panel.add(userField);
+            if (approval.getApproved()==null){
+                Span confirmed = new Span("No decision");
+                confirmed.getElement().getThemeList().add("badge contrast pill");
+                panel.add(confirmed);
+            }else{
+                if (approval.getApproved()){
+                    Span confirmed = new Span("Approved");
+                    confirmed.getElement().getThemeList().add("badge success pill");
+                    panel.add(confirmed);
+                }else if (approval.getApproved()){
+                    Span confirmed = new Span("Disapproved");
+                    confirmed.getElement().getThemeList().add("badge error pill");
+                    panel.add(confirmed);
+                }
+            }
         
+            return panel;
+        });
+        Map<String,String> sortableFields = WorkflowUtils.getSortableFields(Approval.class);
+        grid.setMaxHeight("calc("+COUNT_PER_PAGE+" * var(--lumo-size-m))");
+        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
+        H4 approvalTitle = new H4("Approvals");
+        approvalPanel.add(approvalTitle);
+        approvalPanel.add(nav);
+        approvalPanel.add(grid);
+        return approvalPanel;
+    }
+    
+    private VerticalLayout buildOwnerPanel(WorkItem work, Dialog approvalDialog) {
+        VerticalLayout ownerPanel = new VerticalLayout();
+        PageNav nav = new PageNav();
+        Integer count = bizUserService.countWorkByOwner(work);
+        DataProvider dataProvider = bizUserService.getOwnersByWork(work, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
+        Grid<BizUser> grid = new Grid<>();
+        grid.setItems(dataProvider);
+        grid.setMaxHeight("calc("+COUNT_PER_PAGE+" * var(--lumo-size-m))");
+        grid.addComponentColumn(owner->{
+            BizUser user = new BizUser();
+            user.setFirstName(owner.getFirstName());
+            user.setLastName(owner.getLastName());
+            user.setUsername(owner.getUsername());
+            
+            UserField userField = new UserField(user);
+            HorizontalLayout panel = new HorizontalLayout();
+            panel.add(userField);
+            return panel;
+        });
+        
+        Map<String,String> sortableFields = WorkflowUtils.getSortableFields(BizUser.class);
+        grid.setPageSize(COUNT_PER_PAGE);
+        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
+        H4 approvalTitle = new H4("Owners");
+        ownerPanel.add(approvalTitle);
+        ownerPanel.add(nav);
+        ownerPanel.add(grid);
+        
+        return ownerPanel;
     }
     
     public Boolean validate(){
@@ -117,6 +234,8 @@ public class WorkflowPanel<T> extends FormLayout {
         select.setReadOnly(!editable);
         return select;
     }
+    
+    
 
 //    public void moveWork(){
 //         WorkItem work = workItemService.findOneByParentIdAndContext(parentId, context);

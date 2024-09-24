@@ -32,6 +32,8 @@ public class Approval {
     
     private String lastName;
     
+    private String worklist;
+    
     private Boolean approved;
     
     private LocalDateTime approvalDateTime;
@@ -92,27 +94,27 @@ public class Approval {
         this.approvalDateTime = approvalDateTime;
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 29 * hash + Objects.hashCode(this.id);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final Approval other = (Approval) obj;
-        return Objects.equals(this.id, other.id);
-    }
+//    @Override
+//    public int hashCode() {
+//        int hash = 7;
+//        hash = 29 * hash + Objects.hashCode(this.id);
+//        return hash;
+//    }
+//
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (this == obj) {
+//            return true;
+//        }
+//        if (obj == null) {
+//            return false;
+//        }
+//        if (getClass() != obj.getClass()) {
+//            return false;
+//        }
+//        final Approval other = (Approval) obj;
+//        return Objects.equals(this.id, other.id);
+//    }
 
     /**
      * @return the lastName
@@ -140,6 +142,20 @@ public class Approval {
      */
     public void setFirstName(String firstName) {
         this.firstName = firstName;
+    }
+
+    /**
+     * @return the worklist
+     */
+    public String getWorklist() {
+        return worklist;
+    }
+
+    /**
+     * @param worklist the worklist to set
+     */
+    public void setWorklist(String worklist) {
+        this.worklist = worklist;
     }
     
 }

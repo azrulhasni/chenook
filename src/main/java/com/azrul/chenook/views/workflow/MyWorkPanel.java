@@ -7,6 +7,7 @@ package com.azrul.chenook.views.workflow;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.BadgeUtils;
 import com.azrul.chenook.service.WorkflowService;
+import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.Card;
 import com.azrul.chenook.views.common.PageNav;
 import com.azrul.chenook.workflow.model.BizProcess;
@@ -44,14 +45,12 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
     private final Pair<Grid<T>, PageNav> myOwnedWork;
     private final FinApplicationService finappService;
     private final OidcUser oidcUser;
-    private final Map<String, String> sortableFields;
     private final BadgeUtils badgeUtils;
 
     public MyWorkPanel(
             final Class workItemClass,  
             final OidcUser oidcUser,
             final BizProcess bizProcess,
-            final Map<String, String> sortableFields,
             final FinApplicationService finappService,
             final BadgeUtils badgeUtils,
             final BiConsumer<MyWorkPanel, StartEvent> showCreationDialog,
@@ -60,9 +59,10 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
     ) {
 
         this.oidcUser = oidcUser;
-        this.sortableFields = sortableFields;
         this.finappService = finappService;
         this.badgeUtils = badgeUtils;
+         Map<String,String> sortableFields = WorkflowUtils.getSortableFields(workItemClass);
+        
         this.setWidth("-webkit-fill-available");
 
         List<StartEvent> startEvents = finappService.whatUserCanStart(oidcUser, bizProcess);
@@ -133,13 +133,17 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
     }
 
     public void refresh() {
-        myCreatedWork.getFirst().getDataProvider().refreshAll();
-        Integer countWorkByCreator = finappService.countWorkByCreator(oidcUser.getPreferredUsername());
-        myCreatedWork.getSecond().refreshPageNav(countWorkByCreator);
+        if (myCreatedWork!=null){
+            myCreatedWork.getFirst().getDataProvider().refreshAll();
+            Integer countWorkByCreator = finappService.countWorkByCreator(oidcUser.getPreferredUsername());
+            myCreatedWork.getSecond().refresh(countWorkByCreator);
+        }
         
-        myOwnedWork.getFirst().getDataProvider().refreshAll();
-        Integer countMyOwnedWork = finappService.countWorkByOwner(oidcUser.getPreferredUsername());
-        myOwnedWork.getSecond().refreshPageNav(countMyOwnedWork);
+        if (myOwnedWork!=null){
+            myOwnedWork.getFirst().getDataProvider().refreshAll();
+            Integer countMyOwnedWork = finappService.countWorkByOwner(oidcUser.getPreferredUsername());
+            myOwnedWork.getSecond().refresh(countMyOwnedWork);
+        }
     }
 
     private Grid<T> createGrid(

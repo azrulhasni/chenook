@@ -121,10 +121,8 @@ public class ApplicationForm extends Dialog {
                 work,
                 oidcUser,
                 false,
-                a -> {
-                },
-                a -> {
-                }
+                a -> {},
+                a -> {}
         );
 
         this.add(workflowPanel);
@@ -179,7 +177,7 @@ public class ApplicationForm extends Dialog {
             state = 1;
         } else if (applicantsEmail.contains(oidcUser.getEmail())) { // applicant
             state = 2;
-        } else if (work.getOwners().contains(oidcUser.getPreferredUsername())) {
+        } else if (work.getOwners().stream().filter(o->StringUtils.equals(o.getUsername(),oidcUser.getPreferredUsername())).count()>0) {
             state = 3;
         } else {
             state = 4;
@@ -288,43 +286,6 @@ public class ApplicationForm extends Dialog {
         return form;
     }
 
-//    private TextField createTextField(String label, boolean editable, boolean required) {
-//        TextField textField = new TextField(label);
-//        textField.setReadOnly(!editable);
-//        if (required) {
-//            textField.setRequiredIndicatorVisible(true);
-//        }
-//        return textField;
-//    }
-//    private <T extends WorkItem> TextArea createTextArea(Binder<T> binder,String  fieldName, boolean editable) {
-//        WorkflowAwareTextArea textArea = new WorkflowAwareTextArea(fieldName, binder);
-//        textArea.setReadOnly(!editable);
-//        return textArea;
-//    }
-//
-//    private <T extends WorkItem> ComboBox<T> createComboBox(Binder<T> binder,String  fieldName, boolean editable) {
-//        WorkflowAwareComboBox<T> comboBox = new  WorkflowAwareComboBox<>(fieldName, binder);
-//        comboBox.setReadOnly(!editable);
-//        return comboBox;
-//    }
-//
-//    private <T extends WorkItem> Select<T> createSelect(Binder<T> binder,String  fieldName, boolean editable) {
-//        WorkflowAwareSelect<T> select = new WorkflowAwareSelect<>(fieldName, binder);
-//        select.setReadOnly(!editable);
-//        return select;
-//    }
-//
-//    private  <T extends WorkItem> DateTimePicker createDateTimePicker(Binder<T> binder,String  fieldName, boolean editable) {
-//        WorkflowAwareDateTimePicker<T> dateTimePicker = new WorkflowAwareDateTimePicker(fieldName, binder);
-//        dateTimePicker.setReadOnly(!editable);
-//        return dateTimePicker;
-//    }
-//
-//    private  <T extends WorkItem> BigDecimalField createBigDecimalField(Binder<T> binder,String  fieldName, boolean editable) {
-//        WorkflowAwareBigDecimalField<T> bigDecimalField = new WorkflowAwareBigDecimalField<>(fieldName, binder);
-//        bigDecimalField.setReadOnly(!editable);
-//        return bigDecimalField;
-//    }
     private VerticalLayout createApplicantPanel(
             FinApplication finapp,
             ApplicantService applicantService,

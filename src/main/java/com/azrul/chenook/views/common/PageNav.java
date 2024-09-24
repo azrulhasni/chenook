@@ -205,7 +205,7 @@ public class PageNav extends HorizontalLayout {
     
     
     
-    public void refreshPageNav(Integer totalDataCount) {
+    public void refresh(Integer totalDataCount) {
         
         this.totalDataCount=totalDataCount;
         this.totalPageCount = (int)Math.ceil((double)totalDataCount/getCountPerPage());
@@ -218,6 +218,9 @@ public class PageNav extends HorizontalLayout {
         }
         calculateEnable();
         this.currentPage.setText(Integer.toString(page) + "/" + Integer.toString(totalPageCount));
+        if (totalDataCount==0){
+            this.setVisible(false);
+        }
     }
 
 //    public void initPageNav(Integer totalDataCount, DataProvider dataProvider, Integer countPerPage) {

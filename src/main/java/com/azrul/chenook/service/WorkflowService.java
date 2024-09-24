@@ -33,6 +33,8 @@ import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.SetJoin;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -77,6 +79,9 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     //Setter injection
     private ApprovalService approvalService;
+    
+    //Setter injection
+    private MapperService basicMapper;
 
     private Expression<Boolean, T> expr;
 
@@ -241,7 +246,7 @@ public abstract class WorkflowService<T extends WorkItem> {
             final String tenant,
             final List<Activity> nextSteps,
             final BizProcess bizProcess) {
-        String userIdentifier = user.getUsername();
+        //String userIdentifier = user.getUsername();
         if (activity.getClass().equals(HumanActivity.class)) {
             if (((HumanActivity) activity).getSupervisoryApprovalHierarchy().size() != 0) {
                 handleSupervisorApproval(work,
@@ -330,7 +335,7 @@ public abstract class WorkflowService<T extends WorkItem> {
 
             } else {
                 //don't move to next step but takeout the current owners (i.e. the approvers) so that he doesn't see it in his ownership any more
-                work.getOwners().remove(userIdentifier);
+                work.getOwners().remove(user);
             }
             //dealWithNextStep(root, tenant, getActivities().get(activity.getNext()), nextSteps, container);
         } else if (activity.getClass().equals(XorAtleastOneApprovalActivity.class)) {
@@ -389,7 +394,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                         nextSteps);
             } else {
                 //don't move to next step but takeout the current owner so that he doesn't see it in his ownership any more
-                work.getOwners().remove(userIdentifier);
+                work.getOwners().remove(user);
             }
             //dealWithNextStep(root, tenant, getActivities().get(activity.getNext()), nextSteps, container);
         } else if (activity.getClass().equals(XorMajorityApprovalActivity.class)) {
@@ -445,7 +450,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                         nextSteps);
             } else {
                 //don't move to next step but takeout the current owner so that he doesn't see it in his ownership any more
-                work.getOwners().remove(userIdentifier);
+                work.getOwners().remove(user);
             }
 
         }
@@ -485,7 +490,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                             approverLookup.lookupApprover((T) root, root.getSupervisorApprovalSeeker())
                                     .ifPresent(approver -> {
                                         root.getOwners().clear();
-                                        root.getOwners().add(approver.getUsername());
+                                        root.getOwners().add(approver);
 //                                        if (approver.getUsername() != null) {
 //                                            root.getOwners().add(approver.getUsername());
 //                                        } else {
@@ -501,7 +506,8 @@ public abstract class WorkflowService<T extends WorkItem> {
                                                 approver.getUsername(),
                                                 approver.getFirstName(),
                                                 approver.getLastName(),
-                                                root);
+                                                root,
+                                                next.getId());
                                         nextSteps.add(activity); //if need supervisor, stay in the same activity first
 
                                     });
@@ -512,7 +518,8 @@ public abstract class WorkflowService<T extends WorkItem> {
                 }
             } else {//not approved. Reassign back to original user
                 root.getOwners().clear();
-                root.getOwners().add(root.getSupervisorApprovalSeeker());
+                BizUser supervisorApprovalSeeker = bizUserService.getUser(root.getSupervisorApprovalSeeker());
+                root.getOwners().add(supervisorApprovalSeeker);
 
                 archiveApprovals(root);
                 root.setSupervisorApprovalLevel(null);
@@ -532,7 +539,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                 }).findAny().ifPresent(approverLookup -> {
                     approverLookup.lookupApprover((T) root, user.getUsername()).ifPresent(approver -> {
                         root.getOwners().clear();
-                        root.getOwners().add(approver.getUsername());
+                        root.getOwners().add(approver);
 //                                        if (approver.getUsername() != null) {
 //                                            root.getOwners().add(approver.getUsername());
 //                                        } else {
@@ -548,7 +555,8 @@ public abstract class WorkflowService<T extends WorkItem> {
                                 approver.getUsername(),
                                 approver.getFirstName(),
                                 approver.getLastName(),
-                                root);
+                                root,
+                                next.getId());
 
                         nextSteps.add(activity); //if need supervisor, stay in the same activity first
                     });
@@ -585,13 +593,21 @@ public abstract class WorkflowService<T extends WorkItem> {
         }
     }
 
-    private void loadUserIntoApprovalList(String loginName, String firstName, String lastName, T work) {
+    private void loadUserIntoApprovalList(
+            String loginName, 
+            String firstName, 
+            String lastName, 
+            T work,
+            String nextActivityId) {
         Approval approval = new Approval();
         approval.setUsername(loginName);
         approval.setFirstName(firstName);
         approval.setLastName(lastName);
+        approval.setWorklist(nextActivityId);
         work.getApprovals().add(approval);
     }
+    
+    
 
     private Boolean isSupervisorNeeded(T work) {
         return work.getSupervisorApprovalSeeker() != null; //there is a need to get supervisor's approval
@@ -621,7 +637,8 @@ public abstract class WorkflowService<T extends WorkItem> {
                     user.getUsername(),
                     user.getFirstName(),
                     user.getLastName(),
-                    work);
+                    work,
+                    nextActivity.getId());
         }
 
     }
@@ -647,50 +664,11 @@ public abstract class WorkflowService<T extends WorkItem> {
             Set<Approval> approvals
     ) {
 
-//        Optional<String> parentEnumPath = Castor.<T, Element>given(work)
-//                .castItTo(Element.class)
-//                .thenDo(w -> {
-//                    return w.getEnumPath();
-//                }).go();
-//        Optional<Approval> oapproval = dao.createAndSave(Approval.class,
-//                Optional.of(tenant),
-//                parentEnumPath,
-//                Optional.empty(),
-//                Optional.empty(),
-//                Status.IN_PROGRESS,
-//                work.getCreator());
         Approval approval = new Approval();
         if (user.isEnabled()) {
             approval.setUsername(user.getUsername());
             approval.setFirstName(user.getFirstName());
             approval.setUsername(user.getLastName());
-//                approval.setWorklist(((BaseActivity) nextActivity).getId());
-//                if (work.getStartEventDescription() != null) {
-//                    approval.setStartEventDescription(work.getStartEventDescription());
-//                }
-//                if (work.getStartEventId() != null) {
-//                    approval.setStartEventId(work.getStartEventId());
-//                }
-//            oapproval.ifPresent(approval -> {
-//                mapUserToApproval(approval, user, tenant);
-//                approval.setWorklist(((BaseActivity) nextActivity).getId());
-//                if (work.getStartEventDescription() != null) {
-//                    approval.setStartEventDescription(work.getStartEventDescription());
-//                }
-//                if (work.getStartEventId() != null) {
-//                    approval.setStartEventId(work.getStartEventId());
-//                }
-//                dao.saveAndAssociate(approval, work, "approvals").ifPresent(d -> {
-//                    Approval savedApproval = (Approval) ((Dual) d).getSecond();
-//                    approvals.add(savedApproval);
-//
-//                    //dao.saveAndAssociate(savedApproval, work, "historicalApprovals"); <--move this to ApprovalRenderer beforeSaveCallback/beforeSubmitCallback
-//                });
-//                userIdentifierLookup.lookup(user).ifPresent(userId -> {
-//                    work.getOwners().add(userId);
-//                });
-//
-//            });
         }
     }
 
@@ -852,15 +830,13 @@ public abstract class WorkflowService<T extends WorkItem> {
             final StartEvent startEvent,
             final BizProcess bizProcess) {
 
-        //T newwork = ;
         newwork.setContext(context);
         newwork.setCreator(oidcUser.getPreferredUsername());
         newwork.setPriority(Priority.NONE);
         newwork.setStatus(Status.NEWLY_CREATED);
 
-        //newwork.setFields(fields);
-        Set<String> owners = new HashSet<>();
-        owners.add(oidcUser.getPreferredUsername());
+        Set<BizUser> owners = new HashSet<>();
+        owners.add(basicMapper.map(oidcUser));
         newwork.setOwners(owners);
         newwork.setStartEventId(startEvent.getId());
         newwork.setStartEventDescription(bizProcess.getStartEvents().iterator().next().getDescription());
@@ -888,26 +864,23 @@ public abstract class WorkflowService<T extends WorkItem> {
         Optional<T> work = getWorkItemRepo().findById(id);
         return work.orElse(null);
     }
-
+    
+    
     public Integer countWorkByOwner(String username) {
-        Long count = getWorkItemRepo().countByOwner(username);//count(whereOwnersContains(username));
+        Long count = getWorkItemRepo().count(whereOwnersOrUndecidedApprovalsContains(username));
         return count.intValue();
     }
-
+     
     public DataProvider getWorkByOwner(Class<T> workItemClass, String username, PageNav pageNav) {
         //build data provider
         var dp = new AbstractBackEndDataProvider<T, Void>() {
             @Override
             protected Stream<T> fetchFromBackEnd(Query<T, Void> query) {
                 Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
-                String sortedField = pageNav.getSortField();
-                SessionFactory sessionFactory = getEmFactory().unwrap(SessionFactory.class);
-                AbstractEntityPersister persister = ((AbstractEntityPersister) ((MappingMetamodel) sessionFactory.getMetamodel()).getEntityDescriptor(workItemClass));
-                String sorted = persister.getPropertyColumnNames(sortedField)[0];
-
+                String sorted = pageNav.getSortField();
                 query.getPage();
 
-                Page<T> finapps = getWorkItemRepo().findByOwner(username,
+                Page<T> finapps = getWorkItemRepo().findAll(whereOwnersOrUndecidedApprovalsContains(username),
                         PageRequest.of(
                                 pageNav.getPage() - 1,
                                 pageNav.getMaxCountPerPage(),
@@ -969,7 +942,7 @@ public abstract class WorkflowService<T extends WorkItem> {
     }
 
     public Integer countWorkByWorklist(String worklist) {
-        Long count = getWorkItemRepo().countByWorklistAndNoOwner(worklist);//count(whereWorklistEquals(worklist));
+        Long count = getWorkItemRepo().count(whereNoOwnerAndWorklistEquals(worklist));//countByWorklistAndNoOwner(worklist);//count(whereWorklistEquals(worklist));
         return count.intValue();
     }
 
@@ -979,13 +952,11 @@ public abstract class WorkflowService<T extends WorkItem> {
             @Override
             protected Stream<T> fetchFromBackEnd(Query<T, Void> query) {
                 Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
-                String sortedField = pageNav.getSortField();
-                SessionFactory sessionFactory = getEmFactory().unwrap(SessionFactory.class);
-                AbstractEntityPersister persister = ((AbstractEntityPersister) ((MappingMetamodel) sessionFactory.getMetamodel()).getEntityDescriptor(workItemClass));
-                String sorted = persister.getPropertyColumnNames(sortedField)[0];
+                
+                String sorted = pageNav.getSortField();
                 query.getPage();
 
-                Page<T> finapps = getWorkItemRepo().findByWorklistAndNoOwner(worklist,
+                Page<T> finapps = getWorkItemRepo().findAll(whereNoOwnerAndWorklistEquals(worklist),
                         PageRequest.of(
                                 pageNav.getPage() - 1,
                                 pageNav.getMaxCountPerPage(),
@@ -1008,29 +979,35 @@ public abstract class WorkflowService<T extends WorkItem> {
         return dp;
     }
 
-//    private Specification<T> whereOwnersContains(String username) {
-//        return (workItem, cq, cb) -> {
-//            //workItem.fetch("owners");
-//            //return cb.in(cb.workItem)isMember(username, workItem.get("owners"));
-//            Set<String> users = new HashSet<>();
-//            users.add(username);
-//            return cb.literal(users).in(workItem.get("owners").as(Set.class));
-//        };
-//    }
+    private Specification<T> whereOwnersOrUndecidedApprovalsContains(String username) {
+        return (workItem, cq, cb) -> {
+            SetJoin<T, BizUser> owners = workItem.joinSet("owners", JoinType.LEFT);
+            SetJoin<T, Approval> approvals = workItem.joinSet("approvals", JoinType.LEFT);
+            return cb.or(
+                    cb.equal(owners.get("username"), username),
+                    cb.and(
+                        cb.equal(approvals.get("username"), username),
+                        cb.isNull(approvals.get("approved"))
+                    )
+            );
+        };
+    }
+    
     private Specification<T> whereCreatorEquals(String username) {
         return (workItem, cq, cb) -> {
             return cb.equal(workItem.get("creator"), username);
         };
     }
 
-//    private Specification<T> whereWorklistEquals(String worklist) {
-//        return (workItem, cq, cb) -> {
-//            return cb.and(
-//                    cb.equal(workItem.get("worklist"), worklist),
-//                    cb.isEmpty(workItem.get("owners"))
-//            );
-//        };
-//    }
+    private Specification<T> whereNoOwnerAndWorklistEquals(String worklist) {
+        return (workItem, cq, cb) -> {
+              SetJoin<T, BizUser> children = workItem.joinSet("owners", JoinType.LEFT);
+            return cb.and(
+                    cb.equal(workItem.get("worklist"), worklist),
+                    children.isNull()
+            );
+        };
+    }
     /**
      * @return the workItemRepo
      */
@@ -1124,6 +1101,21 @@ public abstract class WorkflowService<T extends WorkItem> {
     @Autowired
     public void setEmFactory(EntityManagerFactory emFactory) {
         this.emFactory = emFactory;
+    }
+
+    /**
+     * @return the basicMapper
+     */
+    public MapperService getBasicMapper() {
+        return basicMapper;
+    }
+
+    /**
+     * @param basicMapper the basicMapper to set
+     */
+    @Autowired
+    public void setBasicMapper(MapperService basicMapper) {
+        this.basicMapper = basicMapper;
     }
 
 }

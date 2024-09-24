@@ -4,6 +4,7 @@
  */
 package com.azrul.chenook.views.common;
 
+import com.azrul.chenook.domain.BizUser;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.button.Button;
@@ -14,6 +15,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.shared.Registration;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 /**
  *
@@ -22,13 +24,13 @@ import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 public class UserField extends TextField {
 
     private final String BETWEEN_BRACKETS = "\\((.*?)\\)";
-    private DefaultOidcUser user;
+    private BizUser user;
     private Boolean addProfileButton;
     private Button btnShowProfile = new Button();
     private Registration clickListener = null;
     private Avatar avUser = new Avatar();
 
-    public UserField(DefaultOidcUser user, Boolean addProfileButton) {
+    public UserField(BizUser user, Boolean addProfileButton) {
         this.addProfileButton = addProfileButton;
         this.setSuffixComponent(btnShowProfile);
         this.setPrefixComponent(avUser);
@@ -38,21 +40,19 @@ public class UserField extends TextField {
 
     }
 
-    public UserField(DefaultOidcUser user) {
+    public UserField(BizUser user) {
         this.addProfileButton = false;
         setUser(user);
 
     }
 
-    public DefaultOidcUser getUser() {
-        return user;
-    }
+    
 
     public void reset() {
         setUser(null);
     }
 
-    public final void setUser(DefaultOidcUser user_) {
+    private final void setUser(BizUser user_) {
 
         this.user = user_;
         if (user == null) {
@@ -61,7 +61,7 @@ public class UserField extends TextField {
             avUser.setVisible(false);
         } else {
 
-            String userDisplayName = user.getFullName();
+            String userDisplayName = user.getFirstName()+" "+user.getLastName();
             avUser.setVisible(true);
             this.setValue(userDisplayName);
             avUser.setName(userDisplayName.replaceAll(BETWEEN_BRACKETS, ""));
@@ -81,5 +81,7 @@ public class UserField extends TextField {
 
         this.setReadOnly(true);
     }
+
+  
 
 }

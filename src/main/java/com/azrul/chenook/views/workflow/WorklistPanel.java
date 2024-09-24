@@ -6,11 +6,15 @@ package com.azrul.chenook.views.workflow;
 
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.BadgeUtils;
+import com.azrul.chenook.service.BizUserService;
+import com.azrul.chenook.service.MapperService;
 import com.azrul.chenook.service.WorkflowService;
+import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.Card;
 import com.azrul.chenook.views.common.PageNav;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.chenook.workflow.model.StartEvent;
+import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.service.FinApplicationService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
@@ -45,24 +49,27 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
     private final List<Pair<Grid<T>, PageNav>> myWorklists = new ArrayList<>();
     private final WorkflowService<T> workflowService;
     private final OidcUser oidcUser;
-    private final Map<String, String> sortableFields;
     private final BadgeUtils badgeUtils;
+    private final MapperService basicMapper;
 
     public WorklistPanel(
             final Class workItemClass,
             final OidcUser oidcUser,
             final BizProcess bizProcess,
-            final Map<String, String> sortableFields,
             final WorkflowService<T> workflowService,
+            final BizUserService bizUserService,
             final BadgeUtils badgeUtils,
+            final MapperService basicMapper,
             final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
             final Function<T, VerticalLayout> cardBuilder
     ) {
 
         this.oidcUser = oidcUser;
-        this.sortableFields = sortableFields;
         this.workflowService = workflowService;
         this.badgeUtils = badgeUtils;
+        this.basicMapper=basicMapper;
+        Map<String,String> sortableFields = WorkflowUtils.getSortableFields(workItemClass);
+            
         this.setWidth("-webkit-fill-available");
 
         Set<String> roles = oidcUser
@@ -81,6 +88,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
                     worklist.getKey(),
                     oidcUser,
                     bizProcess,
+                    bizUserService,
                     showUpdateDialog,
                     cardBuilder,
                     sortableFields,
@@ -103,6 +111,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             final String w,
             final OidcUser oidcUser1,
             final BizProcess bizProcess,
+            final BizUserService bizUserService,
             final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
             final Function<T, VerticalLayout> cardBuilder,
             final Map<String, String> sortableFields1,
@@ -111,7 +120,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
         PageNav nav = new PageNav();
         Integer count = counter.apply(w);//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
         DataProvider dataProvider = dataProviderCreator.apply(w, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
-        Grid<T> grid = createGrid(title, oidcUser1, bizProcess, dataProvider, showUpdateDialog, cardBuilder);
+        Grid<T> grid = createGrid(title, oidcUser1, bizProcess, bizUserService, dataProvider, showUpdateDialog, cardBuilder);
         nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields1, false);
         Pair<Grid<T>, PageNav> pair = Pair.of(grid, nav);
         return pair;
@@ -121,7 +130,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
         for (var pair : myWorklists) {
             pair.getFirst().getDataProvider().refreshAll();
             Integer countWorkByCreator = workflowService.countWorkByCreator(oidcUser.getPreferredUsername());
-            pair.getSecond().refreshPageNav(countWorkByCreator);
+            pair.getSecond().refresh(countWorkByCreator);
         }
     }
 
@@ -129,6 +138,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             final String panelTitle,
             final OidcUser oidcUser,
             final BizProcess bizProcess,
+            final BizUserService bizUserService,
             final DataProvider dataProvider,
             final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
             final Function<T, VerticalLayout> cardBuilder) {
@@ -147,9 +157,9 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             card.add(content);
             HorizontalLayout btnPanel = new HorizontalLayout();
             btnPanel.add(new Button("Book this work", e -> {
-                work.getOwners().add(oidcUser.getPreferredUsername());
-                workflowService.save(work);
-                showUpdateDialog.accept(this, null, work);
+                work.getOwners().add(basicMapper.map(oidcUser));
+                T w = workflowService.save(work);
+                showUpdateDialog.accept(this, null, w);
             }));
             card.add(btnPanel);
             return card;

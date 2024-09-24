@@ -4,6 +4,7 @@
  */
 package com.azrul.chenook.views.common;
 
+import com.azrul.chenook.domain.BizUser;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -11,16 +12,18 @@ import com.vaadin.flow.component.formlayout.FormLayout.ResponsiveStep;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 /**
  *
  * @author azrul
  */
 public class UserProfile extends FormLayout {
-    public UserProfile(DefaultOidcUser user){
+    public UserProfile(BizUser user){
         //FormLayout this = new FormLayout();
         this.getStyle().set("width","100%");
-         UserField username = new UserField(user);
+         TextField username = new TextField();
+         username.setValue(user.getUsername());
          username.setReadOnly(true);
          username.getStyle().set("width", "100%");
          TextField email = new TextField();
@@ -30,11 +33,11 @@ public class UserProfile extends FormLayout {
          TextField firstName = new TextField();
          firstName.setReadOnly(true);
          firstName.getStyle().set("width", "100%");
-         firstName.setValue(user.getGivenName());
+         firstName.setValue(user.getFirstName());
          TextField lastName = new TextField();
          lastName.setReadOnly(true);
          lastName.getStyle().set("width", "100%");
-         lastName.setValue(user.getFamilyName());
+         lastName.setValue(user.getLastName());
          this.addFormItem(username,"Username");
          this.addFormItem(firstName,"First name");
          this.addFormItem(lastName,"Last name");

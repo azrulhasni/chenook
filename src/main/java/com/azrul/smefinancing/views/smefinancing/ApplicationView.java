@@ -16,6 +16,8 @@ import com.azrul.chenook.workflow.model.StartEvent;
 import com.azrul.smefinancing.service.FinApplicationService;
 import com.azrul.smefinancing.views.application.ApplicationForm;
 import com.azrul.chenook.service.BadgeUtils;
+import com.azrul.chenook.service.BizUserService;
+import com.azrul.chenook.service.MapperService;
 import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.workflow.WorklistPanel;
 import com.vaadin.flow.component.html.NativeLabel;
@@ -55,6 +57,8 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
     private final String DATETIME_FORMAT;
     private final WorkflowConfig workflowConfig;
     private final ApprovalService approvalService;
+    private final BizUserService bizUserService;
+    private final MapperService basicMapper;
 
     public ApplicationView(
             @Autowired FinApplicationService finappService,
@@ -63,6 +67,8 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
             @Autowired BadgeUtils badgeUtils,
             @Autowired WorkflowConfig workflowConfig,
             @Autowired ApprovalService approvalService,
+            @Autowired BizUserService bizUserService,
+            @Autowired MapperService basicMapper,
             @Value("${finapp.datetime.format}") String dateTimeFormat
     ) {
         this.finappService = finappService;
@@ -72,19 +78,19 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
         this.DATETIME_FORMAT = dateTimeFormat;
         this.workflowConfig = workflowConfig;
         this.approvalService=approvalService;
+        this.bizUserService=bizUserService;
+        this.basicMapper = basicMapper;
 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
         final BizProcess bizProcess = workflowConfig.rootBizProcess();
         if (SecurityContextHolder.getContext().getAuthentication() instanceof OAuth2AuthenticationToken oauth2AuthToken) {
             DefaultOidcUser oidcUser = (DefaultOidcUser) oauth2AuthToken.getPrincipal();
             
-            Map<String,String> sortableFields = WorkflowUtils.getSortableFields(FinApplication.class);
             Map<String,String> fieldNameDisplayNameMap = WorkflowUtils.getFieldNameDisplayNameMap(FinApplication.class);
             MyWorkPanel<FinApplication> workPanel = new MyWorkPanel<FinApplication>(
                     FinApplication.class,
                     oidcUser,
                     workflowConfig.rootBizProcess(),
-                    sortableFields,
                     finappService,
                     badgeUtils,
                     (wp, startEvent) -> {
@@ -135,9 +141,10 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                     FinApplication.class,
                     oidcUser,
                     workflowConfig.rootBizProcess(),
-                    sortableFields,
                     finappService,
+                    bizUserService,
                     badgeUtils,
+                    basicMapper,
                     (wp, startEvent, finapp) -> {
                         showApplicationDialog(
                                 startEvent,
