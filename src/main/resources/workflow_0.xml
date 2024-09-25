@@ -8,7 +8,7 @@ Disbursement-Officer-Maker: yuser311
 Disbursement-Officer-Checker: yuser312,yuser313
 Supervisor: yuser310
 
-Role names must be CAPITALIZE both inb here and Keycloak
+Role names must be CAPITALIZE both in here and Keycloak
 -->
 <bizProcess xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:noNamespaceSchemaLocation="workflow.xsd">

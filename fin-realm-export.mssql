@@ -1,0 +1,687 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 16.3 (Debian 16.3-1.pgdg120+1)
+-- Dumped by pg_dump version 16.1
+
+-- Started on 2024-09-25 22:20:09 +08
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+DROP DATABASE IF EXISTS kelichap;
+--
+-- TOC entry 3484 (class 1262 OID 16391)
+-- Name: kelichap; Type: DATABASE; Schema: -; Owner: kelichap
+--
+
+CREATE DATABASE kelichap WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';
+
+
+ALTER DATABASE kelichap OWNER TO kelichap;
+
+\connect kelichap
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 3472 (class 0 OID 32855)
+-- Dependencies: 229
+-- Data for Name: contact_person; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+
+
+--
+-- TOC entry 3471 (class 0 OID 32847)
+-- Dependencies: 228
+-- Data for Name: contact_person_aud; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+
+
+--
+-- TOC entry 3474 (class 0 OID 32871)
+-- Dependencies: 231
+-- Data for Name: fin_application; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+INSERT INTO public.fin_application VALUES (1, 'No 9 Jalan 15, 54300', '2024-07-17 15:44:04.076', 'Azrul Hasni (azrulhasni)', '2024-07-17 15:44:29.726263', NULL, 'Azrul Hasni (azrulhasni)', '2024-07-17 15:44:29.726263', NULL, 'AAA', '123456', 'Selangor', 0, NULL, NULL);
+INSERT INTO public.fin_application VALUES (2, '12 Jalan 14, 53000', '2024-07-17 16:14:41.279', 'Azrul Hasni (azrulhasni)', '2024-07-17 16:15:03.209958', NULL, 'Azrul Hasni (azrulhasni)', '2024-07-17 16:15:03.209958', NULL, 'AAA', '123456', 'Penang', 0, NULL, NULL);
+INSERT INTO public.fin_application VALUES (52, ' RESIDENSI PLATINUM TERATAI ,NO 2 JALAN KURAMAN , JALAN LANGKAWI ,', '2024-07-17 16:52:44.883', 'Azrul Hasni (azrulhasni)', '2024-07-17 16:53:34.798419', NULL, 'Azrul Hasni (azrulhasni)', '2024-07-17 16:53:34.798419', NULL, 'AAA', '12345', 'Perak', 0, NULL, 'AAA');
+INSERT INTO public.fin_application VALUES (102, 'NO 8-27 , RESIDENSI PLATINUM TERATAI ,NO 2 JALAN KURAMAN , JALAN LANGKAWI ,', '2024-07-17 17:07:41.228', 'Azrul Hasni (azrulhasni)', '2024-07-17 17:09:32.525521', 1000000.00, 'Azrul Hasni (azrulhasni)', '2024-07-17 17:09:32.525521', NULL, 'AAA', 'bbb zzzaaabbb', 'Penang', 0, NULL, 'AAA');
+
+
+--
+-- TOC entry 3473 (class 0 OID 32863)
+-- Dependencies: 230
+-- Data for Name: fin_application_aud; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+INSERT INTO public.fin_application_aud VALUES (1, 2552, 0, 'No 9 Jalan 15, 54300', '2024-07-17 15:44:04.076', 'Azrul Hasni (azrulhasni)', '2024-07-17 15:44:29.726263', NULL, 'Azrul Hasni (azrulhasni)', '2024-07-17 15:44:29.726263', NULL, 'AAA', '123456', 'Selangor', 0, NULL, false, NULL);
+INSERT INTO public.fin_application_aud VALUES (2, 2602, 0, '12 Jalan 14, 53000', '2024-07-17 16:14:41.279', 'Azrul Hasni (azrulhasni)', '2024-07-17 16:15:03.209958', NULL, 'Azrul Hasni (azrulhasni)', '2024-07-17 16:15:03.209958', NULL, 'AAA', '123456', 'Penang', 0, NULL, false, NULL);
+INSERT INTO public.fin_application_aud VALUES (52, 2652, 0, ' RESIDENSI PLATINUM TERATAI ,NO 2 JALAN KURAMAN , JALAN LANGKAWI ,', '2024-07-17 16:52:44.883', 'Azrul Hasni (azrulhasni)', '2024-07-17 16:53:34.798419', NULL, 'Azrul Hasni (azrulhasni)', '2024-07-17 16:53:34.798419', NULL, 'AAA', '12345', 'Perak', 0, NULL, false, 'AAA');
+INSERT INTO public.fin_application_aud VALUES (102, 2702, 0, 'NO 8-27 , RESIDENSI PLATINUM TERATAI ,NO 2 JALAN KURAMAN , JALAN LANGKAWI ,', '2024-07-17 17:07:41.228', 'Azrul Hasni (azrulhasni)', '2024-07-17 17:09:32.525521', 1000000.00, 'Azrul Hasni (azrulhasni)', '2024-07-17 17:09:32.525521', NULL, 'AAA', 'bbb zzzaaabbb', 'Penang', 0, NULL, false, 'AAA');
+
+
+--
+-- TOC entry 3475 (class 0 OID 32879)
+-- Dependencies: 232
+-- Data for Name: finapplication_attachment_map; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+
+
+--
+-- TOC entry 3476 (class 0 OID 32884)
+-- Dependencies: 233
+-- Data for Name: finapplication_attachment_map_aud; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+
+
+--
+-- TOC entry 3458 (class 0 OID 17981)
+-- Dependencies: 215
+-- Data for Name: folder_access_map; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+INSERT INTO public.folder_access_map VALUES (1602, 'cholmes', 0);
+INSERT INTO public.folder_access_map VALUES (1602, 'alan.quatermain', 2);
+INSERT INTO public.folder_access_map VALUES (1652, 'alan.quatermain', 0);
+INSERT INTO public.folder_access_map VALUES (1603, 'john.carter', 2);
+INSERT INTO public.folder_access_map VALUES (1603, 'james.rigby', 2);
+INSERT INTO public.folder_access_map VALUES (1603, 'cholmes', 0);
+INSERT INTO public.folder_access_map VALUES (1702, 'john.carter', 0);
+INSERT INTO public.folder_access_map VALUES (1702, 'alan.quatermain', 2);
+INSERT INTO public.folder_access_map VALUES (1702, 'sherlock.holmes', 1);
+INSERT INTO public.folder_access_map VALUES (1703, 'john.carter', 0);
+INSERT INTO public.folder_access_map VALUES (1703, 'tom.sawyer', 1);
+
+
+--
+-- TOC entry 3459 (class 0 OID 17985)
+-- Dependencies: 216
+-- Data for Name: folder_access_map_aud; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+INSERT INTO public.folder_access_map_aud VALUES (2352, 0, 1552, 0, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2352, 0, 1552, 1, 'sherlock.holmes', 1);
+INSERT INTO public.folder_access_map_aud VALUES (2353, 0, 1553, 0, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2353, 0, 1553, 1, 'alan.quatermain', 1);
+INSERT INTO public.folder_access_map_aud VALUES (2356, 2, 1552, 0, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2356, 2, 1552, 1, 'sherlock.holmes', 1);
+INSERT INTO public.folder_access_map_aud VALUES (2356, 0, 1552, 0, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2357, 2, 1552, 0, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2357, 0, 1552, 0, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2357, 0, 1552, 1, 'sherlock.holmes', 1);
+INSERT INTO public.folder_access_map_aud VALUES (2359, 2, 1552, 0, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2359, 2, 1552, 1, 'sherlock.holmes', 1);
+INSERT INTO public.folder_access_map_aud VALUES (2359, 0, 1552, 0, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2362, 2, 1553, 0, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2362, 2, 1553, 1, 'alan.quatermain', 1);
+INSERT INTO public.folder_access_map_aud VALUES (2362, 0, 1553, 2, 'sherlock.holmes', 1);
+INSERT INTO public.folder_access_map_aud VALUES (2362, 0, 1553, 0, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2362, 0, 1553, 1, 'alan.quatermain', 1);
+INSERT INTO public.folder_access_map_aud VALUES (2363, 2, 1552, 0, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2402, 0, 1602, 0, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2402, 0, 1602, 1, 'alan.quatermain', 2);
+INSERT INTO public.folder_access_map_aud VALUES (2403, 0, 1603, 0, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2403, 0, 1603, 1, 'john.carter', 2);
+INSERT INTO public.folder_access_map_aud VALUES (2452, 0, 1652, 0, 'alan.quatermain', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2454, 2, 1652, 0, 'alan.quatermain', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2454, 0, 1652, 0, 'alan.quatermain', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2454, 0, 1652, 1, 'cholmes', 2);
+INSERT INTO public.folder_access_map_aud VALUES (2455, 2, 1652, 0, 'alan.quatermain', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2455, 2, 1652, 1, 'cholmes', 2);
+INSERT INTO public.folder_access_map_aud VALUES (2455, 0, 1652, 0, 'alan.quatermain', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2502, 2, 1603, 0, 'john.carter', 2);
+INSERT INTO public.folder_access_map_aud VALUES (2502, 2, 1603, 1, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2502, 0, 1603, 1, 'james.rigby', 2);
+INSERT INTO public.folder_access_map_aud VALUES (2502, 0, 1603, 2, 'cholmes', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2502, 0, 1603, 0, 'john.carter', 2);
+INSERT INTO public.folder_access_map_aud VALUES (2503, 0, 1702, 0, 'john.carter', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2503, 0, 1702, 1, 'alan.quatermain', 2);
+INSERT INTO public.folder_access_map_aud VALUES (2503, 0, 1702, 2, 'sherlock.holmes', 1);
+INSERT INTO public.folder_access_map_aud VALUES (2504, 0, 1703, 0, 'john.carter', 0);
+INSERT INTO public.folder_access_map_aud VALUES (2504, 0, 1703, 1, 'tom.sawyer', 1);
+
+
+--
+-- TOC entry 3460 (class 0 OID 17991)
+-- Dependencies: 217
+-- Data for Name: item; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+INSERT INTO public.item VALUES ('FOLDER', 1602, 'Clara Holmes (cholmes)', '2024-06-21 23:49:50.217549', 'Clara Holmes (cholmes)', '2024-06-21 23:49:50.217549', 0, 'my folder 1', '', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, true, NULL, 1602);
+INSERT INTO public.item VALUES ('DOCUMENT', 1604, 'Clara Holmes (cholmes)', '2024-06-21 23:50:24.016206', 'Clara Holmes (cholmes)', '2024-06-21 23:50:24.115163', 2, 'Zed.pdf', '1602 1603', 1, NULL, '1603/Zed.pdf/1', 'application/pdf', 'application/pdf', 'Zed.pdf', NULL, 26403, '', true, 1603, 1602);
+INSERT INTO public.item VALUES ('DOCUMENT', 1653, 'Alan Quatermain (alan.quatermain)', '2024-06-22 00:19:06.968561', 'Alan Quatermain (alan.quatermain)', '2024-06-22 00:19:07.038618', 1, 'Zed.pdf', '1652', 1, NULL, '1652/Zed.pdf/1', 'application/pdf', 'application/pdf', 'Zed.pdf', NULL, 26691, '', true, 1652, 1652);
+INSERT INTO public.item VALUES ('FOLDER', 1652, 'Alan Quatermain (alan.quatermain)', '2024-06-22 00:18:45.958282', 'Alan Quatermain (alan.quatermain)', '2024-06-22 00:20:17.571115', 0, 'my folder 3', '', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, true, NULL, 1652);
+INSERT INTO public.item VALUES ('FOLDER', 1603, 'Clara Holmes (cholmes)', '2024-06-21 23:50:11.398255', 'Clara Holmes (cholmes)', '2024-06-22 00:41:47.638203', 1, 'my folder 1 1', '1602', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, true, 1602, 1602);
+INSERT INTO public.item VALUES ('FOLDER', 1702, 'John Carter (john.carter)', '2024-06-22 06:50:57.287432', 'John Carter (john.carter)', '2024-06-22 06:50:57.287432', 0, 'folder 2024-06-21T22:50:39.127Z', '', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, true, NULL, 1702);
+INSERT INTO public.item VALUES ('FOLDER', 1703, 'John Carter (john.carter)', '2024-06-22 06:51:05.65841', 'John Carter (john.carter)', '2024-06-22 06:51:05.65841', 1, 'folder 1 2024-06-21T22:50:39.127Z', '1702', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, true, 1702, 1702);
+INSERT INTO public.item VALUES ('DOCUMENT', 1704, 'John Carter (john.carter)', '2024-06-22 06:51:16.849416', 'John Carter (john.carter)', '2024-06-22 06:51:16.849416', 2, 'Zed.pdf', '1702 1703', 1, NULL, '1703/Zed.pdf/1', 'application/pdf', 'application/pdf', 'Zed.pdf', NULL, 26403, '#programming #zed', true, 1703, 1702);
+INSERT INTO public.item VALUES ('DOCUMENT', 1705, 'Tom Sawyer (tom.sawyer)', '2024-06-22 06:51:43.987116', 'Tom Sawyer (tom.sawyer)', '2024-06-22 06:51:43.987116', 2, 'file-sample_1MB.doc.pdf', '1702 1703', 1, NULL, '1703/file-sample_1MB.doc.pdf/1', 'application/pdf', 'application/msword', 'file-sample_1MB.doc', NULL, 1027072, '#programming #zed', true, 1703, 1702);
+
+
+--
+-- TOC entry 3461 (class 0 OID 17999)
+-- Dependencies: 218
+-- Data for Name: item_aud; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+INSERT INTO public.item_aud VALUES (1552, 2352, 'FOLDER', 0, 'Clara Holmes (cholmes)', '2024-06-21 23:16:38.88306', 'Clara Holmes (cholmes)', '2024-06-21 23:16:38.88306', 0, 'my folder 1', '', 1, true, NULL, NULL, 1552, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1553, 2353, 'FOLDER', 0, 'Clara Holmes (cholmes)', '2024-06-21 23:17:28.316215', 'Clara Holmes (cholmes)', '2024-06-21 23:17:28.316215', 1, 'my folder 1 1', '1552', 1, true, NULL, 1552, 1552, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1554, 2354, 'DOCUMENT', 0, 'Clara Holmes (cholmes)', '2024-06-21 23:17:49.686377', 'Clara Holmes (cholmes)', '2024-06-21 23:17:50.213884', 2, 'Zed.pdf', '1552 1553', 1, true, NULL, 1553, 1552, true, '1553/Zed.pdf/1', 'application/pdf', 'application/pdf', 'Zed.pdf', NULL, 26403, '');
+INSERT INTO public.item_aud VALUES (1552, 2355, 'FOLDER', 1, 'Clara Holmes (cholmes)', '2024-06-21 23:16:38.88306', 'Clara Holmes (cholmes)', '2024-06-21 23:18:19.879622', 0, 'my folder 1', '', 1, false, NULL, NULL, 1552, false, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1552, 2356, 'FOLDER', 1, 'Clara Holmes (cholmes)', '2024-06-21 23:16:38.88306', 'Clara Holmes (cholmes)', '2024-06-21 23:18:34.864644', 0, 'my folder 1', '', 1, false, NULL, NULL, 1552, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1552, 2357, 'FOLDER', 1, 'Clara Holmes (cholmes)', '2024-06-21 23:16:38.88306', 'Clara Holmes (cholmes)', '2024-06-21 23:19:47.595482', 0, 'my folder 1', '', 1, false, NULL, NULL, 1552, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1552, 2358, 'FOLDER', 1, 'Clara Holmes (cholmes)', '2024-06-21 23:16:38.88306', 'Clara Holmes (cholmes)', '2024-06-21 23:19:54.719072', 0, 'my folder 1', '', 1, false, NULL, NULL, 1552, false, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1552, 2359, 'FOLDER', 1, 'Clara Holmes (cholmes)', '2024-06-21 23:16:38.88306', 'Clara Holmes (cholmes)', '2024-06-21 23:19:59.527214', 0, 'my folder 1', '', 1, false, NULL, NULL, 1552, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1554, 2360, 'DOCUMENT', 1, 'Clara Holmes (cholmes)', '2024-06-21 23:17:49.686377', 'Clara Holmes (cholmes)', '2024-06-21 23:20:52.98845', 2, 'Zed.pdf', '1552 1553', 1, false, NULL, 1553, 1552, true, '1553/Zed.pdf/1', 'application/pdf', 'application/pdf', 'Zed.pdf', NULL, 26403, '#hello');
+INSERT INTO public.item_aud VALUES (1554, 2361, 'DOCUMENT', 1, 'Clara Holmes (cholmes)', '2024-06-21 23:17:49.686377', 'Clara Holmes (cholmes)', '2024-06-21 23:21:40.390749', 2, 'Zed.pdf', '1552 1553', 2, true, NULL, 1553, 1552, true, '1553/Zed.pdf/2', 'application/pdf', 'application/pdf', 'Zed.pdf', NULL, 26691, '#hello');
+INSERT INTO public.item_aud VALUES (1553, 2362, 'FOLDER', 1, 'Clara Holmes (cholmes)', '2024-06-21 23:17:28.316215', 'Clara Holmes (cholmes)', '2024-06-21 23:24:20.041968', 1, 'my folder 1 1', '1552', 1, false, NULL, 1552, 1552, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1552, 2363, 'FOLDER', 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1602, 2402, 'FOLDER', 0, 'Clara Holmes (cholmes)', '2024-06-21 23:49:50.217549', 'Clara Holmes (cholmes)', '2024-06-21 23:49:50.217549', 0, 'my folder 1', '', 1, true, NULL, NULL, 1602, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1603, 2403, 'FOLDER', 0, 'Clara Holmes (cholmes)', '2024-06-21 23:50:11.398255', 'Clara Holmes (cholmes)', '2024-06-21 23:50:11.398255', 1, 'my folder 1 1', '1602', 1, true, NULL, 1602, 1602, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1604, 2404, 'DOCUMENT', 0, 'Clara Holmes (cholmes)', '2024-06-21 23:50:24.016206', 'Clara Holmes (cholmes)', '2024-06-21 23:50:24.100243', 2, 'Zed.pdf', '1602 1603', 1, true, NULL, 1603, 1602, true, '1603/Zed.pdf/1', 'application/pdf', 'application/pdf', 'Zed.pdf', NULL, 26403, '');
+INSERT INTO public.item_aud VALUES (1652, 2452, 'FOLDER', 0, 'Alan Quatermain (alan.quatermain)', '2024-06-22 00:18:45.958282', 'Alan Quatermain (alan.quatermain)', '2024-06-22 00:18:45.958282', 0, 'my folder 3', '', 1, true, NULL, NULL, 1652, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1653, 2453, 'DOCUMENT', 0, 'Alan Quatermain (alan.quatermain)', '2024-06-22 00:19:06.968561', 'Alan Quatermain (alan.quatermain)', '2024-06-22 00:19:07.028548', 1, 'Zed.pdf', '1652', 1, true, NULL, 1652, 1652, true, '1652/Zed.pdf/1', 'application/pdf', 'application/pdf', 'Zed.pdf', NULL, 26691, '');
+INSERT INTO public.item_aud VALUES (1652, 2454, 'FOLDER', 1, 'Alan Quatermain (alan.quatermain)', '2024-06-22 00:18:45.958282', 'Alan Quatermain (alan.quatermain)', '2024-06-22 00:19:33.605479', 0, 'my folder 3', '', 1, false, NULL, NULL, 1652, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1652, 2455, 'FOLDER', 1, 'Alan Quatermain (alan.quatermain)', '2024-06-22 00:18:45.958282', 'Alan Quatermain (alan.quatermain)', '2024-06-22 00:20:17.571115', 0, 'my folder 3', '', 1, false, NULL, NULL, 1652, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1603, 2502, 'FOLDER', 1, 'Clara Holmes (cholmes)', '2024-06-21 23:50:11.398255', 'Clara Holmes (cholmes)', '2024-06-22 00:41:47.638203', 1, 'my folder 1 1', '1602', 1, false, NULL, 1602, 1602, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1702, 2503, 'FOLDER', 0, 'John Carter (john.carter)', '2024-06-22 06:50:57.287432', 'John Carter (john.carter)', '2024-06-22 06:50:57.287432', 0, 'folder 2024-06-21T22:50:39.127Z', '', 1, true, NULL, NULL, 1702, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1703, 2504, 'FOLDER', 0, 'John Carter (john.carter)', '2024-06-22 06:51:05.65841', 'John Carter (john.carter)', '2024-06-22 06:51:05.65841', 1, 'folder 1 2024-06-21T22:50:39.127Z', '1702', 1, true, NULL, 1702, 1702, true, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public.item_aud VALUES (1704, 2505, 'DOCUMENT', 0, 'John Carter (john.carter)', '2024-06-22 06:51:16.849416', 'John Carter (john.carter)', '2024-06-22 06:51:16.849416', 2, 'Zed.pdf', '1702 1703', 1, true, NULL, 1703, 1702, true, '1703/Zed.pdf/1', 'application/pdf', 'application/pdf', 'Zed.pdf', NULL, 26403, '#programming #zed');
+INSERT INTO public.item_aud VALUES (1705, 2506, 'DOCUMENT', 0, 'Tom Sawyer (tom.sawyer)', '2024-06-22 06:51:43.987116', 'Tom Sawyer (tom.sawyer)', '2024-06-22 06:51:43.987116', 2, 'file-sample_1MB.doc.pdf', '1702 1703', 1, true, NULL, 1703, 1702, true, '1703/file-sample_1MB.doc.pdf/1', 'application/pdf', 'application/msword', 'file-sample_1MB.doc', NULL, 1027072, '#programming #zed');
+
+
+--
+-- TOC entry 3462 (class 0 OID 18007)
+-- Dependencies: 219
+-- Data for Name: note; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+
+
+--
+-- TOC entry 3463 (class 0 OID 18014)
+-- Dependencies: 220
+-- Data for Name: note_aud; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+
+
+--
+-- TOC entry 3464 (class 0 OID 18021)
+-- Dependencies: 221
+-- Data for Name: notification; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+INSERT INTO public.notification VALUES (1, '2024-06-03 21:13:58.733872', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-03T13:13:44.467Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1);
+INSERT INTO public.notification VALUES (2, '2024-06-03 21:13:58.734342', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-03T13:13:44.467Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1);
+INSERT INTO public.notification VALUES (3, '2024-06-03 21:14:06.749349', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-03T13:13:44.467Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 2);
+INSERT INTO public.notification VALUES (4, '2024-06-03 21:14:16.447625', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 2, 3);
+INSERT INTO public.notification VALUES (52, '2024-06-03 21:20:36.755548', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 2, 52);
+INSERT INTO public.notification VALUES (102, '2024-06-03 21:36:42.664219', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 2, 102);
+INSERT INTO public.notification VALUES (103, '2024-06-03 21:36:42.664484', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 2, 102);
+INSERT INTO public.notification VALUES (104, '2024-06-03 21:40:27.665155', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-03T13:40:14.558Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 104);
+INSERT INTO public.notification VALUES (105, '2024-06-03 21:40:27.665365', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-03T13:40:14.558Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 104);
+INSERT INTO public.notification VALUES (106, '2024-06-03 21:40:35.409988', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-03T13:40:14.558Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 105);
+INSERT INTO public.notification VALUES (107, '2024-06-03 21:40:44.582962', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 2, 106);
+INSERT INTO public.notification VALUES (108, '2024-06-03 21:41:09.845158', 'Tom Sawyer', 'tom.sawyer', 'File name: file-sample_1MB.doc.pdf', NULL, NULL, 0, 'John Carter', 'john.carter', 2, 107);
+INSERT INTO public.notification VALUES (109, '2024-06-03 21:41:52.003556', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-03T13:41:39.440Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 108);
+INSERT INTO public.notification VALUES (110, '2024-06-03 21:41:52.003587', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-03T13:41:39.440Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 108);
+INSERT INTO public.notification VALUES (111, '2024-06-03 21:41:59.752332', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-03T13:41:39.440Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 109);
+INSERT INTO public.notification VALUES (112, '2024-06-03 21:42:09.050791', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 2, 110);
+INSERT INTO public.notification VALUES (113, '2024-06-03 21:42:28.296568', 'Tom Sawyer', 'tom.sawyer', 'File name: Zed.pdf', NULL, NULL, 0, 'John Carter', 'john.carter', 3, 110);
+INSERT INTO public.notification VALUES (114, '2024-06-03 21:43:07.534623', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-03T13:42:54.930Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 111);
+INSERT INTO public.notification VALUES (115, '2024-06-03 21:43:07.534656', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-03T13:42:54.930Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 111);
+INSERT INTO public.notification VALUES (116, '2024-06-03 21:43:15.245361', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-03T13:42:54.930Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 112);
+INSERT INTO public.notification VALUES (117, '2024-06-03 21:43:24.63857', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 2, 113);
+INSERT INTO public.notification VALUES (118, '2024-06-03 21:44:21.257165', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-03T13:44:08.693Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 114);
+INSERT INTO public.notification VALUES (119, '2024-06-03 21:44:21.257246', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-03T13:44:08.693Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 114);
+INSERT INTO public.notification VALUES (120, '2024-06-03 21:44:28.99721', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-03T13:44:08.693Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 115);
+INSERT INTO public.notification VALUES (122, '2024-06-03 21:44:42.646946', 'John Carter', 'john.carter', 'Please help @[John Carter (john.carter)] 2024-06-03T13:44:08.693Z', 1, NULL, 0, 'John Carter (john.carter)', 'john.carter', 0, 116);
+INSERT INTO public.notification VALUES (121, '2024-06-03 21:44:38.425232', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 1, 'Tom Sawyer', 'tom.sawyer', 2, 116);
+INSERT INTO public.notification VALUES (123, '2024-06-03 21:48:04.081691', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-03T13:47:51.293Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 117);
+INSERT INTO public.notification VALUES (124, '2024-06-03 21:48:04.081725', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-03T13:47:51.293Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 117);
+INSERT INTO public.notification VALUES (125, '2024-06-03 21:48:11.818522', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-03T13:47:51.293Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 118);
+INSERT INTO public.notification VALUES (126, '2024-06-03 21:48:21.457694', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 2, 119);
+INSERT INTO public.notification VALUES (127, '2024-06-03 21:48:26.067048', 'John Carter', 'john.carter', 'Please help @[Tom Sawyer (tom.sawyer)] 2024-06-03T13:47:51.293Z', 2, NULL, 1, 'Tom Sawyer (tom.sawyer)', 'tom.sawyer', 0, 119);
+INSERT INTO public.notification VALUES (152, '2024-06-04 20:06:28.820591', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf1', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 202);
+INSERT INTO public.notification VALUES (153, '2024-06-04 20:06:28.820905', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf1', NULL, NULL, 0, 'Goofy Goof', 'goofy.goof', 1, 202);
+INSERT INTO public.notification VALUES (154, '2024-06-04 20:06:28.820964', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf1', NULL, NULL, 0, 'Daisy Duck', 'daisy.duck', 1, 202);
+INSERT INTO public.notification VALUES (202, '2024-06-05 11:35:03.598318', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:34:46.935Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 252);
+INSERT INTO public.notification VALUES (203, '2024-06-05 11:35:03.598696', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:34:46.935Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 252);
+INSERT INTO public.notification VALUES (204, '2024-06-05 11:35:12.037697', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-05T03:34:46.935Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 253);
+INSERT INTO public.notification VALUES (205, '2024-06-05 11:35:23.003466', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 254);
+INSERT INTO public.notification VALUES (206, '2024-06-05 11:35:45.362511', 'Tom Sawyer', 'tom.sawyer', 'File name: file-sample_1MB.doc.pdf', NULL, NULL, 0, NULL, 'john.carter', 2, 255);
+INSERT INTO public.notification VALUES (207, '2024-06-05 11:36:31.161268', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:36:18.248Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 256);
+INSERT INTO public.notification VALUES (208, '2024-06-05 11:36:31.161308', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:36:18.248Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 256);
+INSERT INTO public.notification VALUES (209, '2024-06-05 11:36:39.039055', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-05T03:36:18.248Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 257);
+INSERT INTO public.notification VALUES (210, '2024-06-05 11:36:49.397941', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 258);
+INSERT INTO public.notification VALUES (211, '2024-06-05 11:37:09.014194', 'Tom Sawyer', 'tom.sawyer', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'john.carter', 3, 258);
+INSERT INTO public.notification VALUES (212, '2024-06-05 11:43:46.407525', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:43:33.588Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 259);
+INSERT INTO public.notification VALUES (213, '2024-06-05 11:43:46.407651', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:43:33.588Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 259);
+INSERT INTO public.notification VALUES (214, '2024-06-05 11:43:54.207587', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-05T03:43:33.588Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 260);
+INSERT INTO public.notification VALUES (215, '2024-06-05 11:44:04.442617', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 261);
+INSERT INTO public.notification VALUES (216, '2024-06-05 11:44:47.568615', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 262);
+INSERT INTO public.notification VALUES (217, '2024-06-05 11:44:47.568651', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 262);
+INSERT INTO public.notification VALUES (218, '2024-06-05 11:44:55.437815', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 263);
+INSERT INTO public.notification VALUES (219, '2024-06-05 11:45:05.711515', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 264);
+INSERT INTO public.notification VALUES (220, '2024-06-05 11:45:10.483634', 'John Carter', 'john.carter', 'Please help @[Tom Sawyer (tom.sawyer)] 2024-06-05T03:44:34.845Z', 102, NULL, 1, 'Tom Sawyer (tom.sawyer)', 'tom.sawyer', 0, 264);
+INSERT INTO public.notification VALUES (252, '2024-06-05 21:20:19.643454', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 262);
+INSERT INTO public.notification VALUES (302, '2024-06-05 22:28:58.558905', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 262);
+INSERT INTO public.notification VALUES (303, '2024-06-05 22:28:58.561854', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Goofy Goof', 'goofy.goof', 1, 262);
+INSERT INTO public.notification VALUES (304, '2024-06-05 22:28:58.564373', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Buyong Adil', 'buyong.adil', 1, 262);
+INSERT INTO public.notification VALUES (352, '2024-06-06 06:50:47.136171', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Minnie Mouse', 'minnie.mouse', 1, 262);
+INSERT INTO public.notification VALUES (353, '2024-06-06 06:50:47.138829', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Buyong Adil', 'buyong.adil', 1, 262);
+INSERT INTO public.notification VALUES (354, '2024-06-06 06:50:47.141384', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Goofy Goof', 'goofy.goof', 1, 262);
+INSERT INTO public.notification VALUES (355, '2024-06-06 06:50:47.144184', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Mickey Mouse', 'mickey.mouse', 1, 262);
+INSERT INTO public.notification VALUES (356, '2024-06-06 06:50:47.146485', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 262);
+INSERT INTO public.notification VALUES (357, '2024-06-06 06:53:41.903193', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Minnie Mouse', 'minnie.mouse', 1, 262);
+INSERT INTO public.notification VALUES (358, '2024-06-06 06:53:41.905581', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Buyong Adil', 'buyong.adil', 1, 262);
+INSERT INTO public.notification VALUES (359, '2024-06-06 06:53:41.907797', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Goofy Goof', 'goofy.goof', 1, 262);
+INSERT INTO public.notification VALUES (360, '2024-06-06 06:53:41.910196', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Mickey Mouse', 'mickey.mouse', 1, 262);
+INSERT INTO public.notification VALUES (361, '2024-06-06 06:53:41.912447', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-05T03:44:34.845Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 262);
+INSERT INTO public.notification VALUES (402, '2024-06-06 14:04:21.365142', 'John Carter', 'john.carter', 'Folder name:Folder - Mr. Scrooge McDuck - SME Financing', NULL, NULL, 0, 'Mickey Mouse', 'mickey.mouse', 1, 152);
+INSERT INTO public.notification VALUES (403, '2024-06-06 14:04:21.367523', 'John Carter', 'john.carter', 'Folder name:Folder - Mr. Scrooge McDuck - SME Financing', NULL, NULL, 0, 'Minnie Mouse', 'minnie.mouse', 1, 152);
+INSERT INTO public.notification VALUES (404, '2024-06-06 14:04:21.369594', 'John Carter', 'john.carter', 'Folder name:Folder - Mr. Scrooge McDuck - SME Financing', NULL, NULL, 0, 'Daisy Duck', 'daisy.duck', 1, 152);
+INSERT INTO public.notification VALUES (452, '2024-06-06 16:20:50.50939', 'John Carter', 'john.carter', 'Folder name:my folder 1', NULL, NULL, 0, 'Daisy Duck', 'daisy.duck', 1, 302);
+INSERT INTO public.notification VALUES (454, '2024-06-06 16:20:50.513701', 'John Carter', 'john.carter', 'Folder name:my folder 1', NULL, NULL, 0, 'Minnie Mouse', 'minnie.mouse', 1, 302);
+INSERT INTO public.notification VALUES (502, '2024-06-06 17:36:36.214358', 'Goofy Goof', 'goofy.goof', 'Folder name:my folder 1 1', NULL, 1, 1, NULL, 'john.carter', 4, 303);
+INSERT INTO public.notification VALUES (576, '2024-06-06 20:12:59.571132', 'Tom Sawyer', 'tom.sawyer', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'john.carter', 3, 420);
+INSERT INTO public.notification VALUES (577, '2024-06-06 20:15:33.145365', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-06T12:15:16.081Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 421);
+INSERT INTO public.notification VALUES (578, '2024-06-06 20:15:33.147444', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-06T12:15:16.081Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 421);
+INSERT INTO public.notification VALUES (552, '2024-06-06 19:39:04.991068', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-06T11:38:48.227Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 402);
+INSERT INTO public.notification VALUES (553, '2024-06-06 19:39:04.993675', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-06T11:38:48.227Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 402);
+INSERT INTO public.notification VALUES (554, '2024-06-06 19:39:12.199422', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-06T11:38:48.227Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 403);
+INSERT INTO public.notification VALUES (555, '2024-06-06 19:39:22.082228', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 404);
+INSERT INTO public.notification VALUES (556, '2024-06-06 19:39:43.181362', 'Tom Sawyer', 'tom.sawyer', 'File name: file-sample_1MB.doc.pdf', NULL, NULL, 0, NULL, 'john.carter', 2, 405);
+INSERT INTO public.notification VALUES (557, '2024-06-06 19:40:36.841263', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-06T11:40:20.154Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 406);
+INSERT INTO public.notification VALUES (558, '2024-06-06 19:40:36.844461', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-06T11:40:20.154Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 406);
+INSERT INTO public.notification VALUES (559, '2024-06-06 19:40:44.164294', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-06T11:40:20.154Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 407);
+INSERT INTO public.notification VALUES (560, '2024-06-06 19:40:53.887623', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 408);
+INSERT INTO public.notification VALUES (561, '2024-06-06 19:41:15.219644', 'Tom Sawyer', 'tom.sawyer', 'File name: file-sample_1MB.doc.pdf', NULL, NULL, 0, NULL, 'john.carter', 2, 409);
+INSERT INTO public.notification VALUES (562, '2024-06-06 19:57:18.127203', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-06T11:57:00.612Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 410);
+INSERT INTO public.notification VALUES (563, '2024-06-06 19:57:18.129793', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-06T11:57:00.612Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 410);
+INSERT INTO public.notification VALUES (564, '2024-06-06 19:57:26.025712', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-06T11:57:00.612Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 411);
+INSERT INTO public.notification VALUES (565, '2024-06-06 19:57:35.890258', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 412);
+INSERT INTO public.notification VALUES (566, '2024-06-06 19:58:00.059579', 'Tom Sawyer', 'tom.sawyer', 'File name: file-sample_1MB.doc.pdf', NULL, NULL, 0, NULL, 'john.carter', 2, 413);
+INSERT INTO public.notification VALUES (567, '2024-06-06 20:11:08.455579', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-06T12:10:51.194Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 414);
+INSERT INTO public.notification VALUES (568, '2024-06-06 20:11:08.457641', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-06T12:10:51.194Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 414);
+INSERT INTO public.notification VALUES (569, '2024-06-06 20:11:16.299431', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-06T12:10:51.194Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 415);
+INSERT INTO public.notification VALUES (570, '2024-06-06 20:11:26.315079', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 416);
+INSERT INTO public.notification VALUES (571, '2024-06-06 20:11:47.329718', 'Tom Sawyer', 'tom.sawyer', 'File name: file-sample_1MB.doc.pdf', NULL, NULL, 0, NULL, 'john.carter', 2, 417);
+INSERT INTO public.notification VALUES (572, '2024-06-06 20:12:21.681702', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-06T12:12:04.840Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 418);
+INSERT INTO public.notification VALUES (573, '2024-06-06 20:12:21.684016', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-06T12:12:04.840Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 418);
+INSERT INTO public.notification VALUES (574, '2024-06-06 20:12:29.609586', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-06T12:12:04.840Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 419);
+INSERT INTO public.notification VALUES (575, '2024-06-06 20:12:39.875574', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 420);
+INSERT INTO public.notification VALUES (579, '2024-06-06 20:15:41.08156', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-06T12:15:16.081Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 422);
+INSERT INTO public.notification VALUES (580, '2024-06-06 20:15:51.485289', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 423);
+INSERT INTO public.notification VALUES (581, '2024-06-06 20:16:37.374526', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-06T12:16:20.635Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 424);
+INSERT INTO public.notification VALUES (582, '2024-06-06 20:16:37.37662', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-06T12:16:20.635Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 424);
+INSERT INTO public.notification VALUES (583, '2024-06-06 20:16:45.264444', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-06T12:16:20.635Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 425);
+INSERT INTO public.notification VALUES (584, '2024-06-06 20:16:55.592668', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 426);
+INSERT INTO public.notification VALUES (585, '2024-06-06 20:17:00.382159', 'John Carter', 'john.carter', 'Please help @[Tom Sawyer (tom.sawyer)] 2024-06-06T12:16:20.635Z', 152, NULL, 1, 'Tom Sawyer (tom.sawyer)', 'tom.sawyer', 0, 426);
+INSERT INTO public.notification VALUES (602, '2024-06-08 16:28:36.805065', 'Clara Holmes Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'Mortimer Uki Uki', 'muki', 1, 652);
+INSERT INTO public.notification VALUES (603, '2024-06-08 16:28:49.269916', 'Clara Holmes Holmes', 'cholmes', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'muki', 2, 653);
+INSERT INTO public.notification VALUES (604, '2024-06-08 19:06:40.273461', 'Alan Quatermain', 'alan.quatermain', 'Folder name:my folder', NULL, NULL, 0, 'Melinda June June', 'mjune', 1, 654);
+INSERT INTO public.notification VALUES (605, '2024-06-08 19:06:56.248719', 'Alan Quatermain', 'alan.quatermain', 'File name: The Jakt programming language.pdf', NULL, NULL, 0, NULL, 'mjune', 2, 655);
+INSERT INTO public.notification VALUES (652, '2024-06-13 16:59:52.282519', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 702);
+INSERT INTO public.notification VALUES (653, '2024-06-13 16:59:52.289052', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'Umar Connor', 'uconnor', 1, 702);
+INSERT INTO public.notification VALUES (702, '2024-06-13 23:08:04.510743', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1 2 3', NULL, NULL, 0, 'Umar Connor', 'uconnor', 1, 753);
+INSERT INTO public.notification VALUES (703, '2024-06-13 23:08:24.963961', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1 2 1', NULL, NULL, 0, 'Umar Connor', 'uconnor', 1, 754);
+INSERT INTO public.notification VALUES (704, '2024-06-13 23:08:46.385565', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1 1', NULL, NULL, 0, 'Umar Connor', 'uconnor', 1, 755);
+INSERT INTO public.notification VALUES (705, '2024-06-13 23:08:55.759035', 'Clara Holmes', 'cholmes', 'Folder name:my folder 2', NULL, NULL, 0, 'Umar Connor', 'uconnor', 1, 756);
+INSERT INTO public.notification VALUES (706, '2024-06-13 23:37:55.983104', 'Umar Connor', 'uconnor', 'Folder name:my folder 1 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 755);
+INSERT INTO public.notification VALUES (752, '2024-06-14 09:58:36.670142', 'Clara Holmes', 'cholmes', 'File name: file-sample_1MB.docx.pdf', NULL, NULL, 0, NULL, 'john.carter', 2, 803);
+INSERT INTO public.notification VALUES (753, '2024-06-14 09:58:36.670367', 'Clara Holmes', 'cholmes', 'File name: file-sample_1MB.docx.pdf', NULL, NULL, 0, NULL, 'uconnor', 2, 803);
+INSERT INTO public.notification VALUES (754, '2024-06-14 09:59:07.4181', 'Clara Holmes', 'cholmes', 'File name: file-sample_1MB.docx.pdf', NULL, NULL, 0, NULL, 'john.carter', 3, 803);
+INSERT INTO public.notification VALUES (755, '2024-06-14 09:59:07.418138', 'Clara Holmes', 'cholmes', 'File name: file-sample_1MB.docx.pdf', NULL, NULL, 0, NULL, 'uconnor', 3, 803);
+INSERT INTO public.notification VALUES (802, '2024-06-14 12:35:06.812323', 'Clara Holmes', 'cholmes', '@[John Carter (john.carter)] please review @[Umar Connor (uconnor)] please help', 352, NULL, 0, 'John Carter (john.carter)', 'john.carter', 0, 803);
+INSERT INTO public.notification VALUES (803, '2024-06-14 12:35:06.812323', 'Clara Holmes', 'cholmes', '@[John Carter (john.carter)] please review @[Umar Connor (uconnor)] please help', 352, NULL, 0, 'Umar Connor (uconnor)', 'uconnor', 0, 803);
+INSERT INTO public.notification VALUES (852, '2024-06-14 14:51:00.347633', 'Umar Connor', 'uconnor', 'Folder name:my folder 1 2', NULL, 2, 1, NULL, 'cholmes', 4, 752);
+INSERT INTO public.notification VALUES (902, '2024-06-15 08:59:51.313147', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'Umar Connor', 'uconnor', 1, 702);
+INSERT INTO public.notification VALUES (903, '2024-06-15 08:59:51.319296', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 702);
+INSERT INTO public.notification VALUES (904, '2024-06-15 08:59:51.326078', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'User 910 910', 'user910', 1, 702);
+INSERT INTO public.notification VALUES (952, '2024-06-15 09:13:40.543246', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 702);
+INSERT INTO public.notification VALUES (953, '2024-06-15 09:13:40.545793', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'James Rigby', 'james.rigby', 1, 702);
+INSERT INTO public.notification VALUES (954, '2024-06-15 09:13:40.548552', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'User 912 912', 'user912', 1, 702);
+INSERT INTO public.notification VALUES (955, '2024-06-15 09:13:40.551712', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'User 911 911', 'user911', 1, 702);
+INSERT INTO public.notification VALUES (956, '2024-06-15 09:13:56.715904', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 702);
+INSERT INTO public.notification VALUES (957, '2024-06-15 09:13:56.717936', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'James Rigby', 'james.rigby', 1, 702);
+INSERT INTO public.notification VALUES (958, '2024-06-15 09:13:56.721403', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'User 911 911', 'user911', 1, 702);
+INSERT INTO public.notification VALUES (959, '2024-06-15 09:14:08.641603', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 702);
+INSERT INTO public.notification VALUES (960, '2024-06-15 09:14:08.644522', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'James Rigby', 'james.rigby', 1, 702);
+INSERT INTO public.notification VALUES (961, '2024-06-15 09:14:24.905263', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 702);
+INSERT INTO public.notification VALUES (962, '2024-06-15 09:14:24.908453', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'James Rigby', 'james.rigby', 1, 702);
+INSERT INTO public.notification VALUES (963, '2024-06-15 09:14:24.910957', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'User 91 91', 'user91', 1, 702);
+INSERT INTO public.notification VALUES (964, '2024-06-15 09:14:24.913388', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'User 912 912', 'user912', 1, 702);
+INSERT INTO public.notification VALUES (1002, '2024-06-15 09:22:01.112937', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 702);
+INSERT INTO public.notification VALUES (1003, '2024-06-15 09:22:01.116305', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'James Rigby', 'james.rigby', 1, 702);
+INSERT INTO public.notification VALUES (1004, '2024-06-15 09:22:21.75602', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 702);
+INSERT INTO public.notification VALUES (1005, '2024-06-15 09:22:21.758528', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'User 91 91', 'user91', 1, 702);
+INSERT INTO public.notification VALUES (1006, '2024-06-15 09:22:21.760165', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'James Rigby', 'james.rigby', 1, 702);
+INSERT INTO public.notification VALUES (1052, '2024-06-15 09:24:44.820794', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'User 91 91', 'user91', 1, 702);
+INSERT INTO public.notification VALUES (1053, '2024-06-15 09:24:44.822862', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'James Rigby', 'james.rigby', 1, 702);
+INSERT INTO public.notification VALUES (1054, '2024-06-15 09:24:44.824494', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 702);
+INSERT INTO public.notification VALUES (1055, '2024-06-15 09:24:57.964185', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'James Rigby', 'james.rigby', 1, 702);
+INSERT INTO public.notification VALUES (1056, '2024-06-15 09:24:57.966562', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 702);
+INSERT INTO public.notification VALUES (1057, '2024-06-15 09:25:17.678829', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'James Rigby', 'james.rigby', 1, 702);
+INSERT INTO public.notification VALUES (1058, '2024-06-15 09:25:17.680542', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'User 910 910', 'user910', 1, 702);
+INSERT INTO public.notification VALUES (1059, '2024-06-15 09:25:17.682757', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 702);
+INSERT INTO public.notification VALUES (1102, '2024-06-17 21:54:50.283711', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 902);
+INSERT INTO public.notification VALUES (1103, '2024-06-17 21:54:50.290633', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'James Rigby', 'james.rigby', 1, 902);
+INSERT INTO public.notification VALUES (1104, '2024-06-17 21:55:13.813532', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1 1', NULL, NULL, 0, 'James Rigby', 'james.rigby', 1, 903);
+INSERT INTO public.notification VALUES (1105, '2024-06-17 21:55:13.816387', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 903);
+INSERT INTO public.notification VALUES (1106, '2024-06-17 21:55:38.791216', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1 1 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 904);
+INSERT INTO public.notification VALUES (1107, '2024-06-17 21:55:38.793084', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1 1 1', NULL, NULL, 0, 'James Rigby', 'james.rigby', 1, 904);
+INSERT INTO public.notification VALUES (1108, '2024-06-17 21:59:34.404321', 'James Rigby', 'james.rigby', 'Folder name:rigby folder', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 905);
+INSERT INTO public.notification VALUES (1152, '2024-06-18 09:46:09.110951', 'James Rigby', 'james.rigby', 'Folder name:mf2', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 952);
+INSERT INTO public.notification VALUES (1153, '2024-06-18 10:03:53.432802', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-18T02:03:36.354Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 953);
+INSERT INTO public.notification VALUES (1154, '2024-06-18 10:03:53.435967', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-18T02:03:36.354Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 953);
+INSERT INTO public.notification VALUES (1155, '2024-06-18 10:04:01.218408', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-18T02:03:36.354Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 954);
+INSERT INTO public.notification VALUES (1156, '2024-06-18 10:04:11.373683', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 955);
+INSERT INTO public.notification VALUES (1157, '2024-06-18 10:22:47.93827', 'John Carter', 'john.carter', 'Folder name:mf12024-06-18T02:22:30.909Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 956);
+INSERT INTO public.notification VALUES (1158, '2024-06-18 10:22:47.941028', 'John Carter', 'john.carter', 'Folder name:mf12024-06-18T02:22:30.909Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 956);
+INSERT INTO public.notification VALUES (1159, '2024-06-18 10:24:03.704155', 'John Carter', 'john.carter', 'Folder name:mf12024-06-18T02:23:46.869Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 957);
+INSERT INTO public.notification VALUES (1160, '2024-06-18 10:24:03.707374', 'John Carter', 'john.carter', 'Folder name:mf12024-06-18T02:23:46.869Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 957);
+INSERT INTO public.notification VALUES (1202, '2024-06-18 10:25:37.335989', 'John Carter', 'john.carter', 'Folder name:mf12024-06-18T02:25:20.366Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1002);
+INSERT INTO public.notification VALUES (1203, '2024-06-18 10:25:37.339042', 'John Carter', 'john.carter', 'Folder name:mf12024-06-18T02:25:20.366Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1002);
+INSERT INTO public.notification VALUES (1204, '2024-06-18 10:25:50.092369', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T02:25:20.366Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1003);
+INSERT INTO public.notification VALUES (1205, '2024-06-18 10:25:50.094126', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T02:25:20.366Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1003);
+INSERT INTO public.notification VALUES (1206, '2024-06-18 10:26:02.93909', 'John Carter', 'john.carter', 'Folder name:mf 22024-06-18T02:25:20.366Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1004);
+INSERT INTO public.notification VALUES (1207, '2024-06-18 10:26:02.941008', 'John Carter', 'john.carter', 'Folder name:mf 22024-06-18T02:25:20.366Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1004);
+INSERT INTO public.notification VALUES (1208, '2024-06-18 10:26:15.888582', 'John Carter', 'john.carter', 'Folder name:mf 2 12024-06-18T02:25:20.366Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1005);
+INSERT INTO public.notification VALUES (1209, '2024-06-18 10:26:15.890277', 'John Carter', 'john.carter', 'Folder name:mf 2 12024-06-18T02:25:20.366Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1005);
+INSERT INTO public.notification VALUES (1210, '2024-06-18 10:31:13.432132', 'John Carter', 'john.carter', 'Folder name:mf12024-06-18T02:30:56.319Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1006);
+INSERT INTO public.notification VALUES (1211, '2024-06-18 10:31:13.434115', 'John Carter', 'john.carter', 'Folder name:mf12024-06-18T02:30:56.319Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1006);
+INSERT INTO public.notification VALUES (1212, '2024-06-18 10:31:26.235943', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T02:30:56.319Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1007);
+INSERT INTO public.notification VALUES (1213, '2024-06-18 10:31:26.238142', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T02:30:56.319Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1007);
+INSERT INTO public.notification VALUES (1214, '2024-06-18 10:31:39.667838', 'John Carter', 'john.carter', 'Folder name:mf 22024-06-18T02:30:56.319Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1008);
+INSERT INTO public.notification VALUES (1215, '2024-06-18 10:31:39.669578', 'John Carter', 'john.carter', 'Folder name:mf 22024-06-18T02:30:56.319Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1008);
+INSERT INTO public.notification VALUES (1216, '2024-06-18 10:31:52.721751', 'John Carter', 'john.carter', 'Folder name:mf 2 12024-06-18T02:30:56.319Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1009);
+INSERT INTO public.notification VALUES (1217, '2024-06-18 10:31:52.723975', 'John Carter', 'john.carter', 'Folder name:mf 2 12024-06-18T02:30:56.319Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1009);
+INSERT INTO public.notification VALUES (1218, '2024-06-18 10:32:08.357343', 'Sherlock Holmes', 'sherlock.holmes', 'Folder name:mf 32024-06-18T02:30:56.319Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1010);
+INSERT INTO public.notification VALUES (1219, '2024-06-18 10:32:16.018057', 'Sherlock Holmes', 'sherlock.holmes', 'Folder name:mf 3 12024-06-18T02:30:56.319Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1011);
+INSERT INTO public.notification VALUES (1220, '2024-06-18 10:32:31.040678', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf 42024-06-18T02:30:56.319Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1012);
+INSERT INTO public.notification VALUES (1221, '2024-06-18 10:32:38.930589', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf 4 12024-06-18T02:30:56.319Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1013);
+INSERT INTO public.notification VALUES (1252, '2024-06-18 10:38:28.912124', 'John Carter', 'john.carter', 'Folder name:mf 12024-06-18T02:38:11.677Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1052);
+INSERT INTO public.notification VALUES (1253, '2024-06-18 10:38:28.914671', 'John Carter', 'john.carter', 'Folder name:mf 12024-06-18T02:38:11.677Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1052);
+INSERT INTO public.notification VALUES (1254, '2024-06-18 10:38:41.694264', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T02:38:11.677Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1053);
+INSERT INTO public.notification VALUES (1255, '2024-06-18 10:38:41.696457', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T02:38:11.677Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1053);
+INSERT INTO public.notification VALUES (1256, '2024-06-18 10:38:54.955005', 'John Carter', 'john.carter', 'Folder name:mf 22024-06-18T02:38:11.677Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1054);
+INSERT INTO public.notification VALUES (1257, '2024-06-18 10:38:54.957025', 'John Carter', 'john.carter', 'Folder name:mf 22024-06-18T02:38:11.677Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1054);
+INSERT INTO public.notification VALUES (1258, '2024-06-18 10:39:07.712485', 'John Carter', 'john.carter', 'Folder name:mf 2 12024-06-18T02:38:11.677Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1055);
+INSERT INTO public.notification VALUES (1259, '2024-06-18 10:39:07.714893', 'John Carter', 'john.carter', 'Folder name:mf 2 12024-06-18T02:38:11.677Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1055);
+INSERT INTO public.notification VALUES (1260, '2024-06-18 10:39:25.867672', 'Sherlock Holmes', 'sherlock.holmes', 'Folder name:mf 32024-06-18T02:38:11.677Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1056);
+INSERT INTO public.notification VALUES (1261, '2024-06-18 10:39:33.441565', 'Sherlock Holmes', 'sherlock.holmes', 'Folder name:mf 3 12024-06-18T02:38:11.677Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1057);
+INSERT INTO public.notification VALUES (1262, '2024-06-18 10:39:48.669471', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf 42024-06-18T02:38:11.677Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1058);
+INSERT INTO public.notification VALUES (1263, '2024-06-18 10:39:56.386225', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf 4 12024-06-18T02:38:11.677Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1059);
+INSERT INTO public.notification VALUES (1302, '2024-06-18 10:56:15.022559', 'John Carter', 'john.carter', 'Folder name:mf 12024-06-18T02:55:56.141Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1102);
+INSERT INTO public.notification VALUES (1303, '2024-06-18 10:56:15.02636', 'John Carter', 'john.carter', 'Folder name:mf 12024-06-18T02:55:56.141Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1102);
+INSERT INTO public.notification VALUES (1304, '2024-06-18 10:56:27.930633', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T02:55:56.141Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1103);
+INSERT INTO public.notification VALUES (1305, '2024-06-18 10:56:27.932846', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T02:55:56.141Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1103);
+INSERT INTO public.notification VALUES (1306, '2024-06-18 10:56:46.35175', 'Sherlock Holmes', 'sherlock.holmes', 'Folder name:mf 22024-06-18T02:55:56.141Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1104);
+INSERT INTO public.notification VALUES (1307, '2024-06-18 10:56:53.888631', 'Sherlock Holmes', 'sherlock.holmes', 'Folder name:mf 2 12024-06-18T02:55:56.141Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1105);
+INSERT INTO public.notification VALUES (1308, '2024-06-18 10:57:08.823447', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf 32024-06-18T02:55:56.141Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1106);
+INSERT INTO public.notification VALUES (1309, '2024-06-18 10:57:16.450613', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf 3 12024-06-18T02:55:56.141Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1107);
+INSERT INTO public.notification VALUES (1352, '2024-06-18 11:10:20.176011', 'John Carter', 'john.carter', 'Folder name:mf 12024-06-18T03:10:02.299Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1152);
+INSERT INTO public.notification VALUES (1353, '2024-06-18 11:10:20.179315', 'John Carter', 'john.carter', 'Folder name:mf 12024-06-18T03:10:02.299Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1152);
+INSERT INTO public.notification VALUES (1354, '2024-06-18 11:10:33.324798', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T03:10:02.299Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1153);
+INSERT INTO public.notification VALUES (1355, '2024-06-18 11:10:33.32686', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T03:10:02.299Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1153);
+INSERT INTO public.notification VALUES (1356, '2024-06-18 11:10:48.750033', 'Sherlock Holmes', 'sherlock.holmes', 'Folder name:mf 22024-06-18T03:10:02.299Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1154);
+INSERT INTO public.notification VALUES (1357, '2024-06-18 11:10:56.505839', 'Sherlock Holmes', 'sherlock.holmes', 'Folder name:mf 2 12024-06-18T03:10:02.299Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1155);
+INSERT INTO public.notification VALUES (1358, '2024-06-18 11:11:12.251936', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf 32024-06-18T03:10:02.299Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1156);
+INSERT INTO public.notification VALUES (1359, '2024-06-18 11:11:19.939225', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf 3 12024-06-18T03:10:02.299Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1157);
+INSERT INTO public.notification VALUES (1402, '2024-06-18 23:21:45.325122', 'John Carter', 'john.carter', 'Folder name:mf 12024-06-18T15:21:24.986Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1202);
+INSERT INTO public.notification VALUES (1403, '2024-06-18 23:21:45.32862', 'John Carter', 'john.carter', 'Folder name:mf 12024-06-18T15:21:24.986Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1202);
+INSERT INTO public.notification VALUES (1404, '2024-06-18 23:21:58.285278', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T15:21:24.986Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1203);
+INSERT INTO public.notification VALUES (1405, '2024-06-18 23:21:58.287639', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T15:21:24.986Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1203);
+INSERT INTO public.notification VALUES (1406, '2024-06-18 23:22:15.250217', 'Sherlock Holmes', 'sherlock.holmes', 'Folder name:mf 22024-06-18T15:21:24.986Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1204);
+INSERT INTO public.notification VALUES (1407, '2024-06-18 23:22:22.780225', 'Sherlock Holmes', 'sherlock.holmes', 'Folder name:mf 2 12024-06-18T15:21:24.986Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1205);
+INSERT INTO public.notification VALUES (1408, '2024-06-18 23:22:37.39927', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf 32024-06-18T15:21:24.986Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1206);
+INSERT INTO public.notification VALUES (1409, '2024-06-18 23:22:45.014468', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf 3 12024-06-18T15:21:24.986Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1207);
+INSERT INTO public.notification VALUES (1410, '2024-06-18 23:33:24.499044', 'John Carter', 'john.carter', 'Folder name:mf 12024-06-18T15:33:06.490Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1208);
+INSERT INTO public.notification VALUES (1411, '2024-06-18 23:33:24.501373', 'John Carter', 'john.carter', 'Folder name:mf 12024-06-18T15:33:06.490Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1208);
+INSERT INTO public.notification VALUES (1412, '2024-06-18 23:33:42.142719', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T15:33:06.490Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1209);
+INSERT INTO public.notification VALUES (1413, '2024-06-18 23:33:42.144997', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T15:33:06.490Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1209);
+INSERT INTO public.notification VALUES (1414, '2024-06-18 23:34:02.362245', 'Sherlock Holmes', 'sherlock.holmes', 'Folder name:mf 22024-06-18T15:33:06.490Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1210);
+INSERT INTO public.notification VALUES (1415, '2024-06-18 23:34:09.948233', 'Sherlock Holmes', 'sherlock.holmes', 'Folder name:mf 2 12024-06-18T15:33:06.490Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1211);
+INSERT INTO public.notification VALUES (1416, '2024-06-18 23:34:25.045389', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf 32024-06-18T15:33:06.490Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1212);
+INSERT INTO public.notification VALUES (1417, '2024-06-18 23:34:32.709039', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf 3 12024-06-18T15:33:06.490Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1213);
+INSERT INTO public.notification VALUES (1418, '2024-06-18 23:37:01.565855', 'Sherlock Holmes', 'sherlock.holmes', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'alan.quatermain', 2, 1214);
+INSERT INTO public.notification VALUES (1419, '2024-06-18 23:37:09.944215', 'Sherlock Holmes', 'sherlock.holmes', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'alan.quatermain', 2, 1215);
+INSERT INTO public.notification VALUES (1420, '2024-06-18 23:37:20.404477', 'Sherlock Holmes', 'sherlock.holmes', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'alan.quatermain', 2, 1216);
+INSERT INTO public.notification VALUES (1421, '2024-06-18 23:38:18.790928', 'Alan Quatermain', 'alan.quatermain', 'File name: The Jakt programming language.pdf', NULL, NULL, 0, NULL, 'sherlock.holmes', 2, 1217);
+INSERT INTO public.notification VALUES (1422, '2024-06-18 23:38:47.857894', 'Alan Quatermain', 'alan.quatermain', 'File name: The Jakt programming language.pdf', NULL, NULL, 0, NULL, 'sherlock.holmes', 2, 1218);
+INSERT INTO public.notification VALUES (1423, '2024-06-18 23:46:30.577189', 'John Carter', 'john.carter', 'Folder name:mf 12024-06-18T15:46:12.716Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1219);
+INSERT INTO public.notification VALUES (1424, '2024-06-18 23:46:30.578966', 'John Carter', 'john.carter', 'Folder name:mf 12024-06-18T15:46:12.716Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1219);
+INSERT INTO public.notification VALUES (1425, '2024-06-18 23:46:43.396744', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T15:46:12.716Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1220);
+INSERT INTO public.notification VALUES (1426, '2024-06-18 23:46:43.399037', 'John Carter', 'john.carter', 'Folder name:mf 1 12024-06-18T15:46:12.716Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1220);
+INSERT INTO public.notification VALUES (1427, '2024-06-18 23:47:02.359106', 'Sherlock Holmes', 'sherlock.holmes', 'Folder name:mf 22024-06-18T15:46:12.716Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1221);
+INSERT INTO public.notification VALUES (1428, '2024-06-18 23:47:09.989653', 'Sherlock Holmes', 'sherlock.holmes', 'Folder name:mf 2 12024-06-18T15:46:12.716Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1222);
+INSERT INTO public.notification VALUES (1429, '2024-06-18 23:47:25.046341', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf 32024-06-18T15:46:12.716Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1223);
+INSERT INTO public.notification VALUES (1430, '2024-06-18 23:47:32.622333', 'Alan Quatermain', 'alan.quatermain', 'Folder name:mf 3 12024-06-18T15:46:12.716Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1224);
+INSERT INTO public.notification VALUES (1431, '2024-06-18 23:49:19.515553', 'Alan Quatermain', 'alan.quatermain', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'sherlock.holmes', 2, 1225);
+INSERT INTO public.notification VALUES (1432, '2024-06-18 23:49:57.183884', 'Alan Quatermain', 'alan.quatermain', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'sherlock.holmes', 3, 1225);
+INSERT INTO public.notification VALUES (1433, '2024-06-18 23:50:21.444234', 'Alan Quatermain', 'alan.quatermain', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'sherlock.holmes', 2, 1226);
+INSERT INTO public.notification VALUES (1434, '2024-06-18 23:51:42.356358', 'Sherlock Holmes', 'sherlock.holmes', 'File name: The Jakt programming language.pdf', NULL, NULL, 0, NULL, 'alan.quatermain', 2, 1227);
+INSERT INTO public.notification VALUES (1452, '2024-06-19 19:42:23.265011', 'Clara Holmes', 'cholmes', 'Folder name:i 1', NULL, NULL, 0, 'User 911 911', 'user911', 1, 1261);
+INSERT INTO public.notification VALUES (1453, '2024-06-19 19:42:34.167845', 'Clara Holmes', 'cholmes', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'user911', 2, 1262);
+INSERT INTO public.notification VALUES (1502, '2024-06-19 23:32:26.559149', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-19T15:32:08.024Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1302);
+INSERT INTO public.notification VALUES (1503, '2024-06-19 23:32:26.56323', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-19T15:32:08.024Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1302);
+INSERT INTO public.notification VALUES (1504, '2024-06-19 23:32:35.331333', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-19T15:32:08.024Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1303);
+INSERT INTO public.notification VALUES (1505, '2024-06-19 23:32:46.44667', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 1304);
+INSERT INTO public.notification VALUES (1506, '2024-06-19 23:33:37.797804', 'Tom Sawyer', 'tom.sawyer', 'File name: file-sample_1MB.doc.pdf', NULL, NULL, 0, NULL, 'john.carter', 2, 1305);
+INSERT INTO public.notification VALUES (1507, '2024-06-19 23:35:00.868955', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-19T15:34:41.005Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1306);
+INSERT INTO public.notification VALUES (1508, '2024-06-19 23:35:00.873912', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-19T15:34:41.005Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1306);
+INSERT INTO public.notification VALUES (1509, '2024-06-19 23:35:09.023645', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-19T15:34:41.005Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1307);
+INSERT INTO public.notification VALUES (1510, '2024-06-19 23:35:19.85226', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 1308);
+INSERT INTO public.notification VALUES (1511, '2024-06-19 23:35:40.795933', 'Tom Sawyer', 'tom.sawyer', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'john.carter', 3, 1308);
+INSERT INTO public.notification VALUES (1512, '2024-06-19 23:36:22.119055', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-19T15:36:02.147Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1309);
+INSERT INTO public.notification VALUES (1513, '2024-06-19 23:36:22.122713', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-19T15:36:02.147Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1309);
+INSERT INTO public.notification VALUES (1514, '2024-06-19 23:36:31.266588', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-19T15:36:02.147Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1310);
+INSERT INTO public.notification VALUES (1515, '2024-06-19 23:36:42.535692', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 1311);
+INSERT INTO public.notification VALUES (1516, '2024-06-19 23:37:43.286949', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-19T15:37:23.865Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1312);
+INSERT INTO public.notification VALUES (1517, '2024-06-19 23:37:43.289279', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-19T15:37:23.865Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1312);
+INSERT INTO public.notification VALUES (1518, '2024-06-19 23:37:51.550704', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-19T15:37:23.865Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1313);
+INSERT INTO public.notification VALUES (1519, '2024-06-19 23:38:02.427008', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 1, NULL, 'tom.sawyer', 2, 1314);
+INSERT INTO public.notification VALUES (1552, '2024-06-20 23:13:34.313326', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:13:14.165Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1352);
+INSERT INTO public.notification VALUES (1553, '2024-06-20 23:13:34.319506', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:13:14.165Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1352);
+INSERT INTO public.notification VALUES (1554, '2024-06-20 23:13:42.513824', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-20T15:13:14.165Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1353);
+INSERT INTO public.notification VALUES (1555, '2024-06-20 23:13:54.440015', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 1354);
+INSERT INTO public.notification VALUES (1556, '2024-06-20 23:14:21.616217', 'Tom Sawyer', 'tom.sawyer', 'File name: file-sample_1MB.doc.pdf', NULL, NULL, 0, NULL, 'john.carter', 2, 1355);
+INSERT INTO public.notification VALUES (1602, '2024-06-20 23:17:31.186642', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:17:13.751Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1402);
+INSERT INTO public.notification VALUES (1603, '2024-06-20 23:17:31.20263', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:17:13.751Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1402);
+INSERT INTO public.notification VALUES (1604, '2024-06-20 23:17:39.25162', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-20T15:17:13.751Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1403);
+INSERT INTO public.notification VALUES (1605, '2024-06-20 23:17:50.120218', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 1404);
+INSERT INTO public.notification VALUES (1606, '2024-06-20 23:18:13.70044', 'Tom Sawyer', 'tom.sawyer', 'File name: file-sample_1MB.doc.pdf', NULL, NULL, 0, NULL, 'john.carter', 2, 1405);
+INSERT INTO public.notification VALUES (1652, '2024-06-20 23:27:36.038683', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:27:18.608Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1452);
+INSERT INTO public.notification VALUES (1653, '2024-06-20 23:27:36.054661', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:27:18.608Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1452);
+INSERT INTO public.notification VALUES (1654, '2024-06-20 23:27:44.154139', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-20T15:27:18.608Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1453);
+INSERT INTO public.notification VALUES (1655, '2024-06-20 23:27:55.120054', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 1454);
+INSERT INTO public.notification VALUES (1656, '2024-06-20 23:28:17.43907', 'Tom Sawyer', 'tom.sawyer', 'File name: file-sample_1MB.doc.pdf', NULL, NULL, 0, NULL, 'john.carter', 2, 1455);
+INSERT INTO public.notification VALUES (1702, '2024-06-20 23:50:16.244046', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:49:55.630Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1502);
+INSERT INTO public.notification VALUES (1703, '2024-06-20 23:50:16.248173', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:49:55.630Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1502);
+INSERT INTO public.notification VALUES (1704, '2024-06-20 23:50:25.140974', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-20T15:49:55.630Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1503);
+INSERT INTO public.notification VALUES (1705, '2024-06-20 23:50:37.677161', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 1504);
+INSERT INTO public.notification VALUES (1706, '2024-06-20 23:51:01.721034', 'Tom Sawyer', 'tom.sawyer', 'File name: file-sample_1MB.doc.pdf', NULL, NULL, 0, NULL, 'john.carter', 2, 1505);
+INSERT INTO public.notification VALUES (1707, '2024-06-20 23:51:38.949681', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:51:21.075Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1506);
+INSERT INTO public.notification VALUES (1708, '2024-06-20 23:51:38.952676', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:51:21.075Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1506);
+INSERT INTO public.notification VALUES (1709, '2024-06-20 23:51:47.079535', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-20T15:51:21.075Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1507);
+INSERT INTO public.notification VALUES (1710, '2024-06-20 23:51:58.35411', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 1508);
+INSERT INTO public.notification VALUES (1711, '2024-06-20 23:52:18.958075', 'Tom Sawyer', 'tom.sawyer', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'john.carter', 3, 1508);
+INSERT INTO public.notification VALUES (1712, '2024-06-20 23:52:56.7491', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:52:39.407Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1509);
+INSERT INTO public.notification VALUES (1713, '2024-06-20 23:52:56.751722', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:52:39.407Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1509);
+INSERT INTO public.notification VALUES (1714, '2024-06-20 23:53:04.873414', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-20T15:52:39.407Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1510);
+INSERT INTO public.notification VALUES (1715, '2024-06-20 23:53:16.091785', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 1511);
+INSERT INTO public.notification VALUES (1716, '2024-06-20 23:54:54.579025', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:54:37.317Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1512);
+INSERT INTO public.notification VALUES (1717, '2024-06-20 23:54:54.580907', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:54:37.317Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1512);
+INSERT INTO public.notification VALUES (1718, '2024-06-20 23:55:02.504972', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-20T15:54:37.317Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1513);
+INSERT INTO public.notification VALUES (1719, '2024-06-20 23:55:13.64633', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 1514);
+INSERT INTO public.notification VALUES (1720, '2024-06-20 23:56:38.211116', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:56:19.707Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1515);
+INSERT INTO public.notification VALUES (1721, '2024-06-20 23:56:38.214706', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T15:56:19.707Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1515);
+INSERT INTO public.notification VALUES (1722, '2024-06-20 23:56:46.239777', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-20T15:56:19.707Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1516);
+INSERT INTO public.notification VALUES (1723, '2024-06-20 23:56:57.542797', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 1, NULL, 'tom.sawyer', 2, 1517);
+INSERT INTO public.notification VALUES (1724, '2024-06-21 00:02:27.628017', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T16:02:09.444Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1518);
+INSERT INTO public.notification VALUES (1725, '2024-06-21 00:02:27.631066', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T16:02:09.444Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1518);
+INSERT INTO public.notification VALUES (1726, '2024-06-21 00:02:35.572058', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-20T16:02:09.444Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1519);
+INSERT INTO public.notification VALUES (1727, '2024-06-21 00:02:47.205165', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 1, NULL, 'tom.sawyer', 2, 1520);
+INSERT INTO public.notification VALUES (1728, '2024-06-21 00:04:06.676343', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T16:03:48.248Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1521);
+INSERT INTO public.notification VALUES (1729, '2024-06-21 00:04:06.678889', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T16:03:48.248Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1521);
+INSERT INTO public.notification VALUES (1730, '2024-06-21 00:04:15.137382', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-20T16:03:48.248Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1522);
+INSERT INTO public.notification VALUES (1731, '2024-06-21 00:04:26.814424', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 1523);
+INSERT INTO public.notification VALUES (1732, '2024-06-21 00:06:29.467154', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T16:06:12.141Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1524);
+INSERT INTO public.notification VALUES (1733, '2024-06-21 00:06:29.468934', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T16:06:12.141Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1524);
+INSERT INTO public.notification VALUES (1734, '2024-06-21 00:06:37.434893', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-20T16:06:12.141Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1525);
+INSERT INTO public.notification VALUES (1735, '2024-06-21 00:06:48.726345', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 1526);
+INSERT INTO public.notification VALUES (1736, '2024-06-21 00:08:01.278062', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T16:07:42.947Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1527);
+INSERT INTO public.notification VALUES (1737, '2024-06-21 00:08:01.280395', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-20T16:07:42.947Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1527);
+INSERT INTO public.notification VALUES (1738, '2024-06-21 00:08:09.250164', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-20T16:07:42.947Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1528);
+INSERT INTO public.notification VALUES (1739, '2024-06-21 00:08:20.516984', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 1529);
+INSERT INTO public.notification VALUES (1740, '2024-06-21 00:08:25.057103', 'John Carter', 'john.carter', 'Please help @[Tom Sawyer (tom.sawyer)] 2024-06-20T16:07:42.947Z', 504, NULL, 1, 'Tom Sawyer (tom.sawyer)', 'tom.sawyer', 0, 1529);
+INSERT INTO public.notification VALUES (1752, '2024-06-21 22:31:09.494698', 'Kelichap Admin', 'kelichap.admin', 'Folder name:folder 2024-06-20T16:07:42.947Z', NULL, NULL, 0, 'Clara Holmes', 'cholmes', 1, 1527);
+INSERT INTO public.notification VALUES (1802, '2024-06-21 23:16:39.20924', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1552);
+INSERT INTO public.notification VALUES (1803, '2024-06-21 23:17:28.567603', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1 1', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1553);
+INSERT INTO public.notification VALUES (1804, '2024-06-21 23:17:50.27749', 'Clara Holmes', 'cholmes', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'alan.quatermain', 2, 1554);
+INSERT INTO public.notification VALUES (1805, '2024-06-21 23:19:47.67984', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1552);
+INSERT INTO public.notification VALUES (1806, '2024-06-21 23:21:40.41246', 'Clara Holmes', 'cholmes', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'alan.quatermain', 3, 1554);
+INSERT INTO public.notification VALUES (1807, '2024-06-21 23:24:20.092295', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1 1', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1553);
+INSERT INTO public.notification VALUES (1852, '2024-06-21 23:49:50.290712', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1602);
+INSERT INTO public.notification VALUES (1853, '2024-06-21 23:50:11.44919', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1 1', NULL, NULL, 0, 'John Carter', 'john.carter', 1, 1603);
+INSERT INTO public.notification VALUES (1854, '2024-06-21 23:50:24.132441', 'Clara Holmes', 'cholmes', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'john.carter', 2, 1604);
+INSERT INTO public.notification VALUES (1902, '2024-06-22 00:19:33.63787', 'Alan Quatermain', 'alan.quatermain', 'Folder name:my folder 3', NULL, NULL, 0, 'Clara Holmes', 'cholmes', 1, 1652);
+INSERT INTO public.notification VALUES (1952, '2024-06-22 00:41:47.795217', 'Clara Holmes', 'cholmes', 'Folder name:my folder 1 1', NULL, NULL, 0, 'James Rigby', 'james.rigby', 1, 1603);
+INSERT INTO public.notification VALUES (1953, '2024-06-22 06:50:57.601167', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-21T22:50:39.127Z', NULL, NULL, 0, 'Alan Quatermain', 'alan.quatermain', 1, 1702);
+INSERT INTO public.notification VALUES (1954, '2024-06-22 06:50:57.604348', 'John Carter', 'john.carter', 'Folder name:folder 2024-06-21T22:50:39.127Z', NULL, NULL, 0, 'Sherlock Holmes', 'sherlock.holmes', 1, 1702);
+INSERT INTO public.notification VALUES (1955, '2024-06-22 06:51:05.717418', 'John Carter', 'john.carter', 'Folder name:folder 1 2024-06-21T22:50:39.127Z', NULL, NULL, 0, 'Tom Sawyer', 'tom.sawyer', 1, 1703);
+INSERT INTO public.notification VALUES (1956, '2024-06-22 06:51:17.540968', 'John Carter', 'john.carter', 'File name: Zed.pdf', NULL, NULL, 0, NULL, 'tom.sawyer', 2, 1704);
+INSERT INTO public.notification VALUES (1957, '2024-06-22 06:51:44.304568', 'Tom Sawyer', 'tom.sawyer', 'File name: file-sample_1MB.doc.pdf', NULL, NULL, 0, NULL, 'john.carter', 2, 1705);
+
+
+--
+-- TOC entry 3465 (class 0 OID 18031)
+-- Dependencies: 222
+-- Data for Name: revinfo; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+INSERT INTO public.revinfo VALUES (2352, 1718982999150);
+INSERT INTO public.revinfo VALUES (2353, 1718983048456);
+INSERT INTO public.revinfo VALUES (2354, 1718983070249);
+INSERT INTO public.revinfo VALUES (2355, 1718983099922);
+INSERT INTO public.revinfo VALUES (2356, 1718983114894);
+INSERT INTO public.revinfo VALUES (2357, 1718983187625);
+INSERT INTO public.revinfo VALUES (2358, 1718983194744);
+INSERT INTO public.revinfo VALUES (2359, 1718983199558);
+INSERT INTO public.revinfo VALUES (2360, 1718983252992);
+INSERT INTO public.revinfo VALUES (2361, 1718983300393);
+INSERT INTO public.revinfo VALUES (2362, 1718983460068);
+INSERT INTO public.revinfo VALUES (2363, 1718983623124);
+INSERT INTO public.revinfo VALUES (2402, 1718984990258);
+INSERT INTO public.revinfo VALUES (2403, 1718985011415);
+INSERT INTO public.revinfo VALUES (2404, 1718985024113);
+INSERT INTO public.revinfo VALUES (2452, 1718986725997);
+INSERT INTO public.revinfo VALUES (2453, 1718986747037);
+INSERT INTO public.revinfo VALUES (2454, 1718986773623);
+INSERT INTO public.revinfo VALUES (2455, 1718986817585);
+INSERT INTO public.revinfo VALUES (2502, 1718988107708);
+INSERT INTO public.revinfo VALUES (2503, 1719010257563);
+INSERT INTO public.revinfo VALUES (2504, 1719010265674);
+INSERT INTO public.revinfo VALUES (2505, 1719010277498);
+INSERT INTO public.revinfo VALUES (2506, 1719010304280);
+INSERT INTO public.revinfo VALUES (2552, 1721202269835);
+INSERT INTO public.revinfo VALUES (2602, 1721204103322);
+INSERT INTO public.revinfo VALUES (2652, 1721206414887);
+INSERT INTO public.revinfo VALUES (2702, 1721207373140);
+
+
+--
+-- TOC entry 3470 (class 0 OID 18139)
+-- Dependencies: 227
+-- Data for Name: shedlock; Type: TABLE DATA; Schema: public; Owner: kelichap
+--
+
+INSERT INTO public.shedlock VALUES ('UserSyncTask', '2024-06-22 07:04:00.004', '2024-06-22 06:50:00.004', 'Azruls-MacBook-Pro.local');
+
+
+--
+-- TOC entry 3486 (class 0 OID 0)
+-- Dependencies: 234
+-- Name: contact_person_seq; Type: SEQUENCE SET; Schema: public; Owner: kelichap
+--
+
+SELECT pg_catalog.setval('public.contact_person_seq', 1, false);
+
+
+--
+-- TOC entry 3487 (class 0 OID 0)
+-- Dependencies: 235
+-- Name: fin_application_seq; Type: SEQUENCE SET; Schema: public; Owner: kelichap
+--
+
+SELECT pg_catalog.setval('public.fin_application_seq', 151, true);
+
+
+--
+-- TOC entry 3488 (class 0 OID 0)
+-- Dependencies: 223
+-- Name: item_seq; Type: SEQUENCE SET; Schema: public; Owner: kelichap
+--
+
+SELECT pg_catalog.setval('public.item_seq', 1751, true);
+
+
+--
+-- TOC entry 3489 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: note_seq; Type: SEQUENCE SET; Schema: public; Owner: kelichap
+--
+
+SELECT pg_catalog.setval('public.note_seq', 551, true);
+
+
+--
+-- TOC entry 3490 (class 0 OID 0)
+-- Dependencies: 225
+-- Name: notification_seq; Type: SEQUENCE SET; Schema: public; Owner: kelichap
+--
+
+SELECT pg_catalog.setval('public.notification_seq', 2001, true);
+
+
+--
+-- TOC entry 3491 (class 0 OID 0)
+-- Dependencies: 226
+-- Name: revinfo_seq; Type: SEQUENCE SET; Schema: public; Owner: kelichap
+--
+
+SELECT pg_catalog.setval('public.revinfo_seq', 2751, true);
+
+
+-- Completed on 2024-09-25 22:20:10 +08
+
+--
+-- PostgreSQL database dump complete
+--
+
