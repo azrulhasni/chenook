@@ -1,8 +1,8 @@
 package com.azrul.smefinancing.views.applicant;
 
-import com.azrul.chenook.views.common.StringToUngroupLongConverter;
-import com.azrul.chenook.views.common.WorkflowAwareComboBox;
-import com.azrul.chenook.views.common.WorkflowAwareTextField;
+import com.azrul.chenook.views.common.converter.StringToUngroupLongConverter;
+import com.azrul.chenook.views.common.components.WorkflowAwareComboBox;
+import com.azrul.chenook.views.common.components.WorkflowAwareTextField;
 import com.azrul.smefinancing.domain.Applicant;
 import com.azrul.smefinancing.domain.ApplicantType;
 import com.azrul.smefinancing.domain.FinApplication;
@@ -51,11 +51,10 @@ public class ApplicantForm extends Dialog {
             Consumer<Applicant> onPostSave
     ) {
         this.applicantService = applicantService;
-        
 
         FormLayout form = new FormLayout();
         signPanel = new SignaturePanel();
-        
+
         // Initialize applicant and signature panel
         if (applicant != null) {
             binder.setBean(applicant);
@@ -63,62 +62,58 @@ public class ApplicantForm extends Dialog {
         } else {
             binder.setBean(new Applicant());
         }
-        
-        
+
         // Create form fields
         TextField tfID = WorkflowAwareTextField.create("id", false, binder, new StringToUngroupLongConverter("Not a number"));
         form.add(tfID);
-        
+
         TextField tfFullName = WorkflowAwareTextField.create("fullName", true, binder);
         form.add(tfFullName);
-       
-        TextField tfICNumber =  WorkflowAwareTextField.create("icNumber", true, binder);
+
+        TextField tfICNumber = WorkflowAwareTextField.create("icNumber", true, binder);
         form.add(tfICNumber);
-        
-        TextField tfPhone = WorkflowAwareTextField.create("phoneNumber",true, binder);
+
+        TextField tfPhone = WorkflowAwareTextField.create("phoneNumber", true, binder);
         form.add(tfPhone);
-        
+
         TextField tfEmail = WorkflowAwareTextField.create("email", true, binder);
         form.add(tfEmail);
 
         // Applicant type combo box
         ComboBox<ApplicantType> cbType = WorkflowAwareComboBox.create("type", binder, Set.of(ApplicantType.values()));
-        //cbType.setItems(ApplicantType.values());
-        //binder.forField(cbType).bind(Applicant::getType, Applicant::setType);
         form.add(cbType);
         this.add(form, signPanel);
 
-       
         // Save button and its logic
         Button btnSave = new Button("Save", e -> {
             saveApplicant(finapp, onPostSave);
-            
         });
-        
-         Button btnSaveDraft = new Button("Save draft", e -> {
-            saveDraftApplicant(finapp, onPostSave);
-            
-        });
-        
-        configureEditability(editable, user, tfFullName, tfICNumber,tfPhone, tfEmail, cbType, btnSave);
+        btnSave.setId("btnSave");
 
-        this.getFooter().add(btnSaveDraft,btnSave, new Button("Cancel", e -> this.close()));
+        Button btnSaveDraft = new Button("Save draft", e -> {
+            saveDraftApplicant(finapp, onPostSave);
+        });
+        btnSaveDraft.setId("btnSaveDraft");
+
+        configureEditability(editable, user, tfFullName, tfICNumber, tfPhone, tfEmail, cbType, btnSave);
+
+        this.getFooter().add(btnSaveDraft, btnSave, new Button("Cancel", e -> this.close()));
     }
 
-    private void configureEditability(Editable editable, 
-                                      OidcUser user, 
-                                      TextField tfFullName, 
-                                      TextField tfICNumber, 
-                                      TextField tfPhone, 
-                                      TextField tfEmail, 
-                                      ComboBox<ApplicantType> cbType, 
-                                      Button btnSave) {
+    private void configureEditability(Editable editable,
+            OidcUser user,
+            TextField tfFullName,
+            TextField tfICNumber,
+            TextField tfPhone,
+            TextField tfEmail,
+            ComboBox<ApplicantType> cbType,
+            Button btnSave) {
         if (editable != Editable.YES) {
-            setFieldsReadOnly(tfFullName, tfICNumber,tfPhone, tfEmail, cbType, btnSave);
-            
-            if (editable == Editable.YES_AS_APPLICANT){
+            setFieldsReadOnly(tfFullName, tfICNumber, tfPhone, tfEmail, cbType, btnSave);
+
+            if (editable == Editable.YES_AS_APPLICANT) {
                 Applicant applicant = binder.getBean();
-                if (StringUtils.equals(user.getEmail(), applicant.getEmail())){
+                if (StringUtils.equals(user.getEmail(), applicant.getEmail())) {
                     signPanel.setEnabled(true);
                     btnSave.setEnabled(true);
                 }
@@ -126,15 +121,15 @@ public class ApplicantForm extends Dialog {
         }
     }
 
-    private void setFieldsReadOnly(TextField tfFullName, 
-                                   TextField tfICNumber, 
-                                   TextField tfPhone, 
-                                   TextField tfEmail, 
-                                   ComboBox<ApplicantType> cbType, 
-                                   Button btnSave) {
+    private void setFieldsReadOnly(TextField tfFullName,
+            TextField tfICNumber,
+            TextField tfPhone,
+            TextField tfEmail,
+            ComboBox<ApplicantType> cbType,
+            Button btnSave) {
         tfFullName.setReadOnly(true);
         tfICNumber.setReadOnly(true);
-       // tfDesignation.setReadOnly(true);
+        // tfDesignation.setReadOnly(true);
         tfPhone.setReadOnly(true);
         tfEmail.setReadOnly(true);
         cbType.setReadOnly(true);
@@ -146,14 +141,14 @@ public class ApplicantForm extends Dialog {
         Applicant applicant = binder.getBean();
         Set<String> errors = validateApplicant();
         applicant.setErrors(errors);
-        if (errors.isEmpty()){
+        if (errors.isEmpty()) {
             applicantService.save(applicant, finapp);
             signPanel.save(applicant.getId(), SIGNATURE_CONTEXT);
             onPostSave.accept(applicant);
             this.close();
         }
     }
-    
+
     private void saveDraftApplicant(FinApplication finapp, Consumer<Applicant> onPostSave) {
         Applicant applicant = binder.getBean();
         applicantService.save(applicant, finapp);

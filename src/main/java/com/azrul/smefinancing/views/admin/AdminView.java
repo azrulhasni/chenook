@@ -6,7 +6,7 @@ package com.azrul.smefinancing.views.admin;
 
 import com.azrul.chenook.service.MessageService;
 import com.azrul.chenook.views.MainLayout;
-import com.azrul.chenook.views.common.PageNav;
+import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.service.WorkflowService;
 import com.azrul.smefinancing.domain.FinApplication;

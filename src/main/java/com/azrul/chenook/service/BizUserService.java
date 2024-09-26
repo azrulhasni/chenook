@@ -7,7 +7,7 @@ package com.azrul.chenook.service;
 import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.repository.BizUserRepository;
-import com.azrul.chenook.views.common.PageNav;
+import com.azrul.chenook.views.common.components.PageNav;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;

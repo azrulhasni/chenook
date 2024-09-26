@@ -2,10 +2,8 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.azrul.chenook.views.common;
+package com.azrul.chenook.views.common.components;
 
-import com.azrul.chenook.annotation.NotNullValue;
-import com.azrul.chenook.annotation.WorkField;
 import com.azrul.chenook.utils.WorkflowUtils;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.Validator;
@@ -13,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Currency;
 import java.util.List;
 import org.vaadin.addons.MoneyField;
-import com.azrul.chenook.annotation.NumberRange;
 
 /**
  *
@@ -91,6 +88,7 @@ public class WorkflowAwareMoneyField<T> extends MoneyField {
     public static <T> WorkflowAwareMoneyField create(String fieldName, String currencyCode, Binder<T> binder) {
         T workItem = binder.getBean();
         var field = new WorkflowAwareMoneyField();
+        field.setId(fieldName);
         field.setCurrency(Currency.getInstance(currencyCode));
 
         List<Validator> validators = new ArrayList<>();

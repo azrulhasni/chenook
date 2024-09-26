@@ -3,7 +3,7 @@ package com.azrul.smefinancing.views.application;
 import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.service.MessageService;
 import com.azrul.chenook.views.attachments.AttachmentsPanel;
-import com.azrul.chenook.views.common.Card;
+import com.azrul.chenook.views.common.components.Card;
 import com.azrul.chenook.views.message.MessageButton;
 import com.azrul.chenook.views.workflow.WorkflowPanel;
 import com.azrul.chenook.config.WorkflowConfig;
@@ -21,14 +21,14 @@ import com.azrul.smefinancing.service.FinApplicationService;
 import com.azrul.smefinancing.views.applicant.ApplicantForm;
 import com.azrul.chenook.service.BadgeUtils;
 import com.azrul.chenook.utils.WorkflowUtils;
-import com.azrul.chenook.views.common.StringToUngroupLongConverter;
-import com.azrul.chenook.views.common.WorkflowAwareBigDecimalField;
-import com.azrul.chenook.views.common.WorkflowAwareComboBox;
-import com.azrul.chenook.views.common.WorkflowAwareDateTimePicker;
-import com.azrul.chenook.views.common.WorkflowAwareMoneyField;
-import com.azrul.chenook.views.common.WorkflowAwareSelect;
-import com.azrul.chenook.views.common.WorkflowAwareTextArea;
-import com.azrul.chenook.views.common.WorkflowAwareTextField;
+import com.azrul.chenook.views.common.converter.StringToUngroupLongConverter;
+import com.azrul.chenook.views.common.components.WorkflowAwareBigDecimalField;
+import com.azrul.chenook.views.common.components.WorkflowAwareComboBox;
+import com.azrul.chenook.views.common.components.WorkflowAwareDateTimePicker;
+import com.azrul.chenook.views.common.components.WorkflowAwareMoneyField;
+import com.azrul.chenook.views.common.components.WorkflowAwareSelect;
+import com.azrul.chenook.views.common.components.WorkflowAwareTextArea;
+import com.azrul.chenook.views.common.components.WorkflowAwareTextField;
 import com.azrul.smefinancing.views.common.Editable;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -37,6 +37,7 @@ import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -63,18 +64,7 @@ import org.vaadin.addons.MoneyField;
 
 public class ApplicationForm extends Dialog {
 
-//    private static final String PREFIX_MYR = "MYR ";
     private static final String ADD_APPLICANT = "Add applicant";
-//    private static final String APPLICATION_ID_LABEL = "Application ID (AA Number)";
-//    private static final String BUSINESS_NAME_LABEL = "Business Name";
-//    private static final String ADDRESS_LABEL = "Address";
-//    private static final String POSTAL_CODE_LABEL = "Postal code";
-//    private static final String STATE_LABEL = "State";
-//    private static final String APPLICATION_DATE_LABEL = "Application date";
-//    private static final String SSM_REGISTRATION_LABEL = "SSM Registration";
-//    //private static final String STATUS_LABEL = "Status";
-//    private static final String FINANCING_APPLIED_LABEL = "Financing Applied";
-//    private static final String REASON_FOR_FINANCING_LABEL = "Reason for financing";
     private String DATETIME_FORMAT;
     //private DateTimeFormatter dateTimeFormatter;
 
@@ -318,6 +308,7 @@ public class ApplicationForm extends Dialog {
         gridApplicants.getStyle().set("max-width", "285px");
         gridApplicants.addComponentColumn(app -> createApplicantCard(app, finapp, applicantService, user, editable, gridApplicants));
         gridApplicants.setAllRowsVisible(true);
+        gridApplicants.addThemeVariants(GridVariant.LUMO_NO_BORDER);
         gridApplicants.setItems(applicantService.getApplicantsByApplication(binder.getBean()));
         return gridApplicants;
     }
@@ -379,7 +370,7 @@ public class ApplicationForm extends Dialog {
             Editable editable,
             Grid<Applicant> gridApplicants
     ) {
-        return new Button(
+        Button btnAddApplicant =  new Button(
                 ADD_APPLICANT,
                 e -> buildApplicantDialog(
                         null,
@@ -389,6 +380,8 @@ public class ApplicationForm extends Dialog {
                         editable,
                         gridApplicants)
         );
+        btnAddApplicant.setId("btnAddApplicant");
+        return btnAddApplicant;
     }
 
     private void configureButtons(
@@ -416,6 +409,7 @@ public class ApplicationForm extends Dialog {
                 applicantService,
                 onPostSave
         );
+        btnSaveAndSubmitApp.setId("btnSaveAndSubmitApp");
 
         Button btnSaveDraft = createSaveDraftButton(
                 binder,
@@ -426,10 +420,13 @@ public class ApplicationForm extends Dialog {
                 applicantService,
                 onPostSave
         );
+        btnSaveDraft.setId("btnSaveDraft");
 
         //Button btnSave = createSaveButton(binder, finappService, applicantService, onPostSave);
         Button btnCancel = createCancelButton(binder, finappService, onPostCancel);
+        btnCancel.setId("btnCancel");
         Button btnRemove = createRemoveButton(binder, editable, finappService, onPostRemove);
+        btnRemove.setId("btnRemove");
 
         HorizontalLayout buttonLayout = new HorizontalLayout(
                 btnSaveAndSubmitApp,

@@ -14,7 +14,7 @@ import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.repository.WorkItemRepository;
 import com.azrul.chenook.script.Expression;
 import com.azrul.chenook.script.Scripting;
-import com.azrul.chenook.views.common.PageNav;
+import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.workflow.model.Activity;
 import com.azrul.chenook.workflow.model.BaseActivity;
 import com.azrul.chenook.workflow.model.BizProcess;

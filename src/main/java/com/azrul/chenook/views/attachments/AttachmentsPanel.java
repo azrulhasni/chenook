@@ -5,13 +5,14 @@
 package com.azrul.chenook.views.attachments;
 
 import com.azrul.chenook.config.ApplicationContextHolder;
-import com.azrul.chenook.views.common.Card;
+import com.azrul.chenook.views.common.components.Card;
 import com.azrul.chenook.domain.Attachment;
 import com.azrul.chenook.service.AttachmentService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.Upload;
@@ -52,13 +53,11 @@ public class AttachmentsPanel<T> extends VerticalLayout {
         this.addClassNames(
                 LumoUtility.Padding.SMALL,
                 LumoUtility.Background.BASE
- //               LumoUtility.BoxShadow.XSMALL
-//                LumoUtility.BorderRadius.LARGE,
-//                LumoUtility.Border.NONE
         );
 
         MultiFileMemoryBuffer buffer = new MultiFileMemoryBuffer();
         Upload upload = new Upload(buffer);
+        upload.setId("upload");
         upload.setAcceptedFileTypes(extensions);
 
         int maxFileSizeInBytes = 20 * 1024 * 1024; // 20MB
@@ -80,6 +79,7 @@ public class AttachmentsPanel<T> extends VerticalLayout {
         }
         );
         gridFiles.setAllRowsVisible(true);
+        gridFiles.addThemeVariants(GridVariant.LUMO_NO_BORDER);
         this.add(gridFiles);
 
         upload.addSucceededListener(event -> {

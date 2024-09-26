@@ -6,19 +6,17 @@ package com.azrul.chenook.views.workflow;
 
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.BadgeUtils;
-import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.utils.WorkflowUtils;
-import com.azrul.chenook.views.common.Card;
-import com.azrul.chenook.views.common.PageNav;
+import com.azrul.chenook.views.common.components.Card;
+import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.chenook.workflow.model.StartEvent;
 import com.azrul.smefinancing.service.FinApplicationService;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
-import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -26,7 +24,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -70,10 +67,11 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
             MenuBar menu = new MenuBar();
 
             for (var startEvent : startEvents) {
-                menu.addItem("Add new " + startEvent.getDescription(), e -> {
+                MenuItem miAddNew = menu.addItem("Add new " + startEvent.getDescription(), e -> {
                     showCreationDialog.accept(this, startEvent);
 
                 });
+                miAddNew.setId("new_"+startEvent.getId());
             }
             menu.setWidth("-webkit-fill-available");
             this.add(menu);

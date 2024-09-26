@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.azrul.chenook.views.common;
+package com.azrul.chenook.views.common.converter;
 
 import com.vaadin.flow.data.converter.StringToLongConverter;
 import java.text.NumberFormat;

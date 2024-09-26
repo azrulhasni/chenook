@@ -1,4 +1,4 @@
-package com.azrul.chenook.views.common;
+package com.azrul.chenook.views.common.components;
 
 
 
@@ -7,10 +7,6 @@ import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.server.StreamResource;
-import com.vaadin.flow.server.VaadinSession;
-
-import java.io.ByteArrayInputStream;
 import java.util.Base64;
 
 @Tag("div")

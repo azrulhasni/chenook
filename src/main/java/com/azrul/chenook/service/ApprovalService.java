@@ -8,7 +8,7 @@ import com.azrul.chenook.domain.Approval;
 import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.repository.ApprovalRepository;
-import com.azrul.chenook.views.common.PageNav;
+import com.azrul.chenook.views.common.components.PageNav;
 import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;

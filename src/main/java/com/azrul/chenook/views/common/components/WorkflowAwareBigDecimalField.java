@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.azrul.chenook.views.common;
+package com.azrul.chenook.views.common.components;
 
 import com.azrul.chenook.annotation.NotNullValue;
 import com.azrul.chenook.annotation.WorkField;
@@ -38,6 +38,7 @@ public class WorkflowAwareBigDecimalField<T> extends BigDecimalField {
     public static <T> WorkflowAwareBigDecimalField create(String fieldName, Binder<T> binder) {
         T workItem = binder.getBean();
         var field = new WorkflowAwareBigDecimalField();
+        field.setId(fieldName);
 
         List<Validator> validators = new ArrayList<>();
         var annoFieldDisplayMap = WorkflowUtils.getAnnotations(

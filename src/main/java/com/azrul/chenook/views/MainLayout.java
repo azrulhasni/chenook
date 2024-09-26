@@ -3,7 +3,7 @@ package com.azrul.chenook.views;
 import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.service.MapperService;
 import com.azrul.chenook.views.about.AboutView;
-import com.azrul.chenook.views.common.UserField;
+import com.azrul.chenook.views.common.components.UserField;
 import com.azrul.smefinancing.views.admin.AdminView;
 import com.azrul.smefinancing.views.smefinancing.ApplicationView;
 import com.vaadin.flow.component.UI;

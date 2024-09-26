@@ -7,7 +7,7 @@ package com.azrul.smefinancing.service;
 import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.repository.WorkItemRepository;
 import com.azrul.chenook.service.WorkflowService;
-import com.azrul.chenook.views.common.PageNav;
+import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.smefinancing.domain.Applicant;
 import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.repository.FinApplicationRepository;
