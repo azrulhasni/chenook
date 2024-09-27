@@ -156,11 +156,13 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             Card card = new Card(work.getTitle(), badge);
             card.add(content);
             HorizontalLayout btnPanel = new HorizontalLayout();
-            btnPanel.add(new Button("Book this work", e -> {
+            Button btnBookThis = new Button("Book this work", e -> {
                 work.getOwners().add(basicMapper.map(oidcUser));
                 T w = workflowService.save(work);
                 showUpdateDialog.accept(this, null, w);
-            }));
+            });
+            btnBookThis.setId("btnBook"+work.getId());
+            btnPanel.add(btnBookThis);
             card.add(btnPanel);
             return card;
         });

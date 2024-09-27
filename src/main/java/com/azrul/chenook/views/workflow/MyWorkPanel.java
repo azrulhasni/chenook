@@ -77,6 +77,7 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
             this.add(menu);
             myCreatedWork = buildDataPanel(
                     "Work items I've created",
+                    "btnMyCreatedWork",
                     oidcUser,
                     bizProcess,
                     showCreationDialog,
@@ -93,6 +94,7 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
 
         myOwnedWork = buildDataPanel(
                 "My work items",
+                "btnMyWork",
                 oidcUser,
                 bizProcess,
                 showCreationDialog,
@@ -113,19 +115,20 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
 
     private Pair<Grid<T>, PageNav> buildDataPanel(
             final String title,
-            final OidcUser oidcUser1,
+            final String btnIdDiscriminator,
+            final OidcUser oidcUser,
             final BizProcess bizProcess,
             final BiConsumer<MyWorkPanel, StartEvent> showCreationDialog,
             final TriConsumer<MyWorkPanel, StartEvent, T> showUpdateDialog,
             final Function<T, VerticalLayout> cardBuilder,
-            final Map<String, String> sortableFields1,
+            final Map<String, String> sortableFields,
             final Function<String, Integer> counter,
             final BiFunction<String, PageNav, DataProvider> dataProviderCreator) {
         PageNav nav = new PageNav();
-        Integer count = counter.apply(oidcUser1.getPreferredUsername());//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
-        DataProvider dataProvider = dataProviderCreator.apply(oidcUser1.getPreferredUsername(), nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
-        Grid<T> grid = createGrid(title, oidcUser1, bizProcess, dataProvider, showCreationDialog, showUpdateDialog, cardBuilder);
-        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields1, false);
+        Integer count = counter.apply(oidcUser.getPreferredUsername());//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
+        DataProvider dataProvider = dataProviderCreator.apply(oidcUser.getPreferredUsername(), nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
+        Grid<T> grid = createGrid(title,btnIdDiscriminator, oidcUser, bizProcess, dataProvider, showCreationDialog, showUpdateDialog, cardBuilder);
+        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
         Pair<Grid<T>, PageNav> pair = Pair.of(grid, nav);
         return pair;
     }
@@ -146,6 +149,7 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
 
     private Grid<T> createGrid(
             final String panelTitle,
+            final String btnIdDiscriminator,
             final OidcUser oidcUser,
             final BizProcess bizProcess,
             final DataProvider dataProvider,
@@ -165,9 +169,11 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
             Card card = new Card(work.getTitle(), badge);
             card.add(content);
             HorizontalLayout btnPanel = new HorizontalLayout();
-            btnPanel.add(new Button("See more", e -> {
+            Button btnUpdate = new Button("See more", e -> {
                 showUpdateDialog.accept(this, null, work);
-            }));
+            });
+            btnUpdate.setId(btnIdDiscriminator+work.getId());
+            btnPanel.add(btnUpdate);
             card.add(btnPanel);
             return card;
         });
