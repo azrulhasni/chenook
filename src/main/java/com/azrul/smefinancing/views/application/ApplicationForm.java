@@ -38,6 +38,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -88,16 +89,16 @@ public class ApplicationForm extends Dialog {
         this.DATETIME_FORMAT = dateTimeFormat;
         //this.dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
         BizProcess bizProcess = workflowConfig.rootBizProcess();
-        Editable editable = isEditable(
-                work,
-                applicantService,
-                oidcUser
-        );
+//        Editable editable = isEditable(
+//                work,
+//                applicantService,
+//                oidcUser
+//        );
 
         Binder<FinApplication> binder = new Binder<>(FinApplication.class);
         binder.setBean(work);
 
-        FormLayout form = createForm(binder, badgeUtils, editable);
+        FormLayout form = createForm(binder, badgeUtils);
         MessageButton msgBtn = new MessageButton(
                 work.getId(),
                 context,
@@ -121,7 +122,6 @@ public class ApplicationForm extends Dialog {
                 work,
                 applicantService,
                 oidcUser,
-                editable,
                 binder
         );
 
@@ -153,66 +153,66 @@ public class ApplicationForm extends Dialog {
                 onPostCancel);
     }
 
-    private Editable isEditable(
-            FinApplication work,
-            ApplicantService applicantService,
-            OidcUser oidcUser
-    ) {
-        Set<String> applicantsEmail = applicantService.getApplicantsEmail(work);
-        
-        int state = 0;
-        if (oidcUser.getAuthorities().stream().anyMatch(sga -> {
-            return StringUtils.equals(sga.getAuthority(), "ROLE_FINAPP_ADMIN");
-        })) { // admin
-            state = 1;
-        } else if (applicantsEmail.contains(oidcUser.getEmail())) { // applicant
-            state = 2;
-        } else if (work.getOwners().stream().filter(o->StringUtils.equals(o.getUsername(),oidcUser.getPreferredUsername())).count()>0) {
-            state = 3;
-        } else {
-            state = 4;
-        }
-
-        if (work == null) {
-            state = 5;
-        } else {
-
-            if (state == 2) {
-                if (work.getStatus() == Status.DRAFT
-                        || work.getStatus() == Status.NEED_MORE_INFO
-                        || work.getStatus() == Status.NEWLY_CREATED) {
-                    state = 6;
-                } else {
-                    state = 8;
-                }
-            } else if (state == 3) {
-                if (work.getStatus() == Status.DRAFT
-                        || work.getStatus() == Status.NEED_MORE_INFO
-                        || work.getStatus() == Status.NEWLY_CREATED) {
-                    state = 5;
-                } else {
-                    state = 7;
-                }
-            }
-        }
-
-        switch (state) {
-            case 4:
-                return Editable.NO_DUE_TO_USER;
-            case 7:
-            case 8:
-                return Editable.NO_DUE_TO_STATUS;
-            case 6:
-                return Editable.YES_AS_APPLICANT;
-            case 5:
-                return Editable.YES;
-            case 1:
-                return Editable.YES_AS_ADMIN;
-            default:
-                return Editable.NO_DUE_TO_USER;
-        }
-
-    }
+//    private Editable isEditable(
+//            FinApplication work,
+//            ApplicantService applicantService,
+//            OidcUser oidcUser
+//    ) {
+//        Set<String> applicantsEmail = applicantService.getApplicantsEmail(work);
+//        
+//        int state = 0;
+//        if (oidcUser.getAuthorities().stream().anyMatch(sga -> {
+//            return StringUtils.equals(sga.getAuthority(), "ROLE_FINAPP_ADMIN");
+//        })) { // admin
+//            state = 1;
+//        } else if (applicantsEmail.contains(oidcUser.getEmail())) { // applicant
+//            state = 2;
+//        } else if (work.getOwners().stream().filter(o->StringUtils.equals(o.getUsername(),oidcUser.getPreferredUsername())).count()>0) {
+//            state = 3;
+//        } else {
+//            state = 4;
+//        }
+//
+//        if (work == null) {
+//            state = 5;
+//        } else {
+//
+//            if (state == 2) {
+//                if (work.getStatus() == Status.DRAFT
+//                        || work.getStatus() == Status.NEED_MORE_INFO
+//                        || work.getStatus() == Status.NEWLY_CREATED) {
+//                    state = 6;
+//                } else {
+//                    state = 8;
+//                }
+//            } else if (state == 3) {
+//                if (work.getStatus() == Status.DRAFT
+//                        || work.getStatus() == Status.NEED_MORE_INFO
+//                        || work.getStatus() == Status.NEWLY_CREATED) {
+//                    state = 5;
+//                } else {
+//                    state = 7;
+//                }
+//            }
+//        }
+//
+//        switch (state) {
+//            case 4:
+//                return Editable.NO_DUE_TO_USER;
+//            case 7:
+//            case 8:
+//                return Editable.NO_DUE_TO_STATUS;
+//            case 6:
+//                return Editable.YES_AS_APPLICANT;
+//            case 5:
+//                return Editable.YES;
+//            case 1:
+//                return Editable.YES_AS_ADMIN;
+//            default:
+//                return Editable.NO_DUE_TO_USER;
+//        }
+//
+//    }
 
     private FormLayout createForm(
             Binder<FinApplication> binder,
@@ -238,7 +238,10 @@ public class ApplicationForm extends Dialog {
         form.add(tfAddress);
 
         TextField tfPostalCode = WorkflowAwareTextField.create("postalCode", true, binder);
-        form.add(tfPostalCode);
+        tfPostalCode.setWidthFull();
+        Div div = new Div(tfPostalCode);
+        //div.
+        form.add(div);
 
         ComboBox<String> cbState = WorkflowAwareComboBox.create("state", binder,Set.of(
                 "Johor",
