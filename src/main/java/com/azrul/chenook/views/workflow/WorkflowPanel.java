@@ -17,6 +17,7 @@ import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.views.common.components.UserField;
+import com.azrul.chenook.workflow.model.BizProcess;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -29,6 +30,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.DataProvider;
+import com.vaadin.flow.spring.annotation.SpringComponent;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -40,34 +42,38 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
  *
  * @author azrul
  */
+@SpringComponent
 public class WorkflowPanel<T> extends FormLayout {
 
-    @Autowired
-    private BadgeUtils badgeUtils;
-
-    @Autowired
-    private ApprovalService approvalService;
-
-    @Autowired
-    private BizUserService bizUserService;
-
-    @Autowired
-    private WorkflowService workflowService;
-
-    private Integer COUNT_PER_PAGE = 3;
-
-    private ComboBox<String> cbApprove;
+    
+    private final BadgeUtils badgeUtils;
+    private final ApprovalService approvalService;
+    private final BizUserService bizUserService;
+    private final WorkflowService workflowService;
+    private final Integer COUNT_PER_PAGE = 3;
+    private       ComboBox<String> cbApprove;
 
     public WorkflowPanel(
+        @Autowired BadgeUtils badgeUtils,
+        @Autowired ApprovalService approvalService,
+        @Autowired BizUserService bizUserService,
+        @Autowired WorkflowService workflowService){
+        this.badgeUtils=badgeUtils;
+        this.approvalService=approvalService;
+        this.bizUserService=bizUserService;
+        this.workflowService=workflowService;
+    }
+              
+            
+    public void init(
             final WorkItem work,
-            final OidcUser user,
-            final Boolean editable,
-            final Consumer<Attachment> onPostSave,
-            final Consumer<Attachment> onPostRemove
+            final OidcUser user
+//            final Consumer<Attachment> onPostSave,
+//            final Consumer<Attachment> onPostRemove
     ) {
-        ApplicationContextHolder.autowireBean(this);
+        //ApplicationContextHolder.autowireBean(this);
         var fieldDisplayMap = WorkflowUtils.getFieldNameDisplayNameMap(work.getClass());
-        Select<Status> cbStatus = createSelect(fieldDisplayMap.get("status"), editable);
+        Select<Status> cbStatus = createSelect(fieldDisplayMap.get("status"));
         cbStatus.setItems(Status.values());
         cbStatus.setRenderer(badgeUtils.createStatusBadgeRenderer());
         if (work != null) {
@@ -226,12 +232,12 @@ public class WorkflowPanel<T> extends FormLayout {
     }
 
     private <T> Select<T> createSelect(
-            final String label,
-            final boolean editable
+            final String label
+            //final boolean editable
     ) {
         Select<T> select = new Select<>();
         select.setLabel(label);
-        select.setReadOnly(!editable);
+        //select.setReadOnly(!editable);
         return select;
     }
 

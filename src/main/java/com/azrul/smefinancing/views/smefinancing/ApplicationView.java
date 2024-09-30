@@ -19,7 +19,9 @@ import com.azrul.chenook.service.BadgeUtils;
 import com.azrul.chenook.service.BizUserService;
 import com.azrul.chenook.service.MapperService;
 import com.azrul.chenook.utils.WorkflowUtils;
+import com.azrul.chenook.views.attachments.AttachmentsPanel;
 import com.azrul.chenook.views.workflow.WorklistPanel;
+import com.azrul.smefinancing.views.applicant.ApplicantForm;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -59,6 +61,9 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
     private final ApprovalService approvalService;
     private final BizUserService bizUserService;
     private final MapperService basicMapper;
+    private final ApplicationForm applicationForm;
+    private final MyWorkPanel<FinApplication> myWorkPanel;
+    private final WorklistPanel<FinApplication> worklistPanel;
 
     public ApplicationView(
             @Autowired FinApplicationService finappService,
@@ -69,6 +74,9 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
             @Autowired ApprovalService approvalService,
             @Autowired BizUserService bizUserService,
             @Autowired MapperService basicMapper,
+            @Autowired MyWorkPanel<FinApplication> myWorkPanel,
+            @Autowired WorklistPanel<FinApplication> worklistPanel,
+            //@Autowired ApplicationForm applicationForm,
             @Value("${finapp.datetime.format}") String dateTimeFormat
     ) {
         this.finappService = finappService;
@@ -80,6 +88,11 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
         this.approvalService=approvalService;
         this.bizUserService=bizUserService;
         this.basicMapper = basicMapper;
+        this.myWorkPanel=myWorkPanel;
+        this.worklistPanel=worklistPanel;
+        this.applicationForm=applicationForm;
+        
+        
 
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
         final BizProcess bizProcess = workflowConfig.rootBizProcess();
@@ -87,12 +100,9 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
             DefaultOidcUser oidcUser = (DefaultOidcUser) oauth2AuthToken.getPrincipal();
             
             Map<String,String> fieldNameDisplayNameMap = WorkflowUtils.getFieldNameDisplayNameMap(FinApplication.class);
-            MyWorkPanel<FinApplication> workPanel = new MyWorkPanel<FinApplication>(
+            myWorkPanel.init(
                     FinApplication.class,
                     oidcUser,
-                    workflowConfig.rootBizProcess(),
-                    finappService,
-                    badgeUtils,
                     (wp, startEvent) -> {
                         FinApplication finapp = new FinApplication();
                         finapp.setApplicationDate(LocalDateTime.now());
@@ -135,16 +145,11 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                         return content;
                     }
             );
-            this.add(workPanel);
+            this.add(myWorkPanel);
              
-            WorklistPanel<FinApplication> worklistPanel = new WorklistPanel<FinApplication>(
+            worklistPanel.init(
                     FinApplication.class,
                     oidcUser,
-                    workflowConfig.rootBizProcess(),
-                    finappService,
-                    bizUserService,
-                    badgeUtils,
-                    basicMapper,
                     (wp, startEvent, finapp) -> {
                         showApplicationDialog(
                                 startEvent,
@@ -174,7 +179,6 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                         return content;
                     }
             );
-            this.add(workPanel);
             this.add(worklistPanel);
         }
     }
@@ -182,30 +186,23 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
     private void showApplicationDialog(
             StartEvent startEvent,
             FinApplication work,
-            OidcUser oidcUser,
+            OidcUser user,
             String context,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel
     ) {
-        ApplicationForm appform = new ApplicationForm(
-                startEvent,
-                work,
-                oidcUser,
-                DATETIME_FORMAT,
-                context,
-                applicantService,
-                finappService,
-                approvalService,
-                msgService,
-                badgeUtils,
-                workflowConfig,
-                onPostSave,
-                onPostRemove,
-                onPostCancel
-        );
+        applicationForm.init(
+                startEvent, 
+                work, 
+                user, 
+                context, 
+                onPostSave, 
+                onPostRemove, 
+                onPostCancel);
+         
 
-        appform.open();
+        applicationForm.open();
     }
 
     @Override

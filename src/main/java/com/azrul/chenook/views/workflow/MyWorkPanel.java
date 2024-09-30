@@ -4,6 +4,7 @@
  */
 package com.azrul.chenook.views.workflow;
 
+import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.BadgeUtils;
 import com.azrul.chenook.utils.WorkflowUtils;
@@ -22,12 +23,14 @@ import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
+import com.vaadin.flow.spring.annotation.SpringComponent;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.apache.commons.lang3.function.TriConsumer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
@@ -35,29 +38,40 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
  *
  * @author azrul
  */
+@SpringComponent
 public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
 
-    private final int COUNT_PER_PAGE = 3;
-    private final Pair<Grid<T>, PageNav> myCreatedWork;
-    private final Pair<Grid<T>, PageNav> myOwnedWork;
+    
+    private       Pair<Grid<T>, PageNav> myCreatedWork;
+    private       Pair<Grid<T>, PageNav> myOwnedWork;
+    private       OidcUser oidcUser;
+    
     private final FinApplicationService finappService;
-    private final OidcUser oidcUser;
+    private final int COUNT_PER_PAGE = 3;
     private final BadgeUtils badgeUtils;
+    private final WorkflowConfig workflowConfig;
 
     public MyWorkPanel(
-            final Class workItemClass,  
+            @Autowired WorkflowConfig workflowConfig,
+            @Autowired  FinApplicationService finappService,
+            @Autowired  BadgeUtils badgeUtils
+            ){
+         this.finappService = finappService;
+        this.badgeUtils = badgeUtils;
+        this.workflowConfig=workflowConfig;
+    }
+        
+    public void init(
+        final Class workItemClass,  
             final OidcUser oidcUser,
-            final BizProcess bizProcess,
-            final FinApplicationService finappService,
-            final BadgeUtils badgeUtils,
             final BiConsumer<MyWorkPanel, StartEvent> showCreationDialog,
             final TriConsumer<MyWorkPanel, StartEvent, T> showUpdateDialog,
             final Function<T, VerticalLayout> cardBuilder
     ) {
 
         this.oidcUser = oidcUser;
-        this.finappService = finappService;
-        this.badgeUtils = badgeUtils;
+        BizProcess bizProcess = workflowConfig.rootBizProcess();
+       
          Map<String,String> sortableFields = WorkflowUtils.getSortableFields(workItemClass);
         
         this.setWidth("-webkit-fill-available");

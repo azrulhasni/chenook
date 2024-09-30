@@ -4,6 +4,7 @@
  */
 package com.azrul.chenook.views.workflow;
 
+import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.BadgeUtils;
 import com.azrul.chenook.service.BizUserService;
@@ -27,6 +28,7 @@ import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
+import com.vaadin.flow.spring.annotation.SpringComponent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.function.TriConsumer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
@@ -43,31 +46,41 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
  *
  * @author azrul
  */
+@SpringComponent
 public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
 
     private final int COUNT_PER_PAGE = 3;
     private final List<Pair<Grid<T>, PageNav>> myWorklists = new ArrayList<>();
     private final WorkflowService<T> workflowService;
-    private final OidcUser oidcUser;
+    private final BizUserService bizUserService;
+    private final WorkflowConfig workflowConfig;
+    private       OidcUser oidcUser;
     private final BadgeUtils badgeUtils;
     private final MapperService basicMapper;
 
     public WorklistPanel(
+            @Autowired WorkflowService<T> workflowService,
+            @Autowired  BizUserService bizUserService,
+            @Autowired  BadgeUtils badgeUtils,
+            @Autowired  MapperService basicMapper,
+            @Autowired  WorkflowConfig workflowConfig){
+        this.workflowService=workflowService;
+        this.bizUserService=bizUserService;
+        this.badgeUtils=badgeUtils;
+        this.basicMapper=basicMapper;
+        this.workflowConfig=workflowConfig;
+    }
+        
+    public void init(
             final Class workItemClass,
             final OidcUser oidcUser,
-            final BizProcess bizProcess,
-            final WorkflowService<T> workflowService,
-            final BizUserService bizUserService,
-            final BadgeUtils badgeUtils,
-            final MapperService basicMapper,
             final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
             final Function<T, VerticalLayout> cardBuilder
     ) {
 
         this.oidcUser = oidcUser;
-        this.workflowService = workflowService;
-        this.badgeUtils = badgeUtils;
-        this.basicMapper=basicMapper;
+        BizProcess bizProcess = workflowConfig.rootBizProcess();
+        
         Map<String,String> sortableFields = WorkflowUtils.getSortableFields(workItemClass);
             
         this.setWidth("-webkit-fill-available");

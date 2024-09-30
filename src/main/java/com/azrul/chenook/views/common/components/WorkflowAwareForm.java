@@ -5,18 +5,15 @@
 package com.azrul.chenook.views.common.components;
 
 import com.azrul.chenook.domain.WorkItem;
-import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasEnabled;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.data.binder.Binder;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.BiPredicate;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
@@ -24,13 +21,13 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
  *
  * @author azrul
  */
-public class WorkflowAwareGroup<T extends WorkItem> extends Div{
+public class WorkflowAwareForm<T extends WorkItem> extends FormLayout{
     private final T workItem;
     private final Predicate<T> visibleCondition;
     private final Predicate<T> enableCondition;
     private final Set<HasEnabled> managedComponents = new HashSet<>();
     
-    private WorkflowAwareGroup(
+    private WorkflowAwareForm(
             Predicate<T> visibleCondition, 
             Predicate<T> enableCondition,
             T workItem
@@ -50,7 +47,21 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div{
             c.setVisible(visible);
             this.add(c);
         }
+    }
+    
+     public void addManagedComponent(HasEnabled component){
+         addManagedComponent(component,1);
+     }
+    
+    public void addManagedComponent(HasEnabled component, Integer colspan){
+        managedComponents.add(component);
+        boolean enable = enableCondition.test(workItem);
+        boolean visible = visibleCondition.test(workItem);
         
+        component.setEnabled(enable);
+        Component c = ((Component)component);
+        c.setVisible(visible);
+        this.add(c, colspan);
     }
     
     public void refresh(){
@@ -62,19 +73,6 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div{
             c.setVisible(visible);
             this.add(c);
         }
-    }
-    
-     public void addManagedComponent(HasEnabled component){
-        managedComponents.add(component);
-        boolean enable = enableCondition.test(workItem);
-        boolean visible = visibleCondition.test(workItem);
-        
-        component.setEnabled(enable);
-        Component c = ((Component)component);
-        c.setVisible(visible);
-        this.add(c);
-        
-        
     }
     
     public void calculateEnable(){
@@ -153,7 +151,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div{
         return enabledRule;
     }
     
-    public static <T extends WorkItem>  WorkflowAwareGroup create(
+    public static <T extends WorkItem>  WorkflowAwareForm create(
             final OidcUser user,
             final T workItem,
             final BizProcess bizProcess,
@@ -161,18 +159,18 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div{
              ){
         Predicate<T> visiblePred = getDefaultVisible(user);
         Predicate<T> enablePred = getDefaultEnabled(user, bizProcess, worklistsWhereItemIsEnabled);
-        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred, workItem);
+        WorkflowAwareForm group = new WorkflowAwareForm(visiblePred, enablePred,  workItem);
         return group;
     }
     
-     public static <T extends WorkItem>  WorkflowAwareGroup create(
+     public static <T extends WorkItem>  WorkflowAwareForm create(
             final OidcUser user,
             final T workItem,
             final BizProcess bizProcess
              ){
         Predicate<T> visiblePred = getDefaultVisible(user);
         Predicate<T> enablePred = getDefaultEnabled(user, bizProcess, Set.of());
-        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred, workItem);
+        WorkflowAwareForm group = new WorkflowAwareForm(visiblePred, enablePred,  workItem);
         return group;
     }
 }

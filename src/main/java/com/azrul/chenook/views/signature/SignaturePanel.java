@@ -5,24 +5,20 @@
 package com.azrul.chenook.views.signature;
 
 import com.azrul.chenook.config.ApplicationContextHolder;
-import com.azrul.chenook.domain.Attachment;
 import com.azrul.chenook.domain.Signature;
 import com.azrul.chenook.service.SignatureService;
 import com.azrul.chenook.views.attachments.AttachmentsPanel;
-import com.azrul.chenook.views.common.components.Card;
 import com.azrul.chenook.views.common.components.SignatureCapture;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.NativeLabel;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.spring.annotation.SpringComponent;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Level;
@@ -34,16 +30,20 @@ import org.springframework.beans.factory.annotation.Autowired;
  *
  * @author azrul
  */
+@SpringComponent
 public class SignaturePanel extends VerticalLayout{
     private byte[] signatureImageBinary;
     private Button btnSign;
     private VerticalLayout signaturePanel;
     
-    @Autowired
-    private SignatureService signService;
+   
+    private final SignatureService signService;
     
-    public SignaturePanel(){
-        ApplicationContextHolder.autowireBean(this);
+    public SignaturePanel(@Autowired SignatureService signService){
+        this.signService=signService;
+    }
+        
+    public void init(){
         NativeLabel lbSign = new NativeLabel("Signature:");
         signaturePanel = new VerticalLayout();
 

@@ -1,13 +1,16 @@
 package com.azrul.smefinancing.views.applicant;
 
+import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.views.common.converter.StringToUngroupLongConverter;
 import com.azrul.chenook.views.common.components.WorkflowAwareComboBox;
+import com.azrul.chenook.views.common.components.WorkflowAwareGroup;
 import com.azrul.chenook.views.common.components.WorkflowAwareTextField;
 import com.azrul.smefinancing.domain.Applicant;
 import com.azrul.smefinancing.domain.ApplicantType;
 import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.service.ApplicantService;
 import com.azrul.chenook.views.signature.SignaturePanel;
+import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.smefinancing.views.common.Editable;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -21,39 +24,49 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.data.binder.Setter;
 import com.vaadin.flow.data.converter.StringToLongConverter;
+import com.vaadin.flow.spring.annotation.SpringComponent;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
+import org.springframework.beans.factory.annotation.Autowired;
 
+@SpringComponent
 public class ApplicantForm extends Dialog {
 
-    // Class Variables for Strings
-    private static final String FULL_NAME_LABEL = "Full name";
-    private static final String IC_NUMBER_LABEL = "IC Number";
-    private static final String POSITION_LABEL = "Position";
-    private static final String PHONE_NUMBER_LABEL = "Phone number";
-    private static final String EMAIL_LABEL = "Email";
-    private static final String APPLICANT_TYPE_LABEL = "Applicant type";
+   
     private static final String SIGNATURE_CONTEXT = "SME_FIN";
     private static final String SIGNATURE_ERROR = "Signature not present";
 
     private final Binder<Applicant> binder = new Binder<>(Applicant.class);
     private final ApplicantService applicantService;
+    private final WorkflowConfig workflowConfig;
     private final SignaturePanel signPanel;
 
     public ApplicantForm(
+            @Autowired ApplicantService applicantService,
+            @Autowired WorkflowConfig workflowConfig,
+            @Autowired SignaturePanel signPanel
+            
+    ){
+        this.applicantService =applicantService;
+        this.workflowConfig = workflowConfig;
+        this.signPanel=signPanel;
+    }
+            
+            
+    public void init(        
             Applicant applicant,
             FinApplication finapp,
-            Editable editable,
             OidcUser user,
-            ApplicantService applicantService,
             Consumer<Applicant> onPostSave
     ) {
-        this.applicantService = applicantService;
+    
 
         FormLayout form = new FormLayout();
-        signPanel = new SignaturePanel();
+       // signPanel = new SignaturePanel();
+       signPanel.init();
+       BizProcess bizProcess = workflowConfig.rootBizProcess();
 
         // Initialize applicant and signature panel
         if (applicant != null) {
@@ -82,6 +95,8 @@ public class ApplicantForm extends Dialog {
         // Applicant type combo box
         ComboBox<ApplicantType> cbType = WorkflowAwareComboBox.create("type", binder, Set.of(ApplicantType.values()));
         form.add(cbType);
+          WorkflowAwareGroup group = WorkflowAwareGroup.create(user, finapp, bizProcess);
+        group.add(form);
         this.add(form, signPanel);
 
         // Save button and its logic
@@ -95,46 +110,7 @@ public class ApplicantForm extends Dialog {
         });
         btnSaveDraft.setId("btnSaveDraft");
 
-        configureEditability(editable, user, tfFullName, tfICNumber, tfPhone, tfEmail, cbType, btnSave);
-
         this.getFooter().add(btnSaveDraft, btnSave, new Button("Cancel", e -> this.close()));
-    }
-
-    private void configureEditability(Editable editable,
-            OidcUser user,
-            TextField tfFullName,
-            TextField tfICNumber,
-            TextField tfPhone,
-            TextField tfEmail,
-            ComboBox<ApplicantType> cbType,
-            Button btnSave) {
-        if (editable != Editable.YES) {
-            setFieldsReadOnly(tfFullName, tfICNumber, tfPhone, tfEmail, cbType, btnSave);
-
-            if (editable == Editable.YES_AS_APPLICANT) {
-                Applicant applicant = binder.getBean();
-                if (StringUtils.equals(user.getEmail(), applicant.getEmail())) {
-                    signPanel.setEnabled(true);
-                    btnSave.setEnabled(true);
-                }
-            }
-        }
-    }
-
-    private void setFieldsReadOnly(TextField tfFullName,
-            TextField tfICNumber,
-            TextField tfPhone,
-            TextField tfEmail,
-            ComboBox<ApplicantType> cbType,
-            Button btnSave) {
-        tfFullName.setReadOnly(true);
-        tfICNumber.setReadOnly(true);
-        // tfDesignation.setReadOnly(true);
-        tfPhone.setReadOnly(true);
-        tfEmail.setReadOnly(true);
-        cbType.setReadOnly(true);
-        btnSave.setEnabled(false);
-        signPanel.setEnabled(false);
     }
 
     private void saveApplicant(FinApplication finapp, Consumer<Applicant> onPostSave) {

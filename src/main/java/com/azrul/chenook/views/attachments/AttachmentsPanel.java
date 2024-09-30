@@ -5,9 +5,12 @@
 package com.azrul.chenook.views.attachments;
 
 import com.azrul.chenook.config.ApplicationContextHolder;
+import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.views.common.components.Card;
 import com.azrul.chenook.domain.Attachment;
+import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.AttachmentService;
+import com.azrul.chenook.views.common.components.WorkflowAwareGroup;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
@@ -18,6 +21,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.codecamp.vaadin.serviceref.ServiceRef;
 import java.io.IOException;
@@ -26,35 +30,45 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.vaadin.olli.FileDownloadWrapper;
 
 /**
  *
  * @author azrul
  */
+@SpringComponent
 public class AttachmentsPanel<T> extends VerticalLayout {
 
     //private final AttachmentService attachmentService;
     private static final String[] extensions = {".bib", ".doc", ".xml", ".docx", ".fodt", ".html", ".ltx", ".txt", ".odt", ".ott", ".pdb", ".pdf", ".psw", ".rtf", ".sdw", ".stw", ".sxw", ".uot", ".vor", ".wps", ".epub", ".png", ".bmp", ".emf", ".eps", ".fodg", ".gif", ".jpg", ".met", ".odd", ".otg", ".pbm", ".pct", ".pgm", ".ppm", ".ras", ".std", ".svg", ".svm", ".swf", ".sxd", ".sxw", ".tiff", ".xhtml", ".xpm", ".fodp", ".potm", ".pot", ".pptx", ".pps", ".ppt", ".pwp", ".sda", ".sdd", ".sti", ".sxi", ".uop", ".wmf", ".csv", ".dbf", ".dif", ".fods", ".ods", ".ots", ".pxl", ".sdc", ".slk", ".stc", ".sxc", ".uos", ".xls", ".xlt", ".xlsx", ".tif", ".jpeg", ".odp"};
 
-    @Autowired
-    private AttachmentService attachmentService;
-
+   
+    private final AttachmentService attachmentService;
+    private final WorkflowConfig workflowConfig;
+    
     public AttachmentsPanel(
+            @Autowired AttachmentService attachmentService,
+            @Autowired WorkflowConfig workflowConfig
+    ){
+        this.attachmentService=attachmentService;
+        this.workflowConfig=workflowConfig;
+    }
+
+    public void init(
             Long parentId,
             String context,
             String fileLocation,
-            Boolean editable,
             Consumer<Attachment> onPostSave,
             Consumer<Attachment> onPostRemove
     ) {
-        ApplicationContextHolder.autowireBean(this);
 
         this.addClassNames(
                 LumoUtility.Padding.SMALL,
                 LumoUtility.Background.BASE
         );
-
+        
+       
         MultiFileMemoryBuffer buffer = new MultiFileMemoryBuffer();
         Upload upload = new Upload(buffer);
         upload.setId("upload");
@@ -62,7 +76,7 @@ public class AttachmentsPanel<T> extends VerticalLayout {
 
         int maxFileSizeInBytes = 20 * 1024 * 1024; // 20MB
         upload.setMaxFileSize(maxFileSizeInBytes);
-
+        
         this.add(upload);
 
         Grid<Attachment> gridFiles = new Grid<>();
@@ -72,7 +86,7 @@ public class AttachmentsPanel<T> extends VerticalLayout {
         gridFiles.addComponentColumn(att -> {
             Card filePanel = new Card("File: " + att.getFileName());
             HorizontalLayout btnPanel = new HorizontalLayout();
-            btnPanel.add(addRemoveButton(gridFiles, att, editable, onPostRemove),
+            btnPanel.add(addRemoveButton(gridFiles, att, /*editable,*/ onPostRemove),
                     addBtnToDownloadFile(att, "Download"));
             filePanel.add(btnPanel);
             return filePanel;
@@ -102,7 +116,7 @@ public class AttachmentsPanel<T> extends VerticalLayout {
 
     }
 
-    private Button addRemoveButton(Grid<Attachment> gridFiles, Attachment attc, Boolean editable, Consumer<Attachment> onPostRemove) {
+    private Button addRemoveButton(Grid<Attachment> gridFiles, Attachment attc, /*Boolean editable,*/ Consumer<Attachment> onPostRemove) {
         Button btnRemove = new Button("Remove", e -> {
             ConfirmDialog dialog = new ConfirmDialog();
             dialog.setHeader("Remove applicant");
@@ -121,7 +135,7 @@ public class AttachmentsPanel<T> extends VerticalLayout {
             dialog.open();
 
         });
-        btnRemove.setEnabled(editable);
+        //btnRemove.setEnabled(editable);
         return btnRemove;
     }
 
