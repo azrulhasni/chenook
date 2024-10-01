@@ -1,5 +1,6 @@
 package com.azrul.smefinancing.views.application;
 
+import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.service.MessageService;
 import com.azrul.chenook.views.attachments.AttachmentsPanel;
@@ -60,53 +61,50 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.vaadin.addons.MoneyField;
 
-@SpringComponent
 public class ApplicationForm extends Dialog {
 
     private static final String ADD_APPLICANT = "Add applicant";
     private final FinApplicationService finappService;
     private final ApplicantService applicantService;
-    private final ApplicantForm applicantForm;
     private final MessageService msgService;
-    private final BadgeUtils badgeUtils;
-    private final String DATETIME_FORMAT;
     private final WorkflowConfig workflowConfig;
-    private final ApprovalService approvalService;
-    private final BizUserService bizUserService;
-    private final MapperService basicMapper;
-    private final WorkflowPanel workflowPanel;
-    private final AttachmentsPanel<FinApplication> attachmentsPanel;
 
-
-    public ApplicationForm(
+    public static ApplicationForm create(
+            StartEvent startEvent,
+            FinApplication work,
+            OidcUser user,
+            String context,
+            Consumer<FinApplication> onPostSave,
+            Consumer<FinApplication> onPostRemove,
+            Consumer<FinApplication> onPostCancel){
+        var applicationForm = ApplicationContextHolder.getBean(ApplicationForm.class);
+        applicationForm.init(
+                startEvent, 
+                work, 
+                user, 
+                context, 
+                onPostSave, 
+                onPostRemove, 
+                onPostCancel
+        );
+        return applicationForm;
+    }
+    
+    private ApplicationForm(
             @Autowired FinApplicationService finappService,
             @Autowired ApplicantService applicantService,
             @Autowired MessageService msgService,
-            @Autowired BadgeUtils badgeUtils,
             @Autowired WorkflowConfig workflowConfig,
-            @Autowired ApprovalService approvalService,
-            @Autowired BizUserService bizUserService,
-            @Autowired MapperService basicMapper,
-            @Autowired AttachmentsPanel<FinApplication> attachmentsPanel,
-            @Autowired WorkflowPanel workflowPanel,
-            @Autowired ApplicantForm applicantForm,
             @Value("${finapp.datetime.format}") String dateTimeFormat
     ){
         this.finappService = finappService;
         this.applicantService = applicantService;
         this.msgService = msgService;
-        this.badgeUtils = badgeUtils;
-        this.DATETIME_FORMAT = dateTimeFormat;
         this.workflowConfig = workflowConfig;
-        this.approvalService=approvalService;
-        this.bizUserService=bizUserService;
-        this.basicMapper = basicMapper;
-        this.workflowPanel = workflowPanel;
-        this.attachmentsPanel = attachmentsPanel;
-        this.applicantForm =applicantForm;
+        
     }
     
-    public void init(
+    private void init(
             StartEvent startEvent,
             FinApplication work,
             OidcUser user,
@@ -116,10 +114,9 @@ public class ApplicationForm extends Dialog {
             Consumer<FinApplication> onPostCancel
     ) {
         BizProcess bizProcess = workflowConfig.rootBizProcess();
-
+        
         Binder<FinApplication> binder = new Binder<>(FinApplication.class);
         binder.setBean(work);
-        
         
          MessageButton msgBtn = new MessageButton(
                 work.getId(),
@@ -127,26 +124,22 @@ public class ApplicationForm extends Dialog {
                 user,
                 msgService
         );
-        
-        
-        WorkflowAwareForm form = createForm(binder,bizProcess,user );
-        
-        
-        workflowPanel.init(
-                work,
-                user
-        );
 
-        attachmentsPanel.init(
+        WorkflowAwareForm form = createForm(binder,bizProcess,user );
+
+        var workflowPanel = WorkflowPanel.create(
+                work, user
+        );
+        
+        var attachmentsPanel = AttachmentsPanel.create(
                 work.getId(),
                 "SME_FIN",
                 Long.toString(work.getId()),
                 a -> {},
                 a -> {});
         
-        
-        form.add(msgBtn);
-        form.addManagedComponent(workflowPanel);
+        this.add(msgBtn);
+        form.add(workflowPanel, 2);
         form.addManagedComponent(attachmentsPanel, 2);
         
         this.add(form);
@@ -158,77 +151,16 @@ public class ApplicationForm extends Dialog {
                 binder
         );
          
-
         this.add(applicantPanel);
 
         configureButtons(binder,
                 startEvent,
                 user,
+                workflowPanel,
                 onPostSave,
                 onPostRemove,
                 onPostCancel);
     }
-
-//    private Editable isEditable(
-//            FinApplication work,
-//            ApplicantService applicantService,
-//            OidcUser oidcUser
-//    ) {
-//        Set<String> applicantsEmail = applicantService.getApplicantsEmail(work);
-//        
-//        int state = 0;
-//        if (oidcUser.getAuthorities().stream().anyMatch(sga -> {
-//            return StringUtils.equals(sga.getAuthority(), "ROLE_FINAPP_ADMIN");
-//        })) { // admin
-//            state = 1;
-//        } else if (applicantsEmail.contains(oidcUser.getEmail())) { // applicant
-//            state = 2;
-//        } else if (work.getOwners().stream().filter(o->StringUtils.equals(o.getUsername(),oidcUser.getPreferredUsername())).count()>0) {
-//            state = 3;
-//        } else {
-//            state = 4;
-//        }
-//
-//        if (work == null) {
-//            state = 5;
-//        } else {
-//
-//            if (state == 2) {
-//                if (work.getStatus() == Status.DRAFT
-//                        || work.getStatus() == Status.NEED_MORE_INFO
-//                        || work.getStatus() == Status.NEWLY_CREATED) {
-//                    state = 6;
-//                } else {
-//                    state = 8;
-//                }
-//            } else if (state == 3) {
-//                if (work.getStatus() == Status.DRAFT
-//                        || work.getStatus() == Status.NEED_MORE_INFO
-//                        || work.getStatus() == Status.NEWLY_CREATED) {
-//                    state = 5;
-//                } else {
-//                    state = 7;
-//                }
-//            }
-//        }
-//
-//        switch (state) {
-//            case 4:
-//                return Editable.NO_DUE_TO_USER;
-//            case 7:
-//            case 8:
-//                return Editable.NO_DUE_TO_STATUS;
-//            case 6:
-//                return Editable.YES_AS_APPLICANT;
-//            case 5:
-//                return Editable.YES;
-//            case 1:
-//                return Editable.YES_AS_ADMIN;
-//            default:
-//                return Editable.NO_DUE_TO_USER;
-//        }
-//
-//    }
 
     private WorkflowAwareForm createForm(
             Binder<FinApplication> binder,
@@ -279,7 +211,8 @@ public class ApplicationForm extends Dialog {
         form.addManagedComponent(cbState);
 
         DateTimePicker dtpApplicationDate = WorkflowAwareDateTimePicker.create("applicationDate", binder);
-        form.addManagedComponent(dtpApplicationDate);
+        dtpApplicationDate.setEnabled(false);
+        form.add(dtpApplicationDate);//add non managed
 
         TextField tfBizRegNumber = WorkflowAwareTextField.create("ssmRegistrationNumber", true, binder);
         form.addManagedComponent(tfBizRegNumber);
@@ -300,7 +233,6 @@ public class ApplicationForm extends Dialog {
             Binder<FinApplication> binder
     ) {
         Grid<Applicant> gridApplicants = createApplicantGrid(finapp, user,binder);
-       // gridApplicants.getStyle().set("max-width", "285px");
         Button btnAddApplicant = createAddApplicantButton(finapp,  user, gridApplicants);
 
        WorkflowAwareGroup group = WorkflowAwareGroup.create(user, binder.getBean(), bizProcess);
@@ -308,6 +240,7 @@ public class ApplicationForm extends Dialog {
        group.add(gridApplicants); //not managed. Will always show
        group.setWidthFull();
        VerticalLayout applicantPanel = new VerticalLayout();
+       applicantPanel.setPadding(true);
        applicantPanel.add(group);
        applicantPanel.addClassNames(LumoUtility.Padding.SMALL, LumoUtility.Background.BASE);
        return applicantPanel;
@@ -350,11 +283,6 @@ public class ApplicationForm extends Dialog {
 
         HorizontalLayout buttonPanel = new HorizontalLayout(btnSeeMore, btnRemove);
         card.add(buttonPanel);
-//
-//        if (editable != Editable.YES) {
-//            btnRemove.setEnabled(false);
-//        }
-
         return card;
     }
 
@@ -398,6 +326,7 @@ public class ApplicationForm extends Dialog {
             Binder<FinApplication> binder,
             StartEvent startEvent,
             OidcUser user,
+            WorkflowPanel workflowPanel,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel) {
@@ -405,6 +334,7 @@ public class ApplicationForm extends Dialog {
         Button btnSaveAndSubmitApp = createSaveAndSubmitButton(
                 binder,
                 user,
+                workflowPanel,
                 onPostSave
         );
         btnSaveAndSubmitApp.setId("btnSaveAndSubmitApp");
@@ -433,7 +363,7 @@ public class ApplicationForm extends Dialog {
         btnSaveAndSubmitApp.setEnabled(true);
         btnSaveDraft.setEnabled(false);
         btnRemove.setEnabled(false);
-        btnCancel.setEnabled(false);
+        btnCancel.setEnabled(true);
         //btnSave.setEnabled(false);
 
 //        if (editable == Editable.YES) {
@@ -470,6 +400,7 @@ public class ApplicationForm extends Dialog {
     private Button createSaveAndSubmitButton(
             Binder<FinApplication> binder,
             OidcUser user,
+            WorkflowPanel workflowPanel,
             Consumer<FinApplication> onPostSave
     ) {
         Button btnSaveFinApp = new Button("Save and submit", e1 -> {
@@ -577,7 +508,7 @@ public class ApplicationForm extends Dialog {
             //Editable editable,
             Grid<Applicant> gridApplicants
     ) {
-        applicantForm.init(
+        var applicantForm = ApplicantForm.create(
                 applicant,
                 finApplication,
                 user,

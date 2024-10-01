@@ -43,7 +43,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
  * @author azrul
  */
 @SpringComponent
-public class WorkflowPanel<T> extends FormLayout {
+public class WorkflowPanel<T extends WorkItem> extends FormLayout {
 
     
     private final BadgeUtils badgeUtils;
@@ -52,8 +52,15 @@ public class WorkflowPanel<T> extends FormLayout {
     private final WorkflowService workflowService;
     private final Integer COUNT_PER_PAGE = 3;
     private       ComboBox<String> cbApprove;
+    
+    public static <T extends WorkItem> WorkflowPanel create( final T work,
+            final OidcUser user){
+        var workPanel = ApplicationContextHolder.getBean(WorkflowPanel.class);
+        workPanel.init(work, user);
+        return workPanel;
+    }
 
-    public WorkflowPanel(
+    private WorkflowPanel(
         @Autowired BadgeUtils badgeUtils,
         @Autowired ApprovalService approvalService,
         @Autowired BizUserService bizUserService,
@@ -65,13 +72,10 @@ public class WorkflowPanel<T> extends FormLayout {
     }
               
             
-    public void init(
-            final WorkItem work,
+    private void init(
+            final T work,
             final OidcUser user
-//            final Consumer<Attachment> onPostSave,
-//            final Consumer<Attachment> onPostRemove
     ) {
-        //ApplicationContextHolder.autowireBean(this);
         var fieldDisplayMap = WorkflowUtils.getFieldNameDisplayNameMap(work.getClass());
         Select<Status> cbStatus = createSelect(fieldDisplayMap.get("status"));
         cbStatus.setItems(Status.values());
@@ -81,6 +85,7 @@ public class WorkflowPanel<T> extends FormLayout {
         } else {
             cbStatus.setValue(Status.NEWLY_CREATED);
         }
+        cbStatus.setReadOnly(true);
         Button btnWorkflow = new Button("...", e -> createWorkflowInfoDialog(work, user));
         btnWorkflow.getStyle().set("align-self", "end");
         btnWorkflow.setHeight(cbStatus.getHeight());
@@ -91,7 +96,6 @@ public class WorkflowPanel<T> extends FormLayout {
         workflowField.getStyle().set("width", "50em");
         this.add(workflowField);
 
-        //HorizontalLayout approvalPanel = new HorizontalLayout();
         if (workflowService.isWaitingApproval(work)
                 || work.getApprovals().stream().filter(
                         a -> StringUtils.equals(
@@ -115,11 +119,7 @@ public class WorkflowPanel<T> extends FormLayout {
             if (cbApprove != null) {
                 this.add(cbApprove);
             }
-
         }
-
-        //cbApprove.
-        //this.parentId = parentId;
     }
 
     public void createWorkflowInfoDialog(WorkItem work, OidcUser oidcUser) {

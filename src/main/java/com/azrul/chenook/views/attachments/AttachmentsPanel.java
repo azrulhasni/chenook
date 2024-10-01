@@ -47,15 +47,26 @@ public class AttachmentsPanel<T> extends VerticalLayout {
     private final AttachmentService attachmentService;
     private final WorkflowConfig workflowConfig;
     
-    public AttachmentsPanel(
+    private AttachmentsPanel(
             @Autowired AttachmentService attachmentService,
             @Autowired WorkflowConfig workflowConfig
     ){
         this.attachmentService=attachmentService;
         this.workflowConfig=workflowConfig;
     }
+    
+    
+    public static AttachmentsPanel create(Long parentId,
+            String context,
+            String fileLocation,
+            Consumer<Attachment> onPostSave,
+            Consumer<Attachment> onPostRemove){
+        var attachmentsPanel = ApplicationContextHolder.getBean(AttachmentsPanel.class);
+        attachmentsPanel.init(parentId, context, fileLocation, onPostSave, onPostRemove);
+        return attachmentsPanel;
+    }
 
-    public void init(
+    private void init(
             Long parentId,
             String context,
             String fileLocation,

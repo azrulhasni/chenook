@@ -35,15 +35,18 @@ public class SignaturePanel extends VerticalLayout{
     private byte[] signatureImageBinary;
     private Button btnSign;
     private VerticalLayout signaturePanel;
-    
-   
     private final SignatureService signService;
     
-    public SignaturePanel(@Autowired SignatureService signService){
-        this.signService=signService;
+   
+    
+    
+    public static SignaturePanel create(){
+        var signPanel = ApplicationContextHolder.getBean(SignaturePanel.class);
+        return signPanel;
     }
         
-    public void init(){
+     private SignaturePanel(@Autowired SignatureService signService){
+        this.signService=signService;
         NativeLabel lbSign = new NativeLabel("Signature:");
         signaturePanel = new VerticalLayout();
 

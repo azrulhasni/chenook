@@ -8,6 +8,7 @@ import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasEnabled;
+import com.vaadin.flow.component.HasValueAndElement;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import java.util.Arrays;
@@ -58,10 +59,16 @@ public class WorkflowAwareForm<T extends WorkItem> extends FormLayout{
         boolean enable = enableCondition.test(workItem);
         boolean visible = visibleCondition.test(workItem);
         
-        component.setEnabled(enable);
-        Component c = ((Component)component);
-        c.setVisible(visible);
-        this.add(c, colspan);
+        
+        if (component instanceof Component c){
+            c.setVisible(visible);
+        }
+        if (component instanceof HasValueAndElement c){
+            c.setReadOnly(!enable);
+        }else{
+            component.setEnabled(enable);
+        }
+        this.add((Component)component, colspan);
     }
     
     public void refresh(){

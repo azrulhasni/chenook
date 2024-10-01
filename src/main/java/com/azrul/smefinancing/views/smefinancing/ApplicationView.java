@@ -6,22 +6,14 @@ package com.azrul.smefinancing.views.smefinancing;
 
 import com.azrul.chenook.views.MainLayout;
 import com.azrul.smefinancing.domain.FinApplication;
-import com.azrul.smefinancing.service.ApplicantService;
-import com.azrul.chenook.service.MessageService;
 import com.azrul.chenook.config.WorkflowConfig;
-import com.azrul.chenook.service.ApprovalService;
 import com.azrul.chenook.views.workflow.MyWorkPanel;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.chenook.workflow.model.StartEvent;
 import com.azrul.smefinancing.service.FinApplicationService;
 import com.azrul.smefinancing.views.application.ApplicationForm;
-import com.azrul.chenook.service.BadgeUtils;
-import com.azrul.chenook.service.BizUserService;
-import com.azrul.chenook.service.MapperService;
 import com.azrul.chenook.utils.WorkflowUtils;
-import com.azrul.chenook.views.attachments.AttachmentsPanel;
 import com.azrul.chenook.views.workflow.WorklistPanel;
-import com.azrul.smefinancing.views.applicant.ApplicantForm;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -32,7 +24,6 @@ import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
-import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -53,60 +44,39 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 public class ApplicationView extends VerticalLayout implements AfterNavigationObserver/*, HasUrlParameter<Long> */ {
 
     private final FinApplicationService finappService;
-    private final ApplicantService applicantService;
-    private final MessageService msgService;
-    private final BadgeUtils badgeUtils;
     private final String DATETIME_FORMAT;
     private final WorkflowConfig workflowConfig;
-    private final ApprovalService approvalService;
-    private final BizUserService bizUserService;
-    private final MapperService basicMapper;
-    private final ApplicationForm applicationForm;
-    private final MyWorkPanel<FinApplication> myWorkPanel;
-    private final WorklistPanel<FinApplication> worklistPanel;
 
     public ApplicationView(
             @Autowired FinApplicationService finappService,
-            @Autowired ApplicantService applicantService,
-            @Autowired MessageService msgService,
-            @Autowired BadgeUtils badgeUtils,
             @Autowired WorkflowConfig workflowConfig,
-            @Autowired ApprovalService approvalService,
-            @Autowired BizUserService bizUserService,
-            @Autowired MapperService basicMapper,
-            @Autowired MyWorkPanel<FinApplication> myWorkPanel,
-            @Autowired WorklistPanel<FinApplication> worklistPanel,
-            //@Autowired ApplicationForm applicationForm,
             @Value("${finapp.datetime.format}") String dateTimeFormat
     ) {
         this.finappService = finappService;
-        this.applicantService = applicantService;
-        this.msgService = msgService;
-        this.badgeUtils = badgeUtils;
         this.DATETIME_FORMAT = dateTimeFormat;
         this.workflowConfig = workflowConfig;
-        this.approvalService=approvalService;
-        this.bizUserService=bizUserService;
-        this.basicMapper = basicMapper;
-        this.myWorkPanel=myWorkPanel;
-        this.worklistPanel=worklistPanel;
-        this.applicationForm=applicationForm;
         
-        
-
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
-        final BizProcess bizProcess = workflowConfig.rootBizProcess();
+        final BizProcess bizProcess = this.workflowConfig.rootBizProcess();
         if (SecurityContextHolder.getContext().getAuthentication() instanceof OAuth2AuthenticationToken oauth2AuthToken) {
             DefaultOidcUser oidcUser = (DefaultOidcUser) oauth2AuthToken.getPrincipal();
             
-            Map<String,String> fieldNameDisplayNameMap = WorkflowUtils.getFieldNameDisplayNameMap(FinApplication.class);
-            myWorkPanel.init(
+            Map<String,String> fieldNameDisplayNameMap = WorkflowUtils
+                    .getFieldNameDisplayNameMap(FinApplication.class);
+            
+            var myWorkPanel = MyWorkPanel.create(
                     FinApplication.class,
                     oidcUser,
                     (wp, startEvent) -> {
                         FinApplication finapp = new FinApplication();
                         finapp.setApplicationDate(LocalDateTime.now());
-                        finapp = finappService.init(finapp, oidcUser, "SME_FIN", startEvent, bizProcess);
+                        finapp = this.finappService.init(
+                                finapp, 
+                                oidcUser, 
+                                "SME_FIN", 
+                                startEvent, 
+                                bizProcess
+                        );
                         showApplicationDialog(
                                 startEvent,
                                 finapp,
@@ -131,7 +101,15 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                         content.setSpacing(false);
                         content.setPadding(false);
                         if (finapp.getApplicationDate()!=null){
-                            content.add(new NativeLabel(fieldNameDisplayNameMap.get("applicationDate")+": " + dateTimeFormatter.format(finapp.getApplicationDate())));
+                            content.add(
+                                new NativeLabel(
+                                    fieldNameDisplayNameMap.get("applicationDate")
+                                    +": " 
+                                    + dateTimeFormatter.format(
+                                            finapp.getApplicationDate()
+                                    )
+                                )   
+                            );
                         }
                         TextArea reason = new TextArea();
                         reason.setValue(finapp.getReasonForFinancing()!=null
@@ -147,7 +125,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
             );
             this.add(myWorkPanel);
              
-            worklistPanel.init(
+            var worklistPanel = WorklistPanel.create(
                     FinApplication.class,
                     oidcUser,
                     (wp, startEvent, finapp) -> {
@@ -165,7 +143,10 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                         content.setSpacing(false);
                         content.setPadding(false);
                         if (finapp.getApplicationDate()!=null){
-                            content.add(new NativeLabel("Application date: " + dateTimeFormatter.format(finapp.getApplicationDate())));
+                            content.add(new NativeLabel("Application date: " 
+                                    + dateTimeFormatter.format(
+                                            finapp.getApplicationDate()
+                                    )));
                         }
                         TextArea reason = new TextArea();
                         reason.setValue(finapp.getReasonForFinancing()!=null
@@ -192,7 +173,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel
     ) {
-        applicationForm.init(
+        var applicationForm = ApplicationForm.create(
                 startEvent, 
                 work, 
                 user, 
@@ -200,14 +181,12 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                 onPostSave, 
                 onPostRemove, 
                 onPostCancel);
-         
-
+        
         applicationForm.open();
     }
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        //   throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     private Icon createIcon(VaadinIcon vaadinIcon) {

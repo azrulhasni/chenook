@@ -17,12 +17,13 @@ public class ApplicationContextHolder implements ApplicationContextAware {
     private static AutowireCapableBeanFactory factory;
 
     public static <T> T getBean(Class<T> beanClass) {
-        return applicationContext.getBean(beanClass);
+        return factory.createBean(beanClass);
+        //return applicationContext.getAutowireCapableBeanFactory().createBean(beanClass);
     }
 
-    public static <T> void autowireBean(T bean) {
-        factory.autowireBean(bean);
-    }
+//    public static <T> void autowireBean(T bean) {
+//        factory.autowireBean(bean);
+//    }
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {

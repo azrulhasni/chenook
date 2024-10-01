@@ -4,6 +4,7 @@
  */
 package com.azrul.chenook.views.workflow;
 
+import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.BadgeUtils;
@@ -18,6 +19,7 @@ import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -50,8 +52,23 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
     private final int COUNT_PER_PAGE = 3;
     private final BadgeUtils badgeUtils;
     private final WorkflowConfig workflowConfig;
+    
+    public static <T extends WorkItem> MyWorkPanel create( final Class<T> workItemClass,  
+            final OidcUser oidcUser,
+            final BiConsumer<MyWorkPanel, StartEvent> showCreationDialog,
+            final TriConsumer<MyWorkPanel, StartEvent, T> showUpdateDialog,
+            final Function<T, VerticalLayout> cardBuilder){
+        var myWorkPanel = ApplicationContextHolder.getBean(MyWorkPanel.class);
+        myWorkPanel.init(
+                workItemClass, 
+                oidcUser, 
+                showCreationDialog, 
+                showUpdateDialog, 
+                cardBuilder);
+        return myWorkPanel;
+    }
 
-    public MyWorkPanel(
+    private MyWorkPanel(
             @Autowired WorkflowConfig workflowConfig,
             @Autowired  FinApplicationService finappService,
             @Autowired  BadgeUtils badgeUtils
@@ -123,8 +140,13 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
     }
 
     private void addPair(Pair<Grid<T>, PageNav> pair) {
-        this.add(pair.getSecond());
-        this.add(pair.getFirst());
+        VerticalLayout layout = new VerticalLayout();
+        layout.setMaxWidth("40em");
+        layout.getStyle().set("border","1px solid lightgrey");
+        layout.getStyle().set("border-radius","25px");
+        layout.add(pair.getSecond());
+        layout.add(pair.getFirst());
+        this.add(layout);
     }
 
     private Pair<Grid<T>, PageNav> buildDataPanel(
@@ -171,9 +193,9 @@ public class MyWorkPanel<T extends WorkItem> extends VerticalLayout {
             final TriConsumer<MyWorkPanel, StartEvent, T> showUpdateDialog,
             final Function<T, VerticalLayout> cardBuilder) {
         Grid<T> grid = new Grid<>();
-        H3 title = new H3(panelTitle);
+        H4 title = new H4(panelTitle);
         this.add(title);
-        grid.getStyle().set("max-width", "285px");
+        //grid.getStyle().set("max-width", "285px");
         grid.setAllRowsVisible(true);
 
         this.add(grid);

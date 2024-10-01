@@ -1,5 +1,6 @@
 package com.azrul.smefinancing.views.applicant;
 
+import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.views.common.converter.StringToUngroupLongConverter;
 import com.azrul.chenook.views.common.components.WorkflowAwareComboBox;
@@ -41,21 +42,32 @@ public class ApplicantForm extends Dialog {
     private final Binder<Applicant> binder = new Binder<>(Applicant.class);
     private final ApplicantService applicantService;
     private final WorkflowConfig workflowConfig;
-    private final SignaturePanel signPanel;
+    private       SignaturePanel signPanel;
 
-    public ApplicantForm(
+    
+    public static ApplicantForm create(Applicant applicant,
+            FinApplication finapp,
+            OidcUser user,
+            Consumer<Applicant> onPostSave){
+        var applicantForm = ApplicationContextHolder.getBean(ApplicantForm.class);
+        applicantForm.init(applicant, finapp, user, onPostSave);
+        return applicantForm;
+    }
+    
+    private ApplicantForm(
             @Autowired ApplicantService applicantService,
-            @Autowired WorkflowConfig workflowConfig,
-            @Autowired SignaturePanel signPanel
+            @Autowired WorkflowConfig workflowConfig
             
     ){
         this.applicantService =applicantService;
         this.workflowConfig = workflowConfig;
-        this.signPanel=signPanel;
+       
     }
+    
+    
             
             
-    public void init(        
+    private void init(        
             Applicant applicant,
             FinApplication finapp,
             OidcUser user,
@@ -63,10 +75,9 @@ public class ApplicantForm extends Dialog {
     ) {
     
 
-        FormLayout form = new FormLayout();
-       // signPanel = new SignaturePanel();
-       signPanel.init();
+       FormLayout form = new FormLayout();
        BizProcess bizProcess = workflowConfig.rootBizProcess();
+       this.signPanel=SignaturePanel.create();
 
         // Initialize applicant and signature panel
         if (applicant != null) {

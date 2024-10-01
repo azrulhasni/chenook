@@ -4,6 +4,7 @@
  */
 package com.azrul.chenook.views.workflow;
 
+import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.BadgeUtils;
@@ -57,6 +58,16 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
     private       OidcUser oidcUser;
     private final BadgeUtils badgeUtils;
     private final MapperService basicMapper;
+    
+    public static <T extends WorkItem> WorklistPanel create( 
+            final Class<T> workItemClass,
+            final OidcUser oidcUser,
+            final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
+            final Function<T, VerticalLayout> cardBuilder){
+        var worklistPanel = ApplicationContextHolder.getBean(WorklistPanel.class);
+        worklistPanel.init(workItemClass, oidcUser, showUpdateDialog, cardBuilder);
+        return worklistPanel;
+    }
 
     public WorklistPanel(
             @Autowired WorkflowService<T> workflowService,
@@ -72,7 +83,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
     }
         
     public void init(
-            final Class workItemClass,
+            final Class<T> workItemClass,
             final OidcUser oidcUser,
             final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
             final Function<T, VerticalLayout> cardBuilder
@@ -115,8 +126,14 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
     }
 
     private void addPair(Pair<Grid<T>, PageNav> pair) {
-        this.add(pair.getSecond());
-        this.add(pair.getFirst());
+        VerticalLayout layout = new VerticalLayout();
+        //layout.setWidth("30%");
+        layout.setMaxWidth("40em");
+        layout.getStyle().set("border","1px solid lightgrey");
+        layout.getStyle().set("border-radius","25px");
+        layout.add(pair.getSecond());
+        layout.add(pair.getFirst());
+        this.add(layout);
     }
 
     private Pair<Grid<T>, PageNav> buildDataPanel(
@@ -156,14 +173,12 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
             final Function<T, VerticalLayout> cardBuilder) {
         Grid<T> grid = new Grid<>();
-        H3 title = new H3(panelTitle);
+        H4 title = new H4(panelTitle);
         this.add(title);
-        grid.getStyle().set("max-width", "285px");
         grid.setAllRowsVisible(true);
 
         this.add(grid);
-        grid.addComponentColumn(work
-                -> {
+        grid.addComponentColumn(work -> {
             VerticalLayout content = cardBuilder.apply(work);
             Span badge = badgeUtils.createStatusBadge(work.getStatus());
             Card card = new Card(work.getTitle(), badge);

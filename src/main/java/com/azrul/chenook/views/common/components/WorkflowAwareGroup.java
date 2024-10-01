@@ -5,18 +5,16 @@
 package com.azrul.chenook.views.common.components;
 
 import com.azrul.chenook.domain.WorkItem;
-import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasEnabled;
+import com.vaadin.flow.component.HasValueAndElement;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.data.binder.Binder;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.BiPredicate;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
@@ -50,7 +48,25 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div{
             c.setVisible(visible);
             this.add(c);
         }
+    }
+    
+    
+    
+    public void addManagedComponent(HasEnabled component){
+        managedComponents.add(component);
+        boolean enable = enableCondition.test(workItem);
+        boolean visible = visibleCondition.test(workItem);
         
+        
+        if (component instanceof Component c){
+            c.setVisible(visible);
+        }
+        if (component instanceof HasValueAndElement c){
+            c.setReadOnly(!enable);
+        }else{
+            component.setEnabled(enable);
+        }
+        this.add((Component)component);
     }
     
     public void refresh(){
@@ -62,19 +78,6 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div{
             c.setVisible(visible);
             this.add(c);
         }
-    }
-    
-     public void addManagedComponent(HasEnabled component){
-        managedComponents.add(component);
-        boolean enable = enableCondition.test(workItem);
-        boolean visible = visibleCondition.test(workItem);
-        
-        component.setEnabled(enable);
-        Component c = ((Component)component);
-        c.setVisible(visible);
-        this.add(c);
-        
-        
     }
     
     public void calculateEnable(){
@@ -161,7 +164,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div{
              ){
         Predicate<T> visiblePred = getDefaultVisible(user);
         Predicate<T> enablePred = getDefaultEnabled(user, bizProcess, worklistsWhereItemIsEnabled);
-        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred, workItem);
+        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred,  workItem);
         return group;
     }
     
@@ -172,7 +175,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div{
              ){
         Predicate<T> visiblePred = getDefaultVisible(user);
         Predicate<T> enablePred = getDefaultEnabled(user, bizProcess, Set.of());
-        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred, workItem);
+        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred,  workItem);
         return group;
     }
 }
