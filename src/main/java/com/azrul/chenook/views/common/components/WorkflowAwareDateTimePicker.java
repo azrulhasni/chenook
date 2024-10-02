@@ -19,11 +19,31 @@ import java.util.Map;
  * @author azrul
  */
 public class WorkflowAwareDateTimePicker<T> extends DateTimePicker{
-    public WorkflowAwareDateTimePicker(){}
+    private WorkflowAwareGroup group;
     
-    public static <T> WorkflowAwareDateTimePicker create(String fieldName, Binder<T> binder) {
+    public WorkflowAwareDateTimePicker(WorkflowAwareGroup group){
+        this.group=group;
+    }
+    
+    public WorkflowAwareDateTimePicker(){
+        this.group=null;
+    }
+    
+    public void applyGroup(){
+        if (this.group!=null){
+            this.setReadOnly(!group.calculateEnable());
+            this.setVisible(group.calculateVisible());
+        }
+    }
+    
+     public static <T> WorkflowAwareDateTimePicker create(String fieldName, Binder<T> binder) {
+        return create(fieldName, binder, null);
+     }
+    
+    public static <T> WorkflowAwareDateTimePicker create(String fieldName, Binder<T> binder, WorkflowAwareGroup group) {
         T workItem = binder.getBean();
-        var field = new WorkflowAwareDateTimePicker();
+        var field = new WorkflowAwareDateTimePicker(group);
+        field.applyGroup();
         field.setId(fieldName);
 
         List<Validator> validators = new ArrayList<>();

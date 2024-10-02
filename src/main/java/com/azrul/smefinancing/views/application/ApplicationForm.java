@@ -23,10 +23,10 @@ import com.azrul.chenook.service.BadgeUtils;
 import com.azrul.chenook.service.BizUserService;
 import com.azrul.chenook.service.MapperService;
 import com.azrul.chenook.utils.WorkflowUtils;
+import com.azrul.chenook.views.common.components.WorkflowAwareButton;
 import com.azrul.chenook.views.common.converter.StringToUngroupLongConverter;
 import com.azrul.chenook.views.common.components.WorkflowAwareComboBox;
 import com.azrul.chenook.views.common.components.WorkflowAwareDateTimePicker;
-import com.azrul.chenook.views.common.components.WorkflowAwareForm;
 import com.azrul.chenook.views.common.components.WorkflowAwareGroup;
 import com.azrul.chenook.views.common.components.WorkflowAwareMoneyField;
 import com.azrul.chenook.views.common.components.WorkflowAwareTextArea;
@@ -76,34 +76,34 @@ public class ApplicationForm extends Dialog {
             String context,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
-            Consumer<FinApplication> onPostCancel){
+            Consumer<FinApplication> onPostCancel) {
         var applicationForm = ApplicationContextHolder.getBean(ApplicationForm.class);
         applicationForm.init(
-                startEvent, 
-                work, 
-                user, 
-                context, 
-                onPostSave, 
-                onPostRemove, 
+                startEvent,
+                work,
+                user,
+                context,
+                onPostSave,
+                onPostRemove,
                 onPostCancel
         );
         return applicationForm;
     }
-    
+
     private ApplicationForm(
             @Autowired FinApplicationService finappService,
             @Autowired ApplicantService applicantService,
             @Autowired MessageService msgService,
             @Autowired WorkflowConfig workflowConfig,
             @Value("${finapp.datetime.format}") String dateTimeFormat
-    ){
+    ) {
         this.finappService = finappService;
         this.applicantService = applicantService;
         this.msgService = msgService;
         this.workflowConfig = workflowConfig;
-        
+
     }
-    
+
     private void init(
             StartEvent startEvent,
             FinApplication work,
@@ -114,82 +114,93 @@ public class ApplicationForm extends Dialog {
             Consumer<FinApplication> onPostCancel
     ) {
         BizProcess bizProcess = workflowConfig.rootBizProcess();
-        
+
         Binder<FinApplication> binder = new Binder<>(FinApplication.class);
         binder.setBean(work);
-        
-         MessageButton msgBtn = new MessageButton(
+
+        WorkflowAwareGroup typicalGroup = WorkflowAwareGroup.create(user, work, bizProcess);
+        WorkflowAwareGroup enableBeforeSubmissionGroup = WorkflowAwareGroup.createEnabledBeforeSubmission(work);
+
+        MessageButton msgBtn = new MessageButton(
                 work.getId(),
                 context,
                 user,
                 msgService
         );
 
-        WorkflowAwareForm form = createForm(binder,bizProcess,user );
+        FormLayout form = createForm(
+                binder, 
+                bizProcess, 
+                user, 
+                typicalGroup
+        );
 
         var workflowPanel = WorkflowPanel.create(
                 work, user
         );
-        
+
         var attachmentsPanel = AttachmentsPanel.create(
                 work.getId(),
                 "SME_FIN",
                 Long.toString(work.getId()),
+                typicalGroup,
                 a -> {},
                 a -> {});
-        
+
         this.add(msgBtn);
-        form.add(workflowPanel, 2);
-        form.addManagedComponent(attachmentsPanel, 2);
-        
         this.add(form);
-        
+        this.add(workflowPanel);
+        this.add(attachmentsPanel);
+
         VerticalLayout applicantPanel = createApplicantPanel(
                 work,
                 user,
-                bizProcess,
-                binder
+                binder,
+                typicalGroup
         );
-         
+
         this.add(applicantPanel);
 
-        configureButtons(binder,
+        configureButtons(
+                binder,
                 startEvent,
                 user,
                 workflowPanel,
+                typicalGroup,
+                enableBeforeSubmissionGroup,
                 onPostSave,
                 onPostRemove,
                 onPostCancel);
     }
 
-    private WorkflowAwareForm createForm(
+    private FormLayout createForm(
             Binder<FinApplication> binder,
             BizProcess bizProcess,
-            OidcUser user
+            OidcUser user,
+            WorkflowAwareGroup group
     ) {
-        WorkflowAwareForm form = WorkflowAwareForm.create(user,binder.getBean(), bizProcess);
+        FormLayout form = new FormLayout();
         form.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("500px", 2)
         );
 
+        var tfID = WorkflowAwareTextField.create("id", false, binder, new StringToUngroupLongConverter("Not a number"), group);
+        form.add(tfID);
 
-        var tfID = WorkflowAwareTextField.create("id", false, binder, new StringToUngroupLongConverter("Not a number"));
-        form.addManagedComponent(tfID);
+        TextField tfName = WorkflowAwareTextField.create("name", true, binder, group);
+        form.add(tfName);
 
-        TextField tfName = WorkflowAwareTextField.create("name", true, binder);
-        form.addManagedComponent(tfName);
+        TextArea tfAddress = WorkflowAwareTextArea.create("address", binder, group);
+        form.add(tfAddress);
 
-        TextArea tfAddress = WorkflowAwareTextArea.create("address", binder);
-        form.addManagedComponent(tfAddress);
-
-        TextField tfPostalCode = WorkflowAwareTextField.create("postalCode", true, binder);
-        form.addManagedComponent(tfPostalCode);
+        TextField tfPostalCode = WorkflowAwareTextField.create("postalCode", true, binder, group);
+        form.add(tfPostalCode);
 //        tfPostalCode.setWidthFull();
 //        Div div = new Div(tfPostalCode);
 //        form.add(div);
 
-        ComboBox<String> cbState = WorkflowAwareComboBox.create("state", binder,Set.of(
+        ComboBox<String> cbState = WorkflowAwareComboBox.create("state", binder, Set.of(
                 "Johor",
                 "Kedah",
                 "Kelantan",
@@ -206,55 +217,53 @@ public class ApplicationForm extends Dialog {
                 "W. Persekutuan Kuala Lumpur",
                 "W. Persekutuan Labuan",
                 "W. Persekutuan Putrajaya"
-        ));
+        ), group);
         //cbState.setItems();
-        form.addManagedComponent(cbState);
+        form.add(cbState);
 
-        DateTimePicker dtpApplicationDate = WorkflowAwareDateTimePicker.create("applicationDate", binder);
-        dtpApplicationDate.setEnabled(false);
+        DateTimePicker dtpApplicationDate = WorkflowAwareDateTimePicker.create("applicationDate", binder, null);
+        dtpApplicationDate.setReadOnly(true);
         form.add(dtpApplicationDate);//add non managed
 
-        TextField tfBizRegNumber = WorkflowAwareTextField.create("ssmRegistrationNumber", true, binder);
-        form.addManagedComponent(tfBizRegNumber);
+        TextField tfBizRegNumber = WorkflowAwareTextField.create("ssmRegistrationNumber", true, binder, group);
+        form.add(tfBizRegNumber);
 
-        MoneyField tfFinRequested = WorkflowAwareMoneyField.create("financingRequested", "MYR", binder);
-        form.addManagedComponent(tfFinRequested);
+        MoneyField tfFinRequested = WorkflowAwareMoneyField.create("financingRequested", "MYR", binder, group);
+        form.add(tfFinRequested);
 
-        TextArea taReasonForFinancing = WorkflowAwareTextArea.create("reasonForFinancing", binder);
-        form.addManagedComponent(taReasonForFinancing);
-        
+        TextArea taReasonForFinancing = WorkflowAwareTextArea.create("reasonForFinancing", binder, group);
+        form.add(taReasonForFinancing);
+
         return form;
     }
 
     private VerticalLayout createApplicantPanel(
             FinApplication finapp,
             OidcUser user,
-            BizProcess bizProcess,
-            Binder<FinApplication> binder
+            Binder<FinApplication> binder,
+            WorkflowAwareGroup group
     ) {
-        Grid<Applicant> gridApplicants = createApplicantGrid(finapp, user,binder);
-        Button btnAddApplicant = createAddApplicantButton(finapp,  user, gridApplicants);
+        Grid<Applicant> gridApplicants = createApplicantGrid(finapp, user, binder, group);
+       
+        WorkflowAwareButton btnAddApplicant = createAddApplicantButton(finapp, user, group, gridApplicants);
 
-       WorkflowAwareGroup group = WorkflowAwareGroup.create(user, binder.getBean(), bizProcess);
-       group.addManagedComponents(btnAddApplicant); //
-       group.add(gridApplicants); //not managed. Will always show
-       group.setWidthFull();
-       VerticalLayout applicantPanel = new VerticalLayout();
-       applicantPanel.setPadding(true);
-       applicantPanel.add(group);
-       applicantPanel.addClassNames(LumoUtility.Padding.SMALL, LumoUtility.Background.BASE);
-       return applicantPanel;
+        VerticalLayout applicantPanel = new VerticalLayout();
+        applicantPanel.setPadding(true);
+        applicantPanel.add(btnAddApplicant);
+        applicantPanel.add(gridApplicants);
+        applicantPanel.addClassNames(LumoUtility.Padding.SMALL, LumoUtility.Background.BASE);
+        return applicantPanel;
     }
 
     private Grid<Applicant> createApplicantGrid(
             FinApplication finapp,
             OidcUser user,
-            //Editable editable,
-            Binder<FinApplication> binder) {
+            Binder<FinApplication> binder,
+            WorkflowAwareGroup group) {
         Grid<Applicant> gridApplicants = new Grid<>();
         gridApplicants.getStyle().set("max-width", "285px");
         gridApplicants.addComponentColumn(
-                app -> createApplicantCard(app, finapp, user, gridApplicants)
+                app -> createApplicantCard(app, finapp, user, gridApplicants, group)
         );
         gridApplicants.setAllRowsVisible(true);
         gridApplicants.addThemeVariants(GridVariant.LUMO_NO_BORDER);
@@ -266,20 +275,23 @@ public class ApplicationForm extends Dialog {
             Applicant app,
             FinApplication finapp,
             OidcUser user,
-            Grid<Applicant> gridApplicants
+            Grid<Applicant> gridApplicants,
+            WorkflowAwareGroup group
     ) {
-        Map<String,String> fieldNameDisplayNameMap = WorkflowUtils.getFieldNameDisplayNameMap(app.getClass());
+        Map<String, String> fieldNameDisplayNameMap = WorkflowUtils.getFieldNameDisplayNameMap(app.getClass());
         Card card = new Card(
-                fieldNameDisplayNameMap.get("fullName")+
-                ": " + 
-                app.getFullName()!=null?app.getFullName():"");
-        
-        card.add(new NativeLabel(fieldNameDisplayNameMap.get("email")+": "+(app.getEmail()!=null?app.getEmail():"")));
-        card.add(new NativeLabel(fieldNameDisplayNameMap.get("type")+": "+(app.getType()!=null?app.getType().getText():"")));
-        card.add(new NativeLabel(fieldNameDisplayNameMap.get("phoneNumber")+": "+(app.getPhoneNumber()!=null?app.getPhoneNumber():"")));
+                fieldNameDisplayNameMap.get("fullName")
+                + ": "
+                + app.getFullName() != null ? app.getFullName() : "");
 
-        Button btnSeeMore = new Button("See more", e -> buildApplicantDialog(app, finapp, user,gridApplicants));
-        Button btnRemove = new Button("Remove", e -> createRemoveApplicantDialog(app, applicantService, gridApplicants).open());
+        card.add(new NativeLabel(fieldNameDisplayNameMap.get("email") + ": " + (app.getEmail() != null ? app.getEmail() : "")));
+        card.add(new NativeLabel(fieldNameDisplayNameMap.get("type") + ": " + (app.getType() != null ? app.getType().getText() : "")));
+        card.add(new NativeLabel(fieldNameDisplayNameMap.get("phoneNumber") + ": " + (app.getPhoneNumber() != null ? app.getPhoneNumber() : "")));
+
+        Button btnSeeMore = new Button("See more", e -> buildApplicantDialog(app, finapp, user, gridApplicants));
+        WorkflowAwareButton btnRemove = WorkflowAwareButton.create(group);
+        btnRemove.setText("Remove");
+        btnRemove.addClickListener( e -> createRemoveApplicantDialog(app, applicantService, gridApplicants).open());
 
         HorizontalLayout buttonPanel = new HorizontalLayout(btnSeeMore, btnRemove);
         card.add(buttonPanel);
@@ -305,13 +317,15 @@ public class ApplicationForm extends Dialog {
         return dialog;
     }
 
-    private Button createAddApplicantButton(
+    private WorkflowAwareButton createAddApplicantButton(
             FinApplication finapp,
             OidcUser user,
+            WorkflowAwareGroup typicalWorkflowGroup,
             Grid<Applicant> gridApplicants
     ) {
-        Button btnAddApplicant =  new Button(
-                ADD_APPLICANT,
+        WorkflowAwareButton btnAddApplicant = WorkflowAwareButton.create(typicalWorkflowGroup);
+        btnAddApplicant.setText(ADD_APPLICANT);
+        btnAddApplicant.addClickListener(
                 e -> buildApplicantDialog(
                         null,
                         finapp,
@@ -327,6 +341,8 @@ public class ApplicationForm extends Dialog {
             StartEvent startEvent,
             OidcUser user,
             WorkflowPanel workflowPanel,
+            WorkflowAwareGroup typicalWorkflowGroup,
+            WorkflowAwareGroup enabledBeforeSubmissionGroup,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel) {
@@ -335,20 +351,33 @@ public class ApplicationForm extends Dialog {
                 binder,
                 user,
                 workflowPanel,
+                typicalWorkflowGroup,
                 onPostSave
         );
         btnSaveAndSubmitApp.setId("btnSaveAndSubmitApp");
 
         Button btnSaveDraft = createSaveDraftButton(
                 binder,
+                typicalWorkflowGroup,
                 onPostSave
         );
         btnSaveDraft.setId("btnSaveDraft");
 
         //Button btnSave = createSaveButton(binder, finappService, applicantService, onPostSave);
-        Button btnCancel = createCancelButton(binder, finappService, onPostCancel);
+        Button btnCancel = createCancelButton(
+                binder, 
+                finappService, 
+                typicalWorkflowGroup, 
+                onPostCancel
+        );
         btnCancel.setId("btnCancel");
-        Button btnRemove = createRemoveButton(binder, /*editable,*/ finappService, onPostRemove);
+        
+        Button btnRemove = createRemoveButton(
+                binder, 
+                finappService, 
+                enabledBeforeSubmissionGroup,
+                onPostRemove
+        );
         btnRemove.setId("btnRemove");
 
         HorizontalLayout buttonLayout = new HorizontalLayout(
@@ -360,32 +389,16 @@ public class ApplicationForm extends Dialog {
         buttonLayout.setSpacing(true);
         this.getFooter().add(buttonLayout);
 
-        btnSaveAndSubmitApp.setEnabled(true);
-        btnSaveDraft.setEnabled(false);
-        btnRemove.setEnabled(false);
-        btnCancel.setEnabled(true);
-        //btnSave.setEnabled(false);
-
-//        if (editable == Editable.YES) {
-//            //btnSaveAndSubmitApp.setEnabled(true);
-//            btnSaveDraft.setEnabled(true);
-//            btnRemove.setEnabled(true);
-//            btnCancel.setEnabled(true);
-//        } else if (editable == Editable.YES_AS_APPLICANT) {
-//            btnSaveDraft.setEnabled(true);
-//            btnCancel.setEnabled(true);
-//            //btnSaveAndSubmitApp.setEnabled(true);
-//            btnCancel.setEnabled(true);
-//        } else {
-//            btnCancel.setEnabled(true);
-//        }
     }
 
     private Button createSaveDraftButton(
             Binder<FinApplication> binder,
+            WorkflowAwareGroup group,
             Consumer<FinApplication> onPostSave
     ) {
-        Button btnSaveDraft = new Button("Save draft", e1 -> {
+        WorkflowAwareButton btnSaveDraft = WorkflowAwareButton.create();
+        btnSaveDraft.setText("Save draft");
+        btnSaveDraft.addClickListener(e1 -> {
             FinApplication finapp = binder.getBean();
             if (finapp.getStatus() == Status.NEWLY_CREATED) {
                 finapp.setStatus(Status.DRAFT);
@@ -401,9 +414,12 @@ public class ApplicationForm extends Dialog {
             Binder<FinApplication> binder,
             OidcUser user,
             WorkflowPanel workflowPanel,
+            WorkflowAwareGroup group,
             Consumer<FinApplication> onPostSave
     ) {
-        Button btnSaveFinApp = new Button("Save and submit", e1 -> {
+        WorkflowAwareButton btnSaveFinApp = WorkflowAwareButton.create();
+        btnSaveFinApp.setText("Save and submit");
+        btnSaveFinApp.addClickListener(e1 -> {
             Set<String> errors = validateApplication(applicantService, workflowPanel, binder);
             if (errors.isEmpty()) {
                 FinApplication finapp = binder.getBean();
@@ -416,16 +432,16 @@ public class ApplicationForm extends Dialog {
                     approval.setApproved(workflowPanel.getApproval());
 
                 });
-                finappService.run(finapp, 
-                        user.getPreferredUsername(), 
-                        workflowConfig.rootBizProcess(), 
+                finappService.run(finapp,
+                        user.getPreferredUsername(),
+                        workflowConfig.rootBizProcess(),
                         false
                 );
                 onPostSave.accept(finapp);
                 this.close();
             } else {
                 for (String err : errors) {
-                   Notification.show(err);
+                    Notification.show(err);
                 }
             }
         });
@@ -435,10 +451,12 @@ public class ApplicationForm extends Dialog {
     private Button createCancelButton(
             Binder<FinApplication> binder,
             FinApplicationService finappService,
+            WorkflowAwareGroup group,
             Consumer<FinApplication> onPostCancel
     ) {
-        return new Button("Cancel", e1 -> {
-
+        WorkflowAwareButton btnCancel = WorkflowAwareButton.create(group);
+        btnCancel.setText("Cancel");
+        btnCancel.addClickListener(e1 -> {
             FinApplication work = binder.getBean();
             if (work == null) {
                 finappService.remove(work);
@@ -448,15 +466,19 @@ public class ApplicationForm extends Dialog {
             onPostCancel.accept(work);
             this.close();
         });
+
+        return btnCancel;
     }
 
     private Button createRemoveButton(
             Binder<FinApplication> binder,
-            //Editable editable,
             FinApplicationService finappService,
+            WorkflowAwareGroup group,
             Consumer<FinApplication> onPostRemove
     ) {
-        Button btnRemove = new Button("Remove", e1 -> {
+        WorkflowAwareButton btnRemove = WorkflowAwareButton.create(group);
+        btnRemove.setText("Remove");
+        btnRemove.addClickListener(e1 -> {
             ConfirmDialog dialog = new ConfirmDialog();
             dialog.setHeader("Remove this application");
             dialog.setText("Are you sure to remove this applicant?");
@@ -471,9 +493,6 @@ public class ApplicationForm extends Dialog {
             });
             dialog.open();
         });
-//        if (editable != Editable.YES) {
-//            btnRemove.setEnabled(false);
-//        }
 
         return btnRemove;
     }

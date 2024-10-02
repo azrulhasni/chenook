@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.azrul.chenook.views.signature;
 
 import com.azrul.chenook.config.ApplicationContextHolder;
@@ -9,6 +5,8 @@ import com.azrul.chenook.domain.Signature;
 import com.azrul.chenook.service.SignatureService;
 import com.azrul.chenook.views.attachments.AttachmentsPanel;
 import com.azrul.chenook.views.common.components.SignatureCapture;
+import com.azrul.chenook.views.common.components.WorkflowAwareButton;
+import com.azrul.chenook.views.common.components.WorkflowAwareGroup;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Image;
@@ -36,20 +34,31 @@ public class SignaturePanel extends VerticalLayout{
     private Button btnSign;
     private VerticalLayout signaturePanel;
     private final SignatureService signService;
-    
+    private WorkflowAwareGroup group;
    
+    public void applyGroup(){
+        if (this.group!=null){
+            this.setEnabled(group.calculateEnable());
+            this.setVisible(group.calculateVisible());
+        }
+    }
     
-    
-    public static SignaturePanel create(){
+    public static SignaturePanel create(WorkflowAwareGroup group){
         var signPanel = ApplicationContextHolder.getBean(SignaturePanel.class);
+        signPanel.init(group);
+        signPanel.applyGroup();
         return signPanel;
     }
         
      private SignaturePanel(@Autowired SignatureService signService){
         this.signService=signService;
+     }
+     
+     private void init(WorkflowAwareGroup group){
+        this.group = group;
         NativeLabel lbSign = new NativeLabel("Signature:");
         signaturePanel = new VerticalLayout();
-
+        btnSign = WorkflowAwareButton.create(group);
         btnSign = new Button("Sign", e -> {
             Dialog signDialog = new Dialog();
             signDialog.setWidth("550px");
@@ -140,4 +149,5 @@ public class SignaturePanel extends VerticalLayout{
         }
         signService.save(sign);
     }
+
 }

@@ -4,6 +4,7 @@
  */
 package com.azrul.chenook.views.common.components;
 
+import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.vaadin.flow.component.Component;
@@ -26,7 +27,6 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div{
     private final T workItem;
     private final Predicate<T> visibleCondition;
     private final Predicate<T> enableCondition;
-    private final Set<HasEnabled> managedComponents = new HashSet<>();
     
     private WorkflowAwareGroup(
             Predicate<T> visibleCondition, 
@@ -38,57 +38,17 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div{
         this.enableCondition=enableCondition;
     }
     
-    public void addManagedComponents(HasEnabled... components){
-        managedComponents.addAll(Arrays.asList(components));
-        boolean enable = enableCondition.test(workItem);
-        boolean visible = visibleCondition.test(workItem);
-        for (HasEnabled component:components){
-            component.setEnabled(enable);
-            Component c = ((Component)component);
-            c.setVisible(visible);
-            this.add(c);
-        }
+    
+    
+    
+    
+    
+    public Boolean calculateEnable(){
+        return enableCondition.test(workItem);
     }
     
-    
-    
-    public void addManagedComponent(HasEnabled component){
-        managedComponents.add(component);
-        boolean enable = enableCondition.test(workItem);
-        boolean visible = visibleCondition.test(workItem);
-        
-        
-        if (component instanceof Component c){
-            c.setVisible(visible);
-        }
-        if (component instanceof HasValueAndElement c){
-            c.setReadOnly(!enable);
-        }else{
-            component.setEnabled(enable);
-        }
-        this.add((Component)component);
-    }
-    
-    public void refresh(){
-        boolean enable = enableCondition.test(workItem);
-        boolean visible = visibleCondition.test(workItem);
-        for (HasEnabled component:managedComponents){
-            component.setEnabled(enable);
-            Component c = ((Component)component);
-            c.setVisible(visible);
-            this.add(c);
-        }
-    }
-    
-    public void calculateEnable(){
-       
-        boolean enable = enableCondition.test(workItem);
-        this.setEnabled(enable);
-    }
-    
-    public void calculateVisible(){
-        boolean visible = visibleCondition.test(workItem);
-        this.setVisible(visible);
+    public Boolean calculateVisible(){
+        return visibleCondition.test(workItem);
     }
     
     private static <T extends WorkItem> Predicate<T> getDefaultVisible(OidcUser user){
@@ -164,6 +124,42 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div{
              ){
         Predicate<T> visiblePred = getDefaultVisible(user);
         Predicate<T> enablePred = getDefaultEnabled(user, bizProcess, worklistsWhereItemIsEnabled);
+        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred,  workItem);
+        return group;
+    }
+    
+    
+    
+    public static <T extends WorkItem>  WorkflowAwareGroup createEnabledIfApprrovalNeeded(
+            final T workItem,
+            final OidcUser user
+    ){
+       
+        Predicate<T> commonPred = w->{
+            if (w.getApprovals().stream().map(a->a.getUsername()).anyMatch(u->StringUtils.equals(u,user.getPreferredUsername()))){
+                return true;
+            }else{
+                return false;
+            }
+        };
+        WorkflowAwareGroup group = new WorkflowAwareGroup(commonPred, commonPred,  workItem);
+        return group;
+    }
+    
+    
+    public static <T extends WorkItem>  WorkflowAwareGroup createEnabledBeforeSubmission(
+            final T workItem
+    ){
+        Predicate<T> visiblePred = w->{
+            return true;
+        };
+        Predicate<T> enablePred = w->{
+            if (w.getStatus()==Status.NEWLY_CREATED || w.getStatus()==Status.DRAFT){
+                return true;
+            }else{
+                return false;
+            }
+        };
         WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred,  workItem);
         return group;
     }

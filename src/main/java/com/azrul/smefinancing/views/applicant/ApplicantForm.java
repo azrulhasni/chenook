@@ -31,6 +31,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.context.annotation.SessionScope;
+
 
 @SpringComponent
 public class ApplicantForm extends Dialog {
@@ -77,7 +79,9 @@ public class ApplicantForm extends Dialog {
 
        FormLayout form = new FormLayout();
        BizProcess bizProcess = workflowConfig.rootBizProcess();
-       this.signPanel=SignaturePanel.create();
+       WorkflowAwareGroup group = WorkflowAwareGroup.create(user, finapp, bizProcess);
+
+       this.signPanel=SignaturePanel.create(group);
 
         // Initialize applicant and signature panel
         if (applicant != null) {
@@ -88,26 +92,31 @@ public class ApplicantForm extends Dialog {
         }
 
         // Create form fields
-        TextField tfID = WorkflowAwareTextField.create("id", false, binder, new StringToUngroupLongConverter("Not a number"));
+        WorkflowAwareTextField tfID = WorkflowAwareTextField.create(
+                "id", 
+                false, 
+                binder, 
+                new StringToUngroupLongConverter("Not a number"),
+                group
+        );
         form.add(tfID);
 
-        TextField tfFullName = WorkflowAwareTextField.create("fullName", true, binder);
+        TextField tfFullName = WorkflowAwareTextField.create("fullName", true, binder, group);
         form.add(tfFullName);
 
-        TextField tfICNumber = WorkflowAwareTextField.create("icNumber", true, binder);
+        TextField tfICNumber = WorkflowAwareTextField.create("icNumber", true, binder, group);
         form.add(tfICNumber);
 
-        TextField tfPhone = WorkflowAwareTextField.create("phoneNumber", true, binder);
+        TextField tfPhone = WorkflowAwareTextField.create("phoneNumber", true, binder, group);
         form.add(tfPhone);
 
-        TextField tfEmail = WorkflowAwareTextField.create("email", true, binder);
+        TextField tfEmail = WorkflowAwareTextField.create("email", true, binder, group);
         form.add(tfEmail);
 
         // Applicant type combo box
-        ComboBox<ApplicantType> cbType = WorkflowAwareComboBox.create("type", binder, Set.of(ApplicantType.values()));
+        ComboBox<ApplicantType> cbType = WorkflowAwareComboBox.create("type", binder, Set.of(ApplicantType.values()), group);
         form.add(cbType);
-          WorkflowAwareGroup group = WorkflowAwareGroup.create(user, finapp, bizProcess);
-        group.add(form);
+        
         this.add(form, signPanel);
 
         // Save button and its logic

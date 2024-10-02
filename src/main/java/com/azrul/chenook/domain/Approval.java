@@ -4,6 +4,7 @@
  */
 package com.azrul.chenook.domain;
 
+import com.azrul.chenook.annotation.WorkField;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -34,6 +35,7 @@ public class Approval {
     
     private String worklist;
     
+    @WorkField(displayName = "Approved")
     private Boolean approved;
     
     private LocalDateTime approvalDateTime;

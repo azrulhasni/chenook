@@ -27,24 +27,44 @@ import java.util.function.Consumer;
  * @author azrul
  */
 public class WorkflowAwareComboBox<T, C> extends ComboBox<C> {
-
-    private WorkflowAwareComboBox() {
+    private WorkflowAwareGroup group;
+    
+    private WorkflowAwareComboBox(WorkflowAwareGroup group) {
+        this.group = group;
+    }
+ 
+    
+    public void applyGroup(){
+        if (this.group!=null){
+            this.setReadOnly(!group.calculateEnable());
+            this.setVisible(group.calculateVisible());
+        }
     }
     
-    public static <T, C> WorkflowAwareComboBox create(String fieldName, Binder<T> binder, Set<C> data){
-        return create(fieldName, binder, field->field.setItems(data));
+    public static <T, C> WorkflowAwareComboBox create(String fieldName, Binder<T> binder, Set<C> data, WorkflowAwareGroup group){
+        return create(fieldName, binder, field->field.setItems(data), group);
+    }
+    
+     public static <T, C> WorkflowAwareComboBox create(String fieldName, Binder<T> binder, BackEndDataProvider<String, Void> dp, WorkflowAwareGroup group){
+        return create(fieldName, binder, field->field.setItems(dp), group);
+    }
+     
+     public static <T, C> WorkflowAwareComboBox create(String fieldName, Binder<T> binder, Set<C> data){
+        return create(fieldName, binder, field->field.setItems(data), null);
     }
     
      public static <T, C> WorkflowAwareComboBox create(String fieldName, Binder<T> binder, BackEndDataProvider<String, Void> dp){
-        return create(fieldName, binder, field->field.setItems(dp));
+        return create(fieldName, binder, field->field.setItems(dp),null);
     }
     
    
 
-    public static <T, C> WorkflowAwareComboBox create(String fieldName, Binder<T> binder, Consumer<WorkflowAwareComboBox> dataSetter) {
+    public static <T, C> WorkflowAwareComboBox create(
+            String fieldName, Binder<T> binder, Consumer<WorkflowAwareComboBox> dataSetter, WorkflowAwareGroup group) {
         T workItem = binder.getBean();
-        var field = new WorkflowAwareComboBox();
+        var field = new WorkflowAwareComboBox(group);
         field.setId(fieldName);
+        field.applyGroup();
 
         List<Validator> validators = new ArrayList<>();
         var annoFieldDisplayMap = WorkflowUtils.getAnnotations(
@@ -71,29 +91,5 @@ public class WorkflowAwareComboBox<T, C> extends ComboBox<C> {
         bindingBuilder.bind(fieldName);
         return field;
     }
-//        Optional<WorkField> owf = WorkflowUtils.getAnnotation(WorkField.class,workItem, fieldName);
-//        owf.ifPresent(wf->{
-//            this.setLabel(fieldName);
-//        });
-//        Optional<NotNullValue> onb = WorkflowUtils.getAnnotation(NotNullValue.class,workItem, fieldName);
-//        onb.ifPresent(nb->{
-//            this.setRequiredIndicatorVisible(true);
-//           if (nb.message().length>0) {
-//                this.setErrorMessage(nb.message()[0]);
-//            } else {
-//                owf.ifPresentOrElse(wf -> {
-//                    this.setErrorMessage(wf.displayName() + " cannot be empty");
-//                }, () -> {
-//                    this.setErrorMessage(fieldName + " cannot be empty");
-//                });
-//            }
-//        });
-//    }
-//    
-//    public static <T>WorkflowAwareComboBox create(String fieldName,Binder<T> binder){
-//        T workItem = binder.getBean();
-//        var field = new WorkflowAwareComboBox(fieldName,workItem);
-//        binder.bind(field, fieldName);
-//        return field;
-//    }
+
 }

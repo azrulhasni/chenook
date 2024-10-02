@@ -30,15 +30,30 @@ import com.azrul.chenook.annotation.NumberRange;
  * @author azrul
  */
 public class WorkflowAwareBigDecimalField<T> extends BigDecimalField {
-
-    private WorkflowAwareBigDecimalField() {
-
+    private WorkflowAwareGroup group;
+    
+    private WorkflowAwareBigDecimalField(WorkflowAwareGroup group) {
+        this.group = group;
+    }
+    
+  
+    
+    public void applyGroup(){
+        if (this.group!=null){
+            this.setReadOnly(!group.calculateEnable());
+            this.setVisible(group.calculateVisible());
+        }
+    }
+    
+    public static <T> WorkflowAwareBigDecimalField create(String fieldName, Binder<T> binder){
+        return create(fieldName, binder, null);
     }
 
-    public static <T> WorkflowAwareBigDecimalField create(String fieldName, Binder<T> binder) {
+    public static <T> WorkflowAwareBigDecimalField create(String fieldName, Binder<T> binder, WorkflowAwareGroup group) {
         T workItem = binder.getBean();
-        var field = new WorkflowAwareBigDecimalField();
+        var field = new WorkflowAwareBigDecimalField(group);
         field.setId(fieldName);
+        field.applyGroup();
 
         List<Validator> validators = new ArrayList<>();
         var annoFieldDisplayMap = WorkflowUtils.getAnnotations(

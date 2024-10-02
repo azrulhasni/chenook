@@ -6,7 +6,6 @@ package com.azrul.chenook.views.workflow;
 
 import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.domain.Approval;
-import com.azrul.chenook.domain.Attachment;
 import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.domain.WorkItem;
@@ -17,9 +16,9 @@ import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.views.common.components.UserField;
-import com.azrul.chenook.workflow.model.BizProcess;
+import com.azrul.chenook.views.common.components.WorkflowAwareComboBox;
+import com.azrul.chenook.views.common.components.WorkflowAwareGroup;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
@@ -29,11 +28,11 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -45,38 +44,45 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 @SpringComponent
 public class WorkflowPanel<T extends WorkItem> extends FormLayout {
 
-    
     private final BadgeUtils badgeUtils;
     private final ApprovalService approvalService;
     private final BizUserService bizUserService;
     private final WorkflowService workflowService;
     private final Integer COUNT_PER_PAGE = 3;
-    private       ComboBox<String> cbApprove;
-    
-    public static <T extends WorkItem> WorkflowPanel create( final T work,
-            final OidcUser user){
+    private Approval approval;
+    private WorkflowAwareGroup group;
+    private OidcUser user;
+    private T work;
+
+    public static <T extends WorkItem> WorkflowPanel create(
+            final T work,
+            final OidcUser user) {
         var workPanel = ApplicationContextHolder.getBean(WorkflowPanel.class);
         workPanel.init(work, user);
         return workPanel;
     }
 
     private WorkflowPanel(
-        @Autowired BadgeUtils badgeUtils,
-        @Autowired ApprovalService approvalService,
-        @Autowired BizUserService bizUserService,
-        @Autowired WorkflowService workflowService){
-        this.badgeUtils=badgeUtils;
-        this.approvalService=approvalService;
-        this.bizUserService=bizUserService;
-        this.workflowService=workflowService;
+            @Autowired BadgeUtils badgeUtils,
+            @Autowired ApprovalService approvalService,
+            @Autowired BizUserService bizUserService,
+            @Autowired WorkflowService workflowService) {
+        this.badgeUtils = badgeUtils;
+        this.approvalService = approvalService;
+        this.bizUserService = bizUserService;
+        this.workflowService = workflowService;
     }
-              
-            
+
     private void init(
             final T work,
             final OidcUser user
     ) {
+        this.approval = new Approval();
         var fieldDisplayMap = WorkflowUtils.getFieldNameDisplayNameMap(work.getClass());
+        this.group = WorkflowAwareGroup.createEnabledIfApprrovalNeeded(work, user);
+        this.work = work;
+        this.user = user;
+
         Select<Status> cbStatus = createSelect(fieldDisplayMap.get("status"));
         cbStatus.setItems(Status.values());
         cbStatus.setRenderer(badgeUtils.createStatusBadgeRenderer());
@@ -96,30 +102,36 @@ public class WorkflowPanel<T extends WorkItem> extends FormLayout {
         workflowField.getStyle().set("width", "50em");
         this.add(workflowField);
 
-        if (workflowService.isWaitingApproval(work)
-                || work.getApprovals().stream().filter(
-                        a -> StringUtils.equals(
-                                a.getUsername(),
-                                user.getPreferredUsername()
-                        )).count() > 0) {
-            cbApprove = new ComboBox<>("Approval needed");
+        if (isWaitingApproval(work, user)) {
+            Binder<Approval> binder = new Binder<>(Approval.class);
+            binder.setBean(approval);
+
+            WorkflowAwareComboBox<Approval, Boolean> cbApprove = WorkflowAwareComboBox.<Approval, Boolean>create("approved", binder, Set.of(Boolean.TRUE, Boolean.FALSE), group);
             cbApprove.setId("approvalNeeded");
-            cbApprove.setItems(Set.of("", "APPROVE", "REJECT"));
             cbApprove.setItemLabelGenerator(a -> {
-                if (StringUtils.equals(a, "REJECT")) {
+                if (Boolean.FALSE.equals(a)) {
                     return "Reject";
-                } else if (StringUtils.equals(a, "APPROVE")) {
-                    return "Approve";
                 } else {
-                    return "";
+                    return "Approve";
                 }
             });
+
             cbApprove.getStyle().setWidth("28em");
-            //approvalPanel.add(cbApprove);
             if (cbApprove != null) {
                 this.add(cbApprove);
             }
         }
+    }
+
+    private Boolean isWaitingApproval(
+            final T work, 
+            final OidcUser user
+    ) {
+        return work.getApprovals().stream().filter(
+                a -> StringUtils.equals(
+                        a.getUsername(),
+                        user.getPreferredUsername()
+                )).count() > 0;
     }
 
     public void createWorkflowInfoDialog(WorkItem work, OidcUser oidcUser) {
@@ -145,12 +157,12 @@ public class WorkflowPanel<T extends WorkItem> extends FormLayout {
         Grid<Approval> grid = new Grid<>();
         grid.setItems(dataProvider);
         grid.addComponentColumn(approval -> {
-            BizUser user = new BizUser();
-            user.setFirstName(approval.getFirstName());
-            user.setLastName(approval.getLastName());
-            user.setUsername(approval.getUsername());
+            BizUser bizUser = new BizUser();
+            bizUser.setFirstName(approval.getFirstName());
+            bizUser.setLastName(approval.getLastName());
+            bizUser.setUsername(approval.getUsername());
 
-            UserField userField = new UserField(user);
+            UserField userField = new UserField(bizUser);
             HorizontalLayout panel = new HorizontalLayout();
             panel.add(userField);
             if (approval.getApproved() == null) {
@@ -213,37 +225,27 @@ public class WorkflowPanel<T extends WorkItem> extends FormLayout {
     }
 
     public Boolean validate() {
-        if (cbApprove == null) {
-            return true;
-        }
-
-        if (StringUtils.isEmpty(cbApprove.getValue())) {
-            return false;
+        if (isWaitingApproval(work, user)) {
+            if (approval.getApproved() == null) {
+                return false;
+            } else {
+                return true;
+            }
         } else {
             return true;
         }
     }
 
     public Boolean getApproval() {
-        if (cbApprove == null) {
-            return null;
-        }
-        return "APPROVE".equals(cbApprove.getValue());
+        return approval.getApproved();
     }
 
     private <T> Select<T> createSelect(
             final String label
-            //final boolean editable
     ) {
         Select<T> select = new Select<>();
         select.setLabel(label);
-        //select.setReadOnly(!editable);
         return select;
     }
 
-//    public void moveWork(){
-//         WorkItem work = workItemService.findOneByParentIdAndContext(parentId, context);
-//         BizUser bizUser = bizUserService.getUser(oidcUser.getPreferredUsername());
-//         workflowService.run(parent, work, bizUser, false, bizProcess);
-//    }
 }

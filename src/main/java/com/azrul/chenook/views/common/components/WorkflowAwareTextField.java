@@ -18,14 +18,26 @@ import java.util.List;
  */
 public class WorkflowAwareTextField<T> extends TextField {
 
-    public WorkflowAwareTextField() {
+    private WorkflowAwareGroup group;
+    
+    public WorkflowAwareTextField(WorkflowAwareGroup group){
+        this.group=group;
     }
-
-    public static <T> WorkflowAwareTextField create(String fieldName, Boolean editable, Binder<T> binder, Converter converter) {
+    
+    public void applyGroup(){
+        if (group!=null){
+            this.setReadOnly(!group.calculateEnable());
+            this.setVisible(group.calculateVisible());
+        }
+    }
+    
+  
+    public static <T> WorkflowAwareTextField create(String fieldName, Boolean editable, Binder<T> binder, Converter converter, WorkflowAwareGroup group) {
         T workItem = binder.getBean();
-        var field = new WorkflowAwareTextField();
+        var field = new WorkflowAwareTextField(group);
         List<Validator> validators = new ArrayList<>();
         field.setId(fieldName);
+        field.applyGroup();
 
         var annoFieldDisplayMap = WorkflowUtils.getAnnotations(
                 workItem.getClass(),
@@ -75,8 +87,12 @@ public class WorkflowAwareTextField<T> extends TextField {
         return field;
     }
 
+    public static <T> WorkflowAwareTextField create(String fieldName, Boolean readOnly, Binder<T> binder, WorkflowAwareGroup group) {
+        return create(fieldName, readOnly, binder, null, group);
+    }
+    
     public static <T> WorkflowAwareTextField create(String fieldName, Boolean readOnly, Binder<T> binder) {
-        return create(fieldName, readOnly, binder, null);
+        return create(fieldName, readOnly, binder, null, null);
     }
 
 }

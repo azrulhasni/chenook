@@ -16,13 +16,29 @@ import java.util.List;
  * @author azrul
  */
 public class WorkflowAwareTextArea<T> extends TextArea {
-
-    public WorkflowAwareTextArea(){}
-
+    
+    private WorkflowAwareGroup group;
+    
+    public WorkflowAwareTextArea(WorkflowAwareGroup group){
+        this.group=group;
+    }
+    
+    public void applyGroup(){
+        if (group!=null){
+            this.setReadOnly(!group.calculateEnable());
+            this.setVisible(group.calculateVisible());
+        }
+    }
+    
     public static <T> WorkflowAwareTextArea create(String fieldName, Binder<T> binder) {
+        return create(fieldName, binder, null);
+    }
+
+    public static <T> WorkflowAwareTextArea create(String fieldName, Binder<T> binder, WorkflowAwareGroup group) {
         T workItem = binder.getBean();
-        var field = new WorkflowAwareTextArea();
+        var field = new WorkflowAwareTextArea(group);
         field.setId(fieldName);
+        field.applyGroup();
         List<Validator> validators = new ArrayList<>();
 
          var annoFieldDisplayMap = WorkflowUtils.getAnnotations(

@@ -10,6 +10,7 @@ import com.azrul.chenook.views.common.components.Card;
 import com.azrul.chenook.domain.Attachment;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.AttachmentService;
+import com.azrul.chenook.views.common.components.WorkflowAwareButton;
 import com.azrul.chenook.views.common.components.WorkflowAwareGroup;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -59,10 +60,11 @@ public class AttachmentsPanel<T> extends VerticalLayout {
     public static AttachmentsPanel create(Long parentId,
             String context,
             String fileLocation,
+            WorkflowAwareGroup group,
             Consumer<Attachment> onPostSave,
             Consumer<Attachment> onPostRemove){
         var attachmentsPanel = ApplicationContextHolder.getBean(AttachmentsPanel.class);
-        attachmentsPanel.init(parentId, context, fileLocation, onPostSave, onPostRemove);
+        attachmentsPanel.init(parentId, context, fileLocation, group, onPostSave, onPostRemove);
         return attachmentsPanel;
     }
 
@@ -70,6 +72,7 @@ public class AttachmentsPanel<T> extends VerticalLayout {
             Long parentId,
             String context,
             String fileLocation,
+            WorkflowAwareGroup group,
             Consumer<Attachment> onPostSave,
             Consumer<Attachment> onPostRemove
     ) {
@@ -82,6 +85,10 @@ public class AttachmentsPanel<T> extends VerticalLayout {
        
         MultiFileMemoryBuffer buffer = new MultiFileMemoryBuffer();
         Upload upload = new Upload(buffer);
+        if (group.calculateEnable()==false){
+            upload.setMaxFiles(0);
+        }
+        upload.setVisible(group.calculateVisible());
         upload.setId("upload");
         upload.setAcceptedFileTypes(extensions);
 
@@ -97,7 +104,7 @@ public class AttachmentsPanel<T> extends VerticalLayout {
         gridFiles.addComponentColumn(att -> {
             Card filePanel = new Card("File: " + att.getFileName());
             HorizontalLayout btnPanel = new HorizontalLayout();
-            btnPanel.add(addRemoveButton(gridFiles, att, /*editable,*/ onPostRemove),
+            btnPanel.add(addRemoveButton(gridFiles, att, group, onPostRemove),
                     addBtnToDownloadFile(att, "Download"));
             filePanel.add(btnPanel);
             return filePanel;
@@ -127,8 +134,15 @@ public class AttachmentsPanel<T> extends VerticalLayout {
 
     }
 
-    private Button addRemoveButton(Grid<Attachment> gridFiles, Attachment attc, /*Boolean editable,*/ Consumer<Attachment> onPostRemove) {
-        Button btnRemove = new Button("Remove", e -> {
+    private Button addRemoveButton(
+            Grid<Attachment> gridFiles, 
+            Attachment attc, 
+            WorkflowAwareGroup group, 
+            Consumer<Attachment> onPostRemove
+    ) {
+        WorkflowAwareButton btnRemove = WorkflowAwareButton.create(group);
+        btnRemove.setText("Remove");
+        btnRemove.addClickListener(e -> {
             ConfirmDialog dialog = new ConfirmDialog();
             dialog.setHeader("Remove applicant");
             dialog.setText("Are you sure to remove this applicant");
@@ -146,7 +160,6 @@ public class AttachmentsPanel<T> extends VerticalLayout {
             dialog.open();
 
         });
-        //btnRemove.setEnabled(editable);
         return btnRemove;
     }
 

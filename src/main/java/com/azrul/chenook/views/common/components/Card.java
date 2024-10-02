@@ -10,6 +10,7 @@ import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.HasSize;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H4;
+import com.vaadin.flow.component.html.H5;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
@@ -20,7 +21,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 public class Card extends Composite<Div> implements HasComponents, HasSize {
         Div div = new Div();
         VerticalLayout content = new VerticalLayout();
-        H4 title = new H4();
+        H5 title = new H5();
         String titleText;
         Component titleComponent = null;
         int MAX_TITLE_LENGTH = 30;
