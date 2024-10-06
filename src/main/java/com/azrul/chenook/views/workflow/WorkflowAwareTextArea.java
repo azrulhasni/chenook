@@ -2,25 +2,24 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.azrul.chenook.views.common.components;
+package com.azrul.chenook.views.workflow;
 
 import com.azrul.chenook.utils.WorkflowUtils;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.Validator;
 import java.util.ArrayList;
-import java.util.Currency;
 import java.util.List;
-import org.vaadin.addons.MoneyField;
 
 /**
  *
  * @author azrul
  */
-public class WorkflowAwareMoneyField<T> extends MoneyField {
-
-     private WorkflowAwareGroup group;
+public class WorkflowAwareTextArea<T> extends TextArea {
     
-    public WorkflowAwareMoneyField(WorkflowAwareGroup group){
+    private WorkflowAwareGroup group;
+    
+    public WorkflowAwareTextArea(WorkflowAwareGroup group){
         this.group=group;
     }
     
@@ -31,21 +30,21 @@ public class WorkflowAwareMoneyField<T> extends MoneyField {
         }
     }
     
-    public static <T> WorkflowAwareMoneyField create(String fieldName, String currencyCode, Binder<T> binder) {
-        return create(fieldName, currencyCode, binder, null);
+    public static <T> WorkflowAwareTextArea create(String fieldName, Binder<T> binder) {
+        return create(fieldName, binder, null);
     }
 
-    public static <T> WorkflowAwareMoneyField create(String fieldName, String currencyCode, Binder<T> binder, WorkflowAwareGroup group) {
+    public static <T> WorkflowAwareTextArea create(String fieldName, Binder<T> binder, WorkflowAwareGroup group) {
         T workItem = binder.getBean();
-        var field = new WorkflowAwareMoneyField(group);
+        var field = new WorkflowAwareTextArea(group);
         field.setId(fieldName);
-        field.setCurrency(Currency.getInstance(currencyCode));
         field.applyGroup();
-
         List<Validator> validators = new ArrayList<>();
-        var annoFieldDisplayMap = WorkflowUtils.getAnnotations(
+
+         var annoFieldDisplayMap = WorkflowUtils.getAnnotations(
                 workItem.getClass(), 
-                fieldName);
+                fieldName
+        );
         
         var workfieldMap = WorkflowUtils.applyWorkField(
                 annoFieldDisplayMap, 
@@ -53,30 +52,26 @@ public class WorkflowAwareMoneyField<T> extends MoneyField {
         );
         
         validators.addAll(
-                WorkflowUtils.applyNotNull(
-                    annoFieldDisplayMap, 
-                    field, 
-                    workfieldMap, 
-                    fieldName
+                WorkflowUtils.applyNotBlank(
+                        annoFieldDisplayMap, 
+                        field, 
+                        workfieldMap, 
+                        fieldName
                 )
         );
         
         validators.addAll(
-                WorkflowUtils.applyMoneyRange(
-                    annoFieldDisplayMap, 
-                    workfieldMap, 
-                    fieldName,
-                    currencyCode
+                WorkflowUtils.applyMatcher(
+                        annoFieldDisplayMap
                 )
         );
-
+        
         var bindingBuilder = binder.forField(field);
-        for (var validator : validators) {
+         bindingBuilder.withNullRepresentation("");
+        for (var validator:validators){
             bindingBuilder.withValidator(validator);
         }
         bindingBuilder.bind(fieldName);
         return field;
     }
-
-  
 }

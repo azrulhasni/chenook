@@ -11,7 +11,7 @@ import com.azrul.chenook.views.common.validator.MatcherValidator;
 import com.azrul.chenook.views.common.validator.MoneyRangeValidator;
 import com.azrul.chenook.views.common.validator.NumberRangeValidator;
 import com.azrul.chenook.views.common.validator.PresenceValidator;
-import com.azrul.chenook.views.common.components.WorkflowAwareBigDecimalField;
+import com.azrul.chenook.views.workflow.WorkflowAwareBigDecimalField;
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasLabel;
@@ -32,16 +32,22 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.KeywordField;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -140,8 +146,13 @@ public class WorkflowUtils {
         }
         return annotationValuesMap;
     }
-
+    
+    
     public static <T> Map<Field, Map<String, Object>> getAnnotations(Class<? extends Annotation> annoClass, Class<T> itemClass) {
+        return getAnnotations(annoClass, itemClass, Boolean.FALSE);
+    }
+
+    public static <T> Map<Field, Map<String, Object>> getAnnotations(Class<? extends Annotation> annoClass, Class<T> itemClass, Boolean excludeCollection) {
 
         List<java.lang.reflect.Field> fields = new ArrayList<>();
         Collections.addAll(fields, itemClass.getDeclaredFields());
@@ -149,6 +160,9 @@ public class WorkflowUtils {
         Map<Field, Map<String, Object>> result = new HashMap<>();
 
         for (Field field : fields) {
+            if (excludeCollection && Collection.class.isAssignableFrom(field.getType())){
+                continue;
+            }
             try {
                 Map<String, Object> annotations = new HashMap<>();
                 for (Annotation anno : field.getDeclaredAnnotations()) {
@@ -238,6 +252,32 @@ public class WorkflowUtils {
                                 })
                 );
        
+    }
+    
+    public static <T> Set<String> getSearchFields(Class<T> itemClass) {
+       Set<String> fieldNames = new HashSet<>();
+       Map<Field,  Map<String, Object>> fieldAnnoMap = getAnnotations(FullTextField.class, itemClass,true);
+       fieldNames.addAll(
+               fieldAnnoMap
+                .entrySet()
+                .stream()
+                .map(e->e.getKey().getName())
+                .collect(Collectors.toSet()));
+       Map<Field,  Map<String, Object>> fieldAnnoMap2 = getAnnotations(KeywordField.class, itemClass,true);
+       fieldNames.addAll(
+               fieldAnnoMap2
+                .entrySet()
+                .stream()
+                .map(e->e.getKey().getName())
+                .collect(Collectors.toSet()));
+       Map<Field,  Map<String, Object>> fieldAnnoMap3 = getAnnotations(GenericField.class, itemClass,true);
+       fieldNames.addAll(
+               fieldAnnoMap3
+                .entrySet()
+                .stream()
+                .map(e->e.getKey().getName())
+                .collect(Collectors.toSet()));
+       return fieldNames;
     }
     
      public static List<Validator> applyMoneyRange(

@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.azrul.chenook.views.common.components;
+package com.azrul.chenook.views.workflow;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.data.binder.Binder;

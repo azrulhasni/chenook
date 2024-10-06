@@ -3,16 +3,15 @@ package com.azrul.smefinancing.views.applicant;
 import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.views.common.converter.StringToUngroupLongConverter;
-import com.azrul.chenook.views.common.components.WorkflowAwareComboBox;
-import com.azrul.chenook.views.common.components.WorkflowAwareGroup;
-import com.azrul.chenook.views.common.components.WorkflowAwareTextField;
+import com.azrul.chenook.views.workflow.WorkflowAwareComboBox;
+import com.azrul.chenook.views.workflow.WorkflowAwareGroup;
+import com.azrul.chenook.views.workflow.WorkflowAwareTextField;
 import com.azrul.smefinancing.domain.Applicant;
 import com.azrul.smefinancing.domain.ApplicantType;
 import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.service.ApplicantService;
 import com.azrul.chenook.views.signature.SignaturePanel;
 import com.azrul.chenook.workflow.model.BizProcess;
-import com.azrul.smefinancing.views.common.Editable;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -20,18 +19,13 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.ValidationResult;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import com.vaadin.flow.function.ValueProvider;
-import com.vaadin.flow.data.binder.Setter;
-import com.vaadin.flow.data.converter.StringToLongConverter;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.context.annotation.SessionScope;
 
 
 @SpringComponent

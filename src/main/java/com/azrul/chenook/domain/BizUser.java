@@ -4,6 +4,7 @@
  */
 package com.azrul.chenook.domain;
 
+import com.azrul.chenook.annotation.WorkField;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -33,13 +34,28 @@ public class BizUser {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     
+    @WorkField(displayName = "Username")
     private String username;
+     
+    @WorkField(displayName = "First name")
     private String firstName;
+    
+    @WorkField(displayName = "Last name")
     private String lastName;
+    
+    @WorkField(displayName = "Email")
     private String email;
+    
+    @WorkField(displayName = "Manager")
     private String manager;
+    
+    @WorkField(displayName = "Group")
     private List<String> groups = new ArrayList<>();
+    
+    @WorkField(displayName = "Roles")
     private List<String> clientRoles = new ArrayList<>();
+    
+    @WorkField(displayName = "Enabled")
     private Boolean enabled;
 
     /**

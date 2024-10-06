@@ -38,7 +38,14 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.azrul.chenook.annotation.NumberRange;
 import com.azrul.chenook.domain.Status;
+import com.azrul.chenook.domain.bridge.LocalDateTimeBridge;
 import java.text.NumberFormat;
+import org.hibernate.search.mapper.pojo.bridge.mapping.annotation.ValueBridgeRef;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.KeywordField;
 
 /**
  *
@@ -47,36 +54,41 @@ import java.text.NumberFormat;
 @Entity
 @DiscriminatorValue("FIN_APP")
 @Audited
+@Indexed
 @EntityListeners(AuditingEntityListener.class)
 public class FinApplication extends WorkItem {
 
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.AUTO)
-//    @Column(name = "id")
-//    private Long id;
+
     @NotBlankValue
+    
     @WorkField(displayName = "Name")
+    @FullTextField
     private String name;
 
     @NotBlankValue
     @WorkField(displayName = "SSM Registration Number")
+    @FullTextField
     private String ssmRegistrationNumber;
 
     @NotBlankValue
     @WorkField(displayName = "Address")
+    @FullTextField
     private String address;
 
     @NotBlankValue
     @Matcher(regexp = "[0-9]{5}", message = "Postal code must follow format (e.g. 12345)")
     @WorkField(displayName = "Postal Code")
+    @KeywordField
     private String postalCode;
 
     @NotBlankValue
     @WorkField(displayName = "State")
+    @FullTextField
     private String state;
 
     @NotBlankValue
     @WorkField(displayName = "Main business activity")
+    @FullTextField
     private String mainBusinessActivity;
 
     @NotNullValue
@@ -95,18 +107,21 @@ public class FinApplication extends WorkItem {
     private MonetaryAmount financingRequested;
 
     @NotNullValue
+    @GenericField(valueBridge = @ValueBridgeRef(type=LocalDateTimeBridge.class))
     @WorkField(displayName = "Application date", sortable=true)
     @DateTimeFormat(format = "${finapp.datetime.format}")
     private LocalDateTime applicationDate;
 
     @NotBlankValue
+    @KeywordField
     @WorkField(displayName = "Reason for financing")
     @Size(max = 255, message
             = "Reason for financing must be of at most 255 characters")
     private String reasonForFinancing;
 
 //    @Transient 
-//    protected NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(); 
+//    protected NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance();
+    @IndexedEmbedded
     @OneToMany(mappedBy = "finApplication", orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<Applicant> applicants = new HashSet<>();
 
@@ -131,19 +146,7 @@ public class FinApplication extends WorkItem {
                 @JoinColumn(name = "id", referencedColumnName = "id")})
     private Set<String> errors = new HashSet<>();
 
-//    /**
-//     * @return the id
-//     */
-//    public Long getId() {
-//        return id;
-//    }
-//
-//    /**
-//     * @param id the id to set
-//     */
-//    public void setId(Long id) {
-//        this.id = id;
-//    }
+
     /**
      * @return the name
      */

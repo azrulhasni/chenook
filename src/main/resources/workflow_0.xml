@@ -119,7 +119,7 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
             description='Set disapproved'>
             <script>
                 <![CDATA[
-                
+                current.setStatus(Status.DENIED);
                 System.out.println("ID:"+current.getId()+" - rejected");
                 ;]]>
             </script>
@@ -131,7 +131,7 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
             description='Set approved'>
             <script>
                 <![CDATA[
-                
+                current.setStatus(Status.DONE);
                 System.out.println("ID:"+current.getId()+" - approved");
                 ;]]>
             </script>

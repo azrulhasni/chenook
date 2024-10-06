@@ -20,17 +20,20 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * @author azrul
  */
 @Entity
-@Audited 
+@Audited
 @EntityListeners(AuditingEntityListener.class)
 public class Approval {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     
+    @WorkField(displayName = "User name")
     private String username;
     
+    @WorkField(displayName = "First name")
     private String firstName;
     
+    @WorkField(displayName = "Last name")
     private String lastName;
     
     private String worklist;
@@ -38,6 +41,7 @@ public class Approval {
     @WorkField(displayName = "Approved")
     private Boolean approved;
     
+    @WorkField(displayName = "Approval date")
     private LocalDateTime approvalDateTime;
 
     /**

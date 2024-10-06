@@ -7,17 +7,21 @@ package com.azrul.smefinancing.views.smefinancing;
 import com.azrul.chenook.views.MainLayout;
 import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.chenook.config.WorkflowConfig;
-import com.azrul.chenook.views.workflow.MyWorkPanel;
+import com.azrul.chenook.views.workflow.MyOwnWorkPanel;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.chenook.workflow.model.StartEvent;
 import com.azrul.smefinancing.service.FinApplicationService;
 import com.azrul.smefinancing.views.application.ApplicationForm;
 import com.azrul.chenook.utils.WorkflowUtils;
+import com.azrul.chenook.views.workflow.MyCreatedWorkPanel;
+import com.azrul.chenook.views.workflow.WorkflowCreatePanel;
 import com.azrul.chenook.views.workflow.WorklistPanel;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.tabs.Tab;
+import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
@@ -58,34 +62,14 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
         
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(this.DATETIME_FORMAT);
         final BizProcess bizProcess = this.workflowConfig.rootBizProcess();
-        if (SecurityContextHolder.getContext().getAuthentication() instanceof OAuth2AuthenticationToken oauth2AuthToken) {
-            DefaultOidcUser oidcUser = (DefaultOidcUser) oauth2AuthToken.getPrincipal();
+        if (SecurityContextHolder.getContext().getAuthentication() instanceof OAuth2AuthenticationToken oauth2AuthToken &&
+             oauth2AuthToken.getPrincipal() instanceof DefaultOidcUser oidcUser ) {
             
             Map<String,String> fieldNameDisplayNameMap = WorkflowUtils
                     .getFieldNameDisplayNameMap(FinApplication.class);
-            
-            var myWorkPanel = MyWorkPanel.create(
+            var myOwnWorkPanel = MyOwnWorkPanel.create(
                     FinApplication.class,
                     oidcUser,
-                    (wp, startEvent) -> {
-                        FinApplication finapp = new FinApplication();
-                        finapp.setApplicationDate(LocalDateTime.now());
-                        finapp = this.finappService.init(
-                                finapp, 
-                                oidcUser, 
-                                "SME_FIN", 
-                                startEvent, 
-                                bizProcess
-                        );
-                        showApplicationDialog(
-                                startEvent,
-                                finapp,
-                                oidcUser,
-                                "SME_FIN",
-                                fa -> wp.refresh(),
-                                fa -> wp.refresh(),
-                                fa -> wp.refresh());
-                    },
                     (wp, startEvent, finapp) -> {
                         showApplicationDialog(
                                 startEvent,
@@ -96,35 +80,23 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                                 fa -> wp.refresh(),
                                 fa -> wp.refresh());
                     },
-                    finapp -> {
-                        VerticalLayout content = new VerticalLayout();
-                        content.setSpacing(false);
-                        content.setPadding(false);
-                        if (finapp.getApplicationDate()!=null){
-                            content.add(
-                                new NativeLabel(
-                                    fieldNameDisplayNameMap.get("applicationDate")
-                                    +": " 
-                                    + dateTimeFormatter.format(
-                                            finapp.getApplicationDate()
-                                    )
-                                )   
-                            );
-                        }
-                        TextArea reason = new TextArea();
-                        reason.setValue(finapp.getReasonForFinancing()!=null
-                                ?finapp.getReasonForFinancing()
-                                :"");
-                        reason.setWidthFull();
-                        reason.setMaxHeight("60px");
-                        reason.setReadOnly(true);
-                        content.add(reason);
-                        
-                        return content;
-                    }
+                    finapp -> createCard(finapp, fieldNameDisplayNameMap, dateTimeFormatter)
             );
-            this.add(myWorkPanel);
-             
+            var myCreatedWorkPanel = MyCreatedWorkPanel.create(
+                    FinApplication.class,
+                    oidcUser,
+                    (wp, startEvent, finapp) -> {
+                        showApplicationDialog(
+                                startEvent,
+                                finapp,
+                                oidcUser,
+                                "SME_FIN",
+                                fa -> wp.refresh(),
+                                fa -> wp.refresh(),
+                                fa -> wp.refresh());
+                    },
+                    finapp -> createCard(finapp, fieldNameDisplayNameMap, dateTimeFormatter)
+            );
             var worklistPanel = WorklistPanel.create(
                     FinApplication.class,
                     oidcUser,
@@ -138,30 +110,84 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                                 fa -> wp.refresh(),
                                 fa -> wp.refresh());
                     },
-                    finapp -> {
-                        VerticalLayout content = new VerticalLayout();
-                        content.setSpacing(false);
-                        content.setPadding(false);
-                        if (finapp.getApplicationDate()!=null){
-                            content.add(new NativeLabel("Application date: " 
+                    finapp -> createCard(finapp, fieldNameDisplayNameMap, dateTimeFormatter)
+            );
+            
+            var workflowCreatePanel = WorkflowCreatePanel.create(
+                    FinApplication.class,
+                    oidcUser, 
+                    (startEvent,wp) -> {
+                        FinApplication finapp = new FinApplication();
+                        finapp.setApplicationDate(LocalDateTime.now());
+                        finapp = this.finappService.initializeAndSave(
+                                finapp, 
+                                oidcUser, 
+                                "SME_FIN", 
+                                startEvent, 
+                                bizProcess
+                        );
+                        showApplicationDialog(
+                                startEvent,
+                                finapp,
+                                oidcUser,
+                                "SME_FIN",
+                                fa -> myCreatedWorkPanel.refresh(),
+                                fa -> myCreatedWorkPanel.refresh(),
+                                fa -> myCreatedWorkPanel.refresh());
+                    }
+                    
+            );
+            
+            
+            
+            this.add(workflowCreatePanel);
+            TabSheet tabSheet = new TabSheet();
+            
+            myOwnWorkPanel.setWidth("28em");
+            Tab tab1 = tabSheet.add("My work",myOwnWorkPanel);
+            tab1.setId("tabMyWork");
+            
+            myCreatedWorkPanel.setWidth("28em");
+            Tab tab2 = tabSheet.add("Work I've created",myCreatedWorkPanel);
+            tab2.setId("tabWorkICreated");
+            
+            worklistPanel.setWidth("28em");
+            Tab tab3 = tabSheet.add("Work list",worklistPanel);
+            tab3.setId("tabWorkList");
+            
+            this.add(tabSheet);
+        }
+    }
+
+    private VerticalLayout createCard(
+            FinApplication finapp, 
+            Map<String, String> fieldNameDisplayNameMap, 
+            DateTimeFormatter dateTimeFormatter) {
+        
+        VerticalLayout content = new VerticalLayout();
+        content.setSpacing(false);
+        content.setPadding(false);
+        if (finapp.getApplicationDate()!=null){
+            content.add(
+                    new NativeLabel(
+                            fieldNameDisplayNameMap.get("applicationDate")
+                                    +": "
                                     + dateTimeFormatter.format(
                                             finapp.getApplicationDate()
-                                    )));
-                        }
-                        TextArea reason = new TextArea();
-                        reason.setValue(finapp.getReasonForFinancing()!=null
-                                ?finapp.getReasonForFinancing()
-                                :"");
-                        reason.setWidthFull();
-                        reason.setMaxHeight("60px");
-                        reason.setReadOnly(true);
-                        content.add(reason);
-                        
-                        return content;
-                    }
+                                    )
+                    )
             );
-            this.add(worklistPanel);
         }
+        TextArea reason = new TextArea();
+        reason.setValue(finapp.getReasonForFinancing()!=null
+                ?finapp.getReasonForFinancing()
+                :"");
+        reason.setWidthFull();
+        reason.setMaxHeight("60px");
+        reason.setReadOnly(true);
+        content.add(reason);
+        
+        return content;
     }
 
     private void showApplicationDialog(

@@ -4,6 +4,10 @@
  */
 package com.azrul.chenook.domain;
 
+import com.azrul.chenook.annotation.WorkField;
+import com.azrul.chenook.domain.bridge.CollectionEmptyBridge;
+import com.azrul.chenook.domain.bridge.LocalDateTimeBridge;
+import com.azrul.chenook.domain.bridge.UndecidedApprovalBridge;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -32,6 +36,13 @@ import java.util.Set;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 import org.hibernate.envers.RelationTargetAuditMode;
+import org.hibernate.search.mapper.pojo.bridge.mapping.annotation.ValueBridgeRef;
+import org.hibernate.search.mapper.pojo.extractor.mapping.annotation.ContainerExtract;
+import org.hibernate.search.mapper.pojo.extractor.mapping.annotation.ContainerExtraction;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.KeywordField;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -51,31 +62,61 @@ public abstract class WorkItem {
     
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @WorkField(displayName = "Id")
     protected Long id;
 
+    @FullTextField
+    @WorkField(displayName = "Creator")
     protected String creator;
 
+    @KeywordField
+    @WorkField(displayName = "Status")
     protected Status status;
 
+    @WorkField(displayName = "Tenant")
     protected String tenant;
 
+    @KeywordField
+    @WorkField(displayName = "Priority")
     protected Priority priority;
 
-
+    @FullTextField
+    @WorkField(displayName = "Context")
     protected String context;
 
     protected String startEventId;
 
+    @WorkField(displayName = "Start Event")
     protected String startEventDescription;
     
+    @IndexedEmbedded //needed so that search can filter in only work with no owners
+    @GenericField(
+            name = "ownersIsEmpty",
+            valueBridge = @ValueBridgeRef(type = CollectionEmptyBridge.class), 
+            // Apply the bridge directly to the collection and not to its elements
+            // See https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#_disabling_container_extraction
+            extraction = @ContainerExtraction(extract = ContainerExtract.NO) 
+    )
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "work_id", referencedColumnName = "id")
     protected Set<BizUser> owners;
 
+    @KeywordField
+    @WorkField(displayName = "Worklist")
     protected String worklist;
 
+    @GenericField(valueBridge=@ValueBridgeRef(type = LocalDateTimeBridge.class))
+    @WorkField(displayName = "Worklist update time")
     protected LocalDateTime worklistUpdateTime;
 
+    @IndexedEmbedded //needed so that search can filter approvals without decision
+    @GenericField( 
+            name = "undecidedApprovals",
+            valueBridge = @ValueBridgeRef(type = UndecidedApprovalBridge.class), 
+            // Apply the bridge directly to the collection and not to its elements
+            // See https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#_disabling_container_extraction
+            extraction = @ContainerExtraction(extract = ContainerExtract.NO) 
+    )
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "work_id", referencedColumnName = "id")
     protected Set<Approval> approvals = new HashSet<>();

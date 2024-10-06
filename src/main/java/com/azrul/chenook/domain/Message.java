@@ -4,6 +4,7 @@
  */
 package com.azrul.chenook.domain;
 
+import com.azrul.chenook.annotation.WorkField;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -32,12 +33,20 @@ public class Message {
     
     private Long parentId;
     private String context;
+    
+    @WorkField(displayName = "Sender")
     private String writerUserName;
+    
+    @WorkField(displayName = "Sender full name")
     private String fullName;
     
     private String createdBy;
     private LocalDateTime createdDateTime;
+    
+    @WorkField(displayName = "Message")
     private String message;
+    
+    @WorkField(displayName = "Status")
     private MessageStatus status;
     
     @ElementCollection(fetch = FetchType.EAGER)
