@@ -25,7 +25,7 @@ public class SearchIndexer {
     private EntityManager entityManager;
 
     @Transactional
-    @EventListener(ApplicationReadyEvent.class)
+    //@EventListener(ApplicationReadyEvent.class)
     public void startIndexing() {
          try {
              SearchSession session = Search.session(entityManager);

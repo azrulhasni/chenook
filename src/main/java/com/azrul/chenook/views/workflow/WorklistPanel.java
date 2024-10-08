@@ -6,6 +6,7 @@ package com.azrul.chenook.views.workflow;
 
 import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.config.WorkflowConfig;
+import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.BadgeUtils;
 import com.azrul.chenook.service.BizUserService;
@@ -185,7 +186,8 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             card.add(content);
             HorizontalLayout btnPanel = new HorizontalLayout();
             Button btnBookThis = new Button("Book this work", e -> {
-                work.getOwners().add(basicMapper.map(oidcUser));
+                BizUser buser = basicMapper.map(oidcUser);
+                work.addOwner(buser);
                 T w = workflowService.save(work);
                 showUpdateDialog.accept(this, null, w);
             });

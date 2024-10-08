@@ -7,6 +7,8 @@ package com.azrul.chenook.domain;
 import com.azrul.chenook.annotation.WorkField;
 import com.azrul.chenook.domain.bridge.CollectionEmptyBridge;
 import com.azrul.chenook.domain.bridge.LocalDateTimeBridge;
+import com.azrul.chenook.domain.bridge.PriorityBridge;
+import com.azrul.chenook.domain.bridge.StatusBridge;
 import com.azrul.chenook.domain.bridge.UndecidedApprovalBridge;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
@@ -36,6 +38,7 @@ import java.util.Set;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 import org.hibernate.envers.RelationTargetAuditMode;
+import org.hibernate.search.engine.backend.types.ObjectStructure;
 import org.hibernate.search.mapper.pojo.bridge.mapping.annotation.ValueBridgeRef;
 import org.hibernate.search.mapper.pojo.extractor.mapping.annotation.ContainerExtract;
 import org.hibernate.search.mapper.pojo.extractor.mapping.annotation.ContainerExtraction;
@@ -69,14 +72,14 @@ public abstract class WorkItem {
     @WorkField(displayName = "Creator")
     protected String creator;
 
-    @KeywordField
+    @KeywordField(valueBridge = @ValueBridgeRef(type=StatusBridge.class))
     @WorkField(displayName = "Status")
     protected Status status;
 
     @WorkField(displayName = "Tenant")
     protected String tenant;
 
-    @KeywordField
+    @KeywordField(valueBridge = @ValueBridgeRef(type=PriorityBridge.class))
     @WorkField(displayName = "Priority")
     protected Priority priority;
 
@@ -89,36 +92,30 @@ public abstract class WorkItem {
     @WorkField(displayName = "Start Event")
     protected String startEventDescription;
     
-    @IndexedEmbedded //needed so that search can filter in only work with no owners
+    @IndexedEmbedded(structure = ObjectStructure.NESTED)
     @GenericField(
             name = "ownersIsEmpty",
             valueBridge = @ValueBridgeRef(type = CollectionEmptyBridge.class), 
-            // Apply the bridge directly to the collection and not to its elements
-            // See https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#_disabling_container_extraction
             extraction = @ContainerExtraction(extract = ContainerExtract.NO) 
     )
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name = "work_id", referencedColumnName = "id")
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy="workItem")
     protected Set<BizUser> owners;
 
     @KeywordField
     @WorkField(displayName = "Worklist")
     protected String worklist;
 
-    @GenericField(valueBridge=@ValueBridgeRef(type = LocalDateTimeBridge.class))
+    @GenericField
     @WorkField(displayName = "Worklist update time")
     protected LocalDateTime worklistUpdateTime;
 
-    @IndexedEmbedded //needed so that search can filter approvals without decision
+    @IndexedEmbedded(structure = ObjectStructure.FLATTENED)//needed so that search can filter approvals without decision
     @GenericField( 
             name = "undecidedApprovals",
             valueBridge = @ValueBridgeRef(type = UndecidedApprovalBridge.class), 
-            // Apply the bridge directly to the collection and not to its elements
-            // See https://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#_disabling_container_extraction
             extraction = @ContainerExtraction(extract = ContainerExtract.NO) 
     )
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name = "work_id", referencedColumnName = "id")
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy="workItem")
     protected Set<Approval> approvals = new HashSet<>();
 
     protected String supervisorApprovalSeeker;
@@ -126,8 +123,8 @@ public abstract class WorkItem {
     protected String supervisorApprovalLevel;
 
     @NotAudited //cannot be auditted. if not, WorkItem.id (hist_work_id) will be compulsorry when creating audit and when there is no historical approval, it should not
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL) //do not cascade. Will create problem due to 2 fields pointing to the same type i.e. Approvals
-    @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy="workItem") //do not cascade. Will create problem due to 2 fields pointing to the same type i.e. Approvals
+    //@JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
     protected Set<Approval> historicalApprovals = new HashSet<>();
     
     @ElementCollection(fetch = FetchType.EAGER)
@@ -319,6 +316,9 @@ public abstract class WorkItem {
      * @param owners the owners to set
      */
     public void setOwners(Set<BizUser> owners) {
+        for (BizUser owner:owners){
+            owner.setWorkItem(this);
+        }
         this.owners = owners;
     }
 
@@ -366,6 +366,16 @@ public abstract class WorkItem {
      */
     public void setProperties(Map<String, Serializable> properties) {
         this.properties = properties;
+    }
+    
+    public void addApproval(Approval approval){
+        approval.setWorkItem(this);
+        this.getApprovals().add(approval);
+    }
+    
+    public void addOwner(BizUser bizUser){
+        bizUser.setWorkItem(this);
+        this.getOwners().add(bizUser);
     }
 
 }

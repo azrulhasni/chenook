@@ -32,6 +32,8 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import org.hibernate.envers.Audited;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -44,6 +46,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  */
 @Entity
 @Audited
+@Indexed
 @EntityListeners(AuditingEntityListener.class)
 public class Applicant {
 
@@ -57,12 +60,14 @@ public class Applicant {
     
     @NotBlankValue
     @WorkField(displayName = "Full name")
+    @FullTextField
     private String fullName;
     
     @NotBlankValue
     @Matcher(regexp="((\\d{2}(?!0229))|([02468][048]|[13579][26])(?=0229))(0[1-9]|1[0-2])(0[1-9]|[12]\\d|(?<!02)30|(?<!02|4|6|9|11)31)\\-(\\d{2})\\-(\\d{4})",
             message="The NRIC number must of correct format (E.g. 781231-14-0123")
     @WorkField(displayName = "NRIC number")
+    @FullTextField
     private String icNumber;
     
     @NotNullValue
@@ -75,11 +80,13 @@ public class Applicant {
     
     @NotBlankValue
     @WorkField(displayName = "Phone number")
+    @FullTextField
     private String phoneNumber;
     
     @NotBlankValue
     @Matcher(regexp="([!#-'*+/-9=?A-Z^-~-]+(\\.[!#-'*+/-9=?A-Z^-~-]+)*|\"([]!#-[^-~ \\t]|(\\\\[\\t -~]))+\")@([!#-'*+/-9=?A-Z^-~-]+(\\.[!#-'*+/-9=?A-Z^-~-]+)*|\\[[\\t -Z^-~]*])",message="The email address must be valid")
     @WorkField(displayName = "Email")
+    @FullTextField
     private String email;
 
     private Boolean main;

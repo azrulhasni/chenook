@@ -62,6 +62,8 @@ import org.hibernate.SessionFactory;
 import org.hibernate.mapping.Column;
 import org.hibernate.metamodel.MappingMetamodel;
 import org.hibernate.persister.entity.AbstractEntityPersister;
+import org.hibernate.search.engine.search.common.ValueConvert;
+import org.hibernate.search.engine.search.common.ValueModel;
 import org.hibernate.search.engine.search.predicate.SearchPredicate;
 import org.hibernate.search.engine.search.predicate.dsl.SearchPredicateFactory;
 import org.hibernate.search.engine.search.query.SearchResult;
@@ -504,7 +506,8 @@ public abstract class WorkflowService<T extends WorkItem> {
                             approverLookup.lookupApprover((T) root, root.getSupervisorApprovalSeeker())
                                     .ifPresent(approver -> {
                                         root.getOwners().clear();
-                                        root.getOwners().add(approver);
+                                        root.addOwner(approver);
+                                        //root.getOwners().add(approver);
 //                                        if (approver.getUsername() != null) {
 //                                            root.getOwners().add(approver.getUsername());
 //                                        } else {
@@ -533,7 +536,8 @@ public abstract class WorkflowService<T extends WorkItem> {
             } else {//not approved. Reassign back to original user
                 root.getOwners().clear();
                 BizUser supervisorApprovalSeeker = bizUserService.getUser(root.getSupervisorApprovalSeeker());
-                root.getOwners().add(supervisorApprovalSeeker);
+                //root.getOwners().add(supervisorApprovalSeeker);
+                root.addOwner(supervisorApprovalSeeker);
 
                 archiveApprovals(root);
                 root.setSupervisorApprovalLevel(null);
@@ -553,7 +557,8 @@ public abstract class WorkflowService<T extends WorkItem> {
                 }).findAny().ifPresent(approverLookup -> {
                     approverLookup.lookupApprover((T) root, user.getUsername()).ifPresent(approver -> {
                         root.getOwners().clear();
-                        root.getOwners().add(approver);
+                        root.addOwner(approver);
+                        //root.getOwners().add(approver);
 //                                        if (approver.getUsername() != null) {
 //                                            root.getOwners().add(approver.getUsername());
 //                                        } else {
@@ -618,7 +623,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         approval.setFirstName(firstName);
         approval.setLastName(lastName);
         approval.setWorklist(nextActivityId);
-        work.getApprovals().add(approval);
+        work.addApproval(approval);
     }
 
     private Boolean isSupervisorNeeded(T work) {
@@ -895,7 +900,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                             f
                             -> f.and(
                                     f.match().fields(fieldNames.toArray(new String[]{}))
-                                            .matching(searchTermProvider.getSearchTerm())
+                                            .matching(searchTermProvider.getSearchTerm(),ValueModel.INDEX)
                                             .toPredicate(),
                                     whereOwnersOrUndecidedApprovalsContains(f, username)
                             )
@@ -933,7 +938,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                             .where(
                                     f-> f.and(
                                             f.match().fields(fieldNames.toArray(new String[]{}))
-                                                    .matching(searchTermProvider.getSearchTerm())
+                                                    .matching(searchTermProvider.getSearchTerm(),ValueConvert.NO)
                                                     .toPredicate(),
                                             whereOwnersOrUndecidedApprovalsContains(f, username)
                             ))
@@ -972,7 +977,7 @@ public abstract class WorkflowService<T extends WorkItem> {
             Long hitCount = searchSession.search(workItemClass)
                     .where(f -> f.and(
                     f.match().fields(fieldNames.toArray(new String[]{}))
-                            .matching(searchTermProvider.getSearchTerm())
+                            .matching(searchTermProvider.getSearchTerm(),ValueModel.INDEX)
                             .toPredicate(),
                     whereCreatorEquals(f, username)
             )
@@ -1091,7 +1096,7 @@ public abstract class WorkflowService<T extends WorkItem> {
             String username
     ) {
         return f.and(
-                f.match().field("owners").field("username").matching(username),
+                f.match().field("owners.username").matching(username),
                 f.match().field("undecidedApprovals").matching(true)
         ).toPredicate();
     }

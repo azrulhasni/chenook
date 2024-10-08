@@ -40,6 +40,7 @@ import com.azrul.chenook.annotation.NumberRange;
 import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.domain.bridge.LocalDateTimeBridge;
 import java.text.NumberFormat;
+import org.hibernate.search.engine.backend.types.ObjectStructure;
 import org.hibernate.search.mapper.pojo.bridge.mapping.annotation.ValueBridgeRef;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
@@ -107,7 +108,7 @@ public class FinApplication extends WorkItem {
     private MonetaryAmount financingRequested;
 
     @NotNullValue
-    @GenericField(valueBridge = @ValueBridgeRef(type=LocalDateTimeBridge.class))
+    @GenericField
     @WorkField(displayName = "Application date", sortable=true)
     @DateTimeFormat(format = "${finapp.datetime.format}")
     private LocalDateTime applicationDate;
@@ -121,7 +122,7 @@ public class FinApplication extends WorkItem {
 
 //    @Transient 
 //    protected NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance();
-    @IndexedEmbedded
+    @IndexedEmbedded(structure = ObjectStructure.FLATTENED)
     @OneToMany(mappedBy = "finApplication", orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<Applicant> applicants = new HashSet<>();
 
@@ -258,12 +259,14 @@ public class FinApplication extends WorkItem {
     }
 
     @Override
+    //@GenericField
     @WorkField(displayName = "Worklist Last Update")
     public LocalDateTime getWorklistUpdateTime() {
         return super.getWorklistUpdateTime();
     }
     
     @Override
+    //@KeywordField
     @WorkField(displayName = "Status", sortable=true)
     public Status getStatus() {
         return super.getStatus();

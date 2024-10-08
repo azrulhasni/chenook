@@ -10,9 +10,13 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import org.hibernate.envers.Audited;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -21,21 +25,26 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  */
 @Entity
 @Audited
+@Indexed
 @EntityListeners(AuditingEntityListener.class)
 public class Approval {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     
+    @FullTextField
     @WorkField(displayName = "User name")
     private String username;
     
+    @FullTextField
     @WorkField(displayName = "First name")
     private String firstName;
     
+    @FullTextField
     @WorkField(displayName = "Last name")
     private String lastName;
     
+    @WorkField(displayName = "Approval worklist")
     private String worklist;
     
     @WorkField(displayName = "Approved")
@@ -43,7 +52,17 @@ public class Approval {
     
     @WorkField(displayName = "Approval date")
     private LocalDateTime approvalDateTime;
-
+    
+    @ManyToOne
+    @JoinColumn(name = "work_id", referencedColumnName = "id")
+    private WorkItem workItem;
+    
+    @ManyToOne
+    @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
+    private WorkItem historicalWorkItem;
+    
+    
+    
     /**
      * @return the id
      */
@@ -162,6 +181,34 @@ public class Approval {
      */
     public void setWorklist(String worklist) {
         this.worklist = worklist;
+    }
+
+    /**
+     * @return the workItem
+     */
+    public WorkItem getWorkItem() {
+        return workItem;
+    }
+
+    /**
+     * @param workItem the workItem to set
+     */
+    public void setWorkItem(WorkItem workItem) {
+        this.workItem = workItem;
+    }
+
+    /**
+     * @return the historicalWorkItem
+     */
+    public WorkItem getHistoricalWorkItem() {
+        return historicalWorkItem;
+    }
+
+    /**
+     * @param historicalWorkItem the historicalWorkItem to set
+     */
+    public void setHistoricalWorkItem(WorkItem historicalWorkItem) {
+        this.historicalWorkItem = historicalWorkItem;
     }
     
 }

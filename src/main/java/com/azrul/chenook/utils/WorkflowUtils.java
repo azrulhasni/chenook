@@ -261,6 +261,7 @@ public class WorkflowUtils {
                fieldAnnoMap
                 .entrySet()
                 .stream()
+                .filter(e->String.class.equals(e.getKey().getType()))
                 .map(e->e.getKey().getName())
                 .collect(Collectors.toSet()));
        Map<Field,  Map<String, Object>> fieldAnnoMap2 = getAnnotations(KeywordField.class, itemClass,true);
@@ -268,6 +269,7 @@ public class WorkflowUtils {
                fieldAnnoMap2
                 .entrySet()
                 .stream()
+                .filter(e->String.class.equals(e.getKey().getType()))
                 .map(e->e.getKey().getName())
                 .collect(Collectors.toSet()));
        Map<Field,  Map<String, Object>> fieldAnnoMap3 = getAnnotations(GenericField.class, itemClass,true);
@@ -275,6 +277,7 @@ public class WorkflowUtils {
                fieldAnnoMap3
                 .entrySet()
                 .stream()
+                 .filter(e->String.class.equals(e.getKey().getType()))
                 .map(e->e.getKey().getName())
                 .collect(Collectors.toSet()));
        return fieldNames;

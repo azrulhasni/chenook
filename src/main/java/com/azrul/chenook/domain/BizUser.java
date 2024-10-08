@@ -10,9 +10,13 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import java.util.ArrayList;
 import java.util.List;
 import org.hibernate.envers.Audited;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -21,6 +25,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  */
 @Entity
 @Audited 
+@Indexed
 @EntityListeners(AuditingEntityListener.class)
 public class BizUser {
 
@@ -34,18 +39,23 @@ public class BizUser {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     
+    @FullTextField
     @WorkField(displayName = "Username")
     private String username;
      
+    @FullTextField
     @WorkField(displayName = "First name")
     private String firstName;
     
+    @FullTextField
     @WorkField(displayName = "Last name")
     private String lastName;
     
+    @FullTextField
     @WorkField(displayName = "Email")
     private String email;
     
+    @FullTextField
     @WorkField(displayName = "Manager")
     private String manager;
     
@@ -57,6 +67,10 @@ public class BizUser {
     
     @WorkField(displayName = "Enabled")
     private Boolean enabled;
+    
+    @ManyToOne
+    @JoinColumn(name = "work_id", referencedColumnName = "id")
+    private WorkItem workItem;
 
     /**
      * @return the username
@@ -191,6 +205,20 @@ public class BizUser {
      */
     public void setId(Long id) {
         this.id = id;
+    }
+
+    /**
+     * @return the work
+     */
+    public WorkItem getWorkItem() {
+        return workItem;
+    }
+
+    /**
+     * @param work the work to set
+     */
+    public void setWorkItem(WorkItem work) {
+        this.workItem = work;
     }
 
    
