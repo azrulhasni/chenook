@@ -45,9 +45,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.KeywordField;
+//import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+//import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
+//import org.hibernate.search.mapper.pojo.mapping.definition.annotation.KeywordField;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -254,34 +254,34 @@ public class WorkflowUtils {
        
     }
     
-    public static <T> Set<String> getSearchFields(Class<T> itemClass) {
-       Set<String> fieldNames = new HashSet<>();
-       Map<Field,  Map<String, Object>> fieldAnnoMap = getAnnotations(FullTextField.class, itemClass,true);
-       fieldNames.addAll(
-               fieldAnnoMap
-                .entrySet()
-                .stream()
-                .filter(e->String.class.equals(e.getKey().getType()))
-                .map(e->e.getKey().getName())
-                .collect(Collectors.toSet()));
-       Map<Field,  Map<String, Object>> fieldAnnoMap2 = getAnnotations(KeywordField.class, itemClass,true);
-       fieldNames.addAll(
-               fieldAnnoMap2
-                .entrySet()
-                .stream()
-                .filter(e->String.class.equals(e.getKey().getType()))
-                .map(e->e.getKey().getName())
-                .collect(Collectors.toSet()));
-       Map<Field,  Map<String, Object>> fieldAnnoMap3 = getAnnotations(GenericField.class, itemClass,true);
-       fieldNames.addAll(
-               fieldAnnoMap3
-                .entrySet()
-                .stream()
-                 .filter(e->String.class.equals(e.getKey().getType()))
-                .map(e->e.getKey().getName())
-                .collect(Collectors.toSet()));
-       return fieldNames;
-    }
+//    public static <T> Set<String> getSearchFields(Class<T> itemClass) {
+//       Set<String> fieldNames = new HashSet<>();
+//       Map<Field,  Map<String, Object>> fieldAnnoMap = getAnnotations(FullTextField.class, itemClass,true);
+//       fieldNames.addAll(
+//               fieldAnnoMap
+//                .entrySet()
+//                .stream()
+//                .filter(e->String.class.equals(e.getKey().getType()))
+//                .map(e->e.getKey().getName())
+//                .collect(Collectors.toSet()));
+//       Map<Field,  Map<String, Object>> fieldAnnoMap2 = getAnnotations(KeywordField.class, itemClass,true);
+//       fieldNames.addAll(
+//               fieldAnnoMap2
+//                .entrySet()
+//                .stream()
+//                .filter(e->String.class.equals(e.getKey().getType()))
+//                .map(e->e.getKey().getName())
+//                .collect(Collectors.toSet()));
+//       Map<Field,  Map<String, Object>> fieldAnnoMap3 = getAnnotations(GenericField.class, itemClass,true);
+//       fieldNames.addAll(
+//               fieldAnnoMap3
+//                .entrySet()
+//                .stream()
+//                 .filter(e->String.class.equals(e.getKey().getType()))
+//                .map(e->e.getKey().getName())
+//                .collect(Collectors.toSet()));
+//       return fieldNames;
+//    }
     
      public static List<Validator> applyMoneyRange(
             Map<Class<? extends Annotation>, Map<String, Object>> annoFieldDisplayMap, 

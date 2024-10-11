@@ -14,7 +14,6 @@ import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.repository.WorkItemRepository;
 import com.azrul.chenook.script.Expression;
 import com.azrul.chenook.script.Scripting;
-import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.views.workflow.SearchTermProvider;
 import com.azrul.chenook.workflow.model.Activity;
@@ -33,13 +32,8 @@ import com.azrul.chenook.workflow.model.XorUnanimousApprovalActivity;
 import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
-import com.vaadin.flow.data.provider.QuerySortOrder;
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.SetJoin;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -55,21 +49,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.StringUtils;
-import org.hibernate.SessionFactory;
-import org.hibernate.mapping.Column;
-import org.hibernate.metamodel.MappingMetamodel;
-import org.hibernate.persister.entity.AbstractEntityPersister;
-import org.hibernate.search.engine.search.common.ValueConvert;
-import org.hibernate.search.engine.search.common.ValueModel;
-import org.hibernate.search.engine.search.predicate.SearchPredicate;
-import org.hibernate.search.engine.search.predicate.dsl.SearchPredicateFactory;
-import org.hibernate.search.engine.search.query.SearchResult;
-import org.hibernate.search.engine.search.sort.SearchSort;
-import org.hibernate.search.mapper.orm.Search;
-import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -888,25 +868,25 @@ public abstract class WorkflowService<T extends WorkItem> {
             SearchTermProvider searchTermProvider
     ) {
 
-        if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+//        if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
             Long count = getWorkItemRepo().count(whereOwnersOrUndecidedApprovalsContains(username));
             return count.intValue();
-        } else {
-            EntityManager em = emFactory.createEntityManager();
-            SearchSession searchSession = Search.session(em);
-            Set<String> fieldNames = WorkflowUtils.getSearchFields(workItemClass);
-            Long hitCounts = searchSession.search(workItemClass)
-                    .where(
-                            f
-                            -> f.and(
-                                    f.match().fields(fieldNames.toArray(new String[]{}))
-                                            .matching(searchTermProvider.getSearchTerm(),ValueModel.INDEX)
-                                            .toPredicate(),
-                                    whereOwnersOrUndecidedApprovalsContains(f, username)
-                            )
-                    ).fetchTotalHitCount();
-            return hitCounts.intValue();
-        }
+//        } else {
+//            EntityManager em = emFactory.createEntityManager();
+//            SearchSession searchSession = Search.session(em);
+//            Set<String> fieldNames = WorkflowUtils.getSearchFields(workItemClass);
+//            Long hitCounts = searchSession.search(workItemClass)
+//                    .where(
+//                            f
+//                            -> f.and(
+//                                    f.match().fields(fieldNames.toArray(new String[]{}))
+//                                            .matching(searchTermProvider.getSearchTerm())
+//                                            .toPredicate(),
+//                                    whereOwnersOrUndecidedApprovalsContains(f, username)
+//                            )
+//                    ).fetchTotalHitCount();
+//            return hitCounts.intValue();
+//        }
     }
 
     public DataProvider getWorkByOwner(
@@ -922,7 +902,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                 Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
                 String sorted = pageNav.getSortField();
                 query.getPage();
-                if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+//                if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
                     Page<T> finapps = getWorkItemRepo().findAll(whereOwnersOrUndecidedApprovalsContains(username),
                             PageRequest.of(
                                     pageNav.getPage() - 1,
@@ -930,22 +910,22 @@ public abstract class WorkflowService<T extends WorkItem> {
                                     Sort.by(sort, sorted))
                     );
                     return finapps.stream();
-                } else {
-                    EntityManager em = emFactory.createEntityManager();
-                    SearchSession searchSession = Search.session(em);
-                    Set<String> fieldNames = WorkflowUtils.getSearchFields(workItemClass);
-                    SearchResult<T> result = searchSession.search(workItemClass)
-                            .where(
-                                    f-> f.and(
-                                            f.match().fields(fieldNames.toArray(new String[]{}))
-                                                    .matching(searchTermProvider.getSearchTerm(),ValueConvert.NO)
-                                                    .toPredicate(),
-                                            whereOwnersOrUndecidedApprovalsContains(f, username)
-                            ))
-                    .sort(f->f.field(sorted))
-                    .fetch(pageNav.getPage() - 1, pageNav.getMaxCountPerPage());
-                    return result.hits().stream();
-                }
+//                } else {
+//                    EntityManager em = emFactory.createEntityManager();
+//                    SearchSession searchSession = Search.session(em);
+//                    Set<String> fieldNames = WorkflowUtils.getSearchFields(workItemClass);
+//                    SearchResult<T> result = searchSession.search(workItemClass)
+//                            .where(
+//                                    f-> f.and(
+//                                            f.match().fields(fieldNames.toArray(new String[]{}))
+//                                                    .matching(searchTermProvider.getSearchTerm())
+//                                                    .toPredicate(),
+//                                            whereOwnersOrUndecidedApprovalsContains(f, username)
+//                            ))
+//                    .sort(f->f.field(sorted))
+//                    .fetch(pageNav.getPage() - 1, pageNav.getMaxCountPerPage());
+//                    return result.hits().stream();
+//                }
             }
 
             @Override
@@ -967,23 +947,23 @@ public abstract class WorkflowService<T extends WorkItem> {
             String username, 
             SearchTermProvider searchTermProvider
     ) {
-        if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+//        if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
             Long count = getWorkItemRepo().count(whereCreatorEquals(username));
             return count.intValue();
-        } else {
-            EntityManager em = emFactory.createEntityManager();
-            SearchSession searchSession = Search.session(em);
-            Set<String> fieldNames = WorkflowUtils.getSearchFields(workItemClass);
-            Long hitCount = searchSession.search(workItemClass)
-                    .where(f -> f.and(
-                    f.match().fields(fieldNames.toArray(new String[]{}))
-                            .matching(searchTermProvider.getSearchTerm(),ValueModel.INDEX)
-                            .toPredicate(),
-                    whereCreatorEquals(f, username)
-            )
-                    ).fetchTotalHitCount();
-            return hitCount.intValue();
-        }
+//        } else {
+//            EntityManager em = emFactory.createEntityManager();
+//            SearchSession searchSession = Search.session(em);
+//            Set<String> fieldNames = WorkflowUtils.getSearchFields(workItemClass);
+//            Long hitCount = searchSession.search(workItemClass)
+//                    .where(f -> f.and(
+//                    f.match().fields(fieldNames.toArray(new String[]{}))
+//                            .matching(searchTermProvider.getSearchTerm())
+//                            .toPredicate(),
+//                    whereCreatorEquals(f, username)
+//            )
+//                    ).fetchTotalHitCount();
+//            return hitCount.intValue();
+//        }
     }
 
     public DataProvider getWorkByCreator(
@@ -998,7 +978,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                 Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
                 String sorted = pageNav.getSortField();
                 query.getPage();
-                if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+//                if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
                     Page<T> finapps = getWorkItemRepo().findAll(
                             whereCreatorEquals(username),
                             PageRequest.of(
@@ -1007,22 +987,22 @@ public abstract class WorkflowService<T extends WorkItem> {
                                     Sort.by(sort, sorted))
                     );
                     return finapps.stream();
-                } else {
-                    EntityManager em = emFactory.createEntityManager();
-                    SearchSession searchSession = Search.session(em);
-                    Set<String> fieldNames = WorkflowUtils.getSearchFields(workItemClass);
-                    SearchResult<T> result = searchSession.search(workItemClass)
-                            .where(f -> f.and(
-                            f.match().fields(fieldNames.toArray(new String[]{}))
-                                    .matching(searchTermProvider.getSearchTerm())
-                                    .toPredicate(),
-                            whereCreatorEquals(f, username)
-                    ))
-                    .sort(f->f.field(sorted))
-                    .fetch(pageNav.getPage() - 1, pageNav.getMaxCountPerPage());
-                    return result.hits().stream();
-
-                }
+//                } else {
+//                    EntityManager em = emFactory.createEntityManager();
+//                    SearchSession searchSession = Search.session(em);
+//                    Set<String> fieldNames = WorkflowUtils.getSearchFields(workItemClass);
+//                    SearchResult<T> result = searchSession.search(workItemClass)
+//                            .where(f -> f.and(
+//                            f.match().fields(fieldNames.toArray(new String[]{}))
+//                                    .matching(searchTermProvider.getSearchTerm())
+//                                    .toPredicate(),
+//                            whereCreatorEquals(f, username)
+//                    ))
+//                    .sort(f->f.field(sorted))
+//                    .fetch(pageNav.getPage() - 1, pageNav.getMaxCountPerPage());
+//                    return result.hits().stream();
+//
+//                }
             }
 
             @Override
@@ -1091,15 +1071,15 @@ public abstract class WorkflowService<T extends WorkItem> {
         };
     }
 
-    private SearchPredicate whereOwnersOrUndecidedApprovalsContains(
-            SearchPredicateFactory f,
-            String username
-    ) {
-        return f.and(
-                f.match().field("owners.username").matching(username),
-                f.match().field("undecidedApprovals").matching(true)
-        ).toPredicate();
-    }
+//    private SearchPredicate whereOwnersOrUndecidedApprovalsContains(
+//            SearchPredicateFactory f,
+//            String username
+//    ) {
+//        return f.and(
+//                f.match().field("owners.username").matching(username),
+//                f.match().field("undecidedApprovals").matching(true)
+//        ).toPredicate();
+//    }
 
     private Specification<T> whereCreatorEquals(String username) {
         return (workItem, cq, cb) -> {
@@ -1107,14 +1087,14 @@ public abstract class WorkflowService<T extends WorkItem> {
         };
     }
 
-    private SearchPredicate whereCreatorEquals(
-            SearchPredicateFactory f,
-            String username
-    ) {
-        return f.and(
-                f.match().field(" creator").matching(username)
-        ).toPredicate();
-    }
+//    private SearchPredicate whereCreatorEquals(
+//            SearchPredicateFactory f,
+//            String username
+//    ) {
+//        return f.and(
+//                f.match().field(" creator").matching(username)
+//        ).toPredicate();
+//    }
 
     private Specification<T> whereNoOwnerAndWorklistEquals(String worklist) {
         return (workItem, cq, cb) -> {
@@ -1126,15 +1106,15 @@ public abstract class WorkflowService<T extends WorkItem> {
         };
     }
 
-    protected SearchPredicate whereNoOwnerAndWorklistEquals(
-            SearchPredicateFactory f,
-            String worklist
-    ) {
-        return f.and(
-                f.match().field("worklist").matching(worklist),
-                f.match().field("ownersIsEmpty").matching(true)
-        ).toPredicate();
-    }
+//    protected SearchPredicate whereNoOwnerAndWorklistEquals(
+//            SearchPredicateFactory f,
+//            String worklist
+//    ) {
+//        return f.and(
+//                f.match().field("worklist").matching(worklist),
+//                f.match().field("ownersIsEmpty").matching(true)
+//        ).toPredicate();
+//    }
 
     /**
      * @return the workItemRepo

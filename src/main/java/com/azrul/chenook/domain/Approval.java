@@ -5,6 +5,12 @@
 package com.azrul.chenook.domain;
 
 import com.azrul.chenook.annotation.WorkField;
+import com.azrul.chenook.service.serializer.LocalDateTimeJsonDeSerializer;
+import com.azrul.chenook.service.serializer.LocalDateTimeJsonSerializer;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -15,8 +21,6 @@ import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import org.hibernate.envers.Audited;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -25,22 +29,18 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  */
 @Entity
 @Audited
-@Indexed
 @EntityListeners(AuditingEntityListener.class)
 public class Approval {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     
-    @FullTextField
     @WorkField(displayName = "User name")
     private String username;
     
-    @FullTextField
     @WorkField(displayName = "First name")
     private String firstName;
     
-    @FullTextField
     @WorkField(displayName = "Last name")
     private String lastName;
     
@@ -50,16 +50,20 @@ public class Approval {
     @WorkField(displayName = "Approved")
     private Boolean approved;
     
+    @JsonSerialize(using = LocalDateTimeJsonSerializer.class)
+    @JsonDeserialize(using =LocalDateTimeJsonDeSerializer.class)
     @WorkField(displayName = "Approval date")
     private LocalDateTime approvalDateTime;
     
-    @ManyToOne
-    @JoinColumn(name = "work_id", referencedColumnName = "id")
-    private WorkItem workItem;
+//    @JsonBackReference
+//    @ManyToOne
+//    @JoinColumn(name = "work_id", referencedColumnName = "id")
+//    private WorkItem workItem;
     
-    @ManyToOne
-    @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
-    private WorkItem historicalWorkItem;
+//    @JsonIgnoreProperties
+//    @ManyToOne
+//    @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
+//    private WorkItem historicalWorkItem;
     
     
     
@@ -176,39 +180,39 @@ public class Approval {
         return worklist;
     }
 
-    /**
-     * @param worklist the worklist to set
-     */
+//    /**
+//     * @param worklist the worklist to set
+//     */
     public void setWorklist(String worklist) {
         this.worklist = worklist;
     }
-
-    /**
-     * @return the workItem
-     */
-    public WorkItem getWorkItem() {
-        return workItem;
-    }
-
-    /**
-     * @param workItem the workItem to set
-     */
-    public void setWorkItem(WorkItem workItem) {
-        this.workItem = workItem;
-    }
-
-    /**
-     * @return the historicalWorkItem
-     */
-    public WorkItem getHistoricalWorkItem() {
-        return historicalWorkItem;
-    }
-
-    /**
-     * @param historicalWorkItem the historicalWorkItem to set
-     */
-    public void setHistoricalWorkItem(WorkItem historicalWorkItem) {
-        this.historicalWorkItem = historicalWorkItem;
-    }
+//
+//    /**
+//     * @return the workItem
+//     */
+//    public WorkItem getWorkItem() {
+//        return workItem;
+//    }
+//
+//    /**
+//     * @param workItem the workItem to set
+//     */
+//    public void setWorkItem(WorkItem workItem) {
+//        this.workItem = workItem;
+//    }
+//
+//    /**
+//     * @return the historicalWorkItem
+//     */
+//    public WorkItem getHistoricalWorkItem() {
+//        return historicalWorkItem;
+//    }
+//
+//    /**
+//     * @param historicalWorkItem the historicalWorkItem to set
+//     */
+//    public void setHistoricalWorkItem(WorkItem historicalWorkItem) {
+//        this.historicalWorkItem = historicalWorkItem;
+//    }
     
 }

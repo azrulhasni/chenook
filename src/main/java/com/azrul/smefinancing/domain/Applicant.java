@@ -8,8 +8,12 @@ import com.azrul.chenook.annotation.Matcher;
 import com.azrul.chenook.annotation.NotBlankValue;
 import com.azrul.chenook.annotation.NotNullValue;
 import com.azrul.chenook.annotation.WorkField;
-import jakarta.persistence.Basic;
-import jakarta.persistence.CascadeType;
+import com.azrul.chenook.service.serializer.LocalDateTimeJsonDeSerializer;
+import com.azrul.chenook.service.serializer.LocalDateTimeJsonSerializer;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -20,20 +24,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapKeyColumn;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Transient;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import org.hibernate.envers.Audited;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -46,12 +43,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  */
 @Entity
 @Audited
-@Indexed
 @EntityListeners(AuditingEntityListener.class)
 public class Applicant {
-
-   
-    
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="id")
@@ -60,33 +53,26 @@ public class Applicant {
     
     @NotBlankValue
     @WorkField(displayName = "Full name")
-    @FullTextField
     private String fullName;
     
     @NotBlankValue
     @Matcher(regexp="((\\d{2}(?!0229))|([02468][048]|[13579][26])(?=0229))(0[1-9]|1[0-2])(0[1-9]|[12]\\d|(?<!02)30|(?<!02|4|6|9|11)31)\\-(\\d{2})\\-(\\d{4})",
             message="The NRIC number must of correct format (E.g. 781231-14-0123")
     @WorkField(displayName = "NRIC number")
-    @FullTextField
     private String icNumber;
     
     @NotNullValue
     @WorkField(displayName = "Date of birth")
     private LocalDate dateOfBirth;
     
-//    @NotBlankValue
-//    @WorkField(displayName = "Position")
-//    private String position;
-    
+
     @NotBlankValue
     @WorkField(displayName = "Phone number")
-    @FullTextField
     private String phoneNumber;
     
     @NotBlankValue
     @Matcher(regexp="([!#-'*+/-9=?A-Z^-~-]+(\\.[!#-'*+/-9=?A-Z^-~-]+)*|\"([]!#-[^-~ \\t]|(\\\\[\\t -~]))+\")@([!#-'*+/-9=?A-Z^-~-]+(\\.[!#-'*+/-9=?A-Z^-~-]+)*|\\[[\\t -Z^-~]*])",message="The email address must be valid")
     @WorkField(displayName = "Email")
-    @FullTextField
     private String email;
 
     private Boolean main;
@@ -94,33 +80,40 @@ public class Applicant {
     @WorkField(displayName = "Position")
     private ApplicantType type;
     
+    @JsonIgnoreProperties
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "applicant_error_mapping", 
       joinColumns = {@JoinColumn(name = "id", referencedColumnName = "id")})
     private Set<String> errors = new HashSet<>();
     
+    @JsonIgnoreProperties
     @Audited(withModifiedFlag = true)
     private Integer version;
 
+    @JsonIgnoreProperties
     @CreatedBy
     private String createdBy;
 
+    @JsonIgnoreProperties
     @CreatedDate
+     @JsonSerialize(using = LocalDateTimeJsonSerializer.class)
+    @JsonDeserialize(using =LocalDateTimeJsonDeSerializer.class)
     private LocalDateTime creationDate;
 
+    @JsonIgnoreProperties
     @LastModifiedBy
     private String lastModifiedBy;
 
     @LastModifiedDate
+     @JsonSerialize(using = LocalDateTimeJsonSerializer.class)
+    @JsonDeserialize(using =LocalDateTimeJsonDeSerializer.class)
     private LocalDateTime lastModifiedDate;
     
+//    @JsonBackReference
+//    @ManyToOne
+//    @JoinColumn(name = "fk_finApplication")
+//    private FinApplication finApplication;
     
-    @ManyToOne
-    @JoinColumn(name = "fk_finApplication")
-    private FinApplication finApplication;
-    
-//    @OneToMany(mappedBy = "applicant",orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-//    private Set<Attachment> documents = new HashSet<>();
 
     /**
      * @return the id
@@ -211,16 +204,16 @@ public class Applicant {
     /**
      * @return the business
      */
-    public FinApplication getFinApplication() {
-        return finApplication;
-    }
-
-    /**
-     * @param business the business to set
-     */
-    public void setFinApplication(FinApplication finApplication) {
-        this.finApplication = finApplication;
-    }
+//    public FinApplication getFinApplication() {
+//        return finApplication;
+//    }
+//
+//    /**
+//     * @param business the business to set
+//     */
+//    public void setFinApplication(FinApplication finApplication) {
+//        this.finApplication = finApplication;
+//    }
 
     /**
      * @return the version

@@ -5,6 +5,8 @@
 package com.azrul.chenook.domain;
 
 import com.azrul.chenook.annotation.WorkField;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -15,8 +17,6 @@ import jakarta.persistence.ManyToOne;
 import java.util.ArrayList;
 import java.util.List;
 import org.hibernate.envers.Audited;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -24,8 +24,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * @author azrul
  */
 @Entity
-@Audited 
-@Indexed
+@Audited
 @EntityListeners(AuditingEntityListener.class)
 public class BizUser {
 
@@ -39,38 +38,36 @@ public class BizUser {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     
-    @FullTextField
     @WorkField(displayName = "Username")
     private String username;
-     
-    @FullTextField
+
     @WorkField(displayName = "First name")
     private String firstName;
-    
-    @FullTextField
+
     @WorkField(displayName = "Last name")
     private String lastName;
     
-    @FullTextField
     @WorkField(displayName = "Email")
     private String email;
-    
-    @FullTextField
+
     @WorkField(displayName = "Manager")
     private String manager;
     
+    @JsonIgnoreProperties
     @WorkField(displayName = "Group")
     private List<String> groups = new ArrayList<>();
     
+    @JsonIgnoreProperties
     @WorkField(displayName = "Roles")
     private List<String> clientRoles = new ArrayList<>();
     
     @WorkField(displayName = "Enabled")
     private Boolean enabled;
     
-    @ManyToOne
-    @JoinColumn(name = "work_id", referencedColumnName = "id")
-    private WorkItem workItem;
+//    @JsonBackReference
+//    @ManyToOne
+//    @JoinColumn(name = "work_id", referencedColumnName = "id")
+//    private WorkItem workItem;
 
     /**
      * @return the username
@@ -132,7 +129,8 @@ public class BizUser {
         return username;
     }
     
-    public String getUserDispalyName() {
+    @JsonIgnoreProperties
+    public String userDispalyName() {
         String userDisplayName = getFirstName() + " " + getLastName() + " (" + getUsername() + ")";
         return userDisplayName;
     }
@@ -207,19 +205,19 @@ public class BizUser {
         this.id = id;
     }
 
-    /**
-     * @return the work
-     */
-    public WorkItem getWorkItem() {
-        return workItem;
-    }
-
-    /**
-     * @param work the work to set
-     */
-    public void setWorkItem(WorkItem work) {
-        this.workItem = work;
-    }
+//    /**
+//     * @return the work
+//     */
+//    public WorkItem getWorkItem() {
+//        return workItem;
+//    }
+//
+//    /**
+//     * @param work the work to set
+//     */
+//    public void setWorkItem(WorkItem work) {
+//        this.workItem = work;
+//    }
 
    
 }

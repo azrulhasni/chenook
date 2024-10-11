@@ -47,13 +47,13 @@ public class ApplicantService {
     @Transactional
     public Applicant save(Applicant applicant, FinApplication finapp){
         FinApplication fa = finappRepo.getReferenceById(finapp.getId());
-        applicant.setFinApplication(fa);
+        //applicant.setFinApplication(fa);
         Applicant a =  this.applicantRepo.save(applicant);
         return a;
     }
     
-     public void remove(Applicant applicant){
-        FinApplication finapp =  applicant.getFinApplication();
+     public void remove(FinApplication finapp,Applicant applicant){
+        //FinApplication finapp =  applicant.getFinApplication();
         finapp.getApplicants().remove(applicant);
         this.finappRepo.save(finapp);
         this.applicantRepo.delete(applicant);

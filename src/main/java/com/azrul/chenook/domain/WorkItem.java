@@ -5,11 +5,12 @@
 package com.azrul.chenook.domain;
 
 import com.azrul.chenook.annotation.WorkField;
-import com.azrul.chenook.domain.bridge.CollectionEmptyBridge;
-import com.azrul.chenook.domain.bridge.LocalDateTimeBridge;
-import com.azrul.chenook.domain.bridge.PriorityBridge;
-import com.azrul.chenook.domain.bridge.StatusBridge;
-import com.azrul.chenook.domain.bridge.UndecidedApprovalBridge;
+import com.azrul.chenook.service.serializer.LocalDateTimeJsonDeSerializer;
+import com.azrul.chenook.service.serializer.LocalDateTimeJsonSerializer;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -33,19 +34,13 @@ import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
-import org.hibernate.envers.RelationTargetAuditMode;
-import org.hibernate.search.engine.backend.types.ObjectStructure;
-import org.hibernate.search.mapper.pojo.bridge.mapping.annotation.ValueBridgeRef;
-import org.hibernate.search.mapper.pojo.extractor.mapping.annotation.ContainerExtract;
-import org.hibernate.search.mapper.pojo.extractor.mapping.annotation.ContainerExtraction;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
-import org.hibernate.search.mapper.pojo.mapping.definition.annotation.KeywordField;
+import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -59,6 +54,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
         discriminatorType = DiscriminatorType.STRING)
 @Audited
 @EntityListeners(AuditingEntityListener.class)
+@Document(indexName = "workitem")
 public abstract class WorkItem {
 
    
@@ -68,22 +64,18 @@ public abstract class WorkItem {
     @WorkField(displayName = "Id")
     protected Long id;
 
-    @FullTextField
     @WorkField(displayName = "Creator")
     protected String creator;
 
-    @KeywordField(valueBridge = @ValueBridgeRef(type=StatusBridge.class))
     @WorkField(displayName = "Status")
     protected Status status;
 
     @WorkField(displayName = "Tenant")
     protected String tenant;
 
-    @KeywordField(valueBridge = @ValueBridgeRef(type=PriorityBridge.class))
     @WorkField(displayName = "Priority")
     protected Priority priority;
 
-    @FullTextField
     @WorkField(displayName = "Context")
     protected String context;
 
@@ -92,39 +84,40 @@ public abstract class WorkItem {
     @WorkField(displayName = "Start Event")
     protected String startEventDescription;
     
-    @IndexedEmbedded(structure = ObjectStructure.NESTED)
-    @GenericField(
-            name = "ownersIsEmpty",
-            valueBridge = @ValueBridgeRef(type = CollectionEmptyBridge.class), 
-            extraction = @ContainerExtraction(extract = ContainerExtract.NO) 
-    )
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy="workItem")
+//    @JsonManagedReference
+//    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy="workItem")
+//    protected Set<BizUser> owners;
+    @JsonManagedReference
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "work_id", referencedColumnName = "id")
     protected Set<BizUser> owners;
 
-    @KeywordField
     @WorkField(displayName = "Worklist")
     protected String worklist;
 
-    @GenericField
+    @JsonSerialize(using = LocalDateTimeJsonSerializer.class)
+    @JsonDeserialize(using =LocalDateTimeJsonDeSerializer.class)
     @WorkField(displayName = "Worklist update time")
     protected LocalDateTime worklistUpdateTime;
 
-    @IndexedEmbedded(structure = ObjectStructure.FLATTENED)//needed so that search can filter approvals without decision
-    @GenericField( 
-            name = "undecidedApprovals",
-            valueBridge = @ValueBridgeRef(type = UndecidedApprovalBridge.class), 
-            extraction = @ContainerExtraction(extract = ContainerExtract.NO) 
-    )
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy="workItem")
+//    @JsonManagedReference
+//    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy="workItem")
+//    protected Set<Approval> approvals = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "work_id", referencedColumnName = "id")
     protected Set<Approval> approvals = new HashSet<>();
 
+    @JsonIgnoreProperties
     protected String supervisorApprovalSeeker;
 
+    @JsonIgnoreProperties
     protected String supervisorApprovalLevel;
 
+    @JsonIgnoreProperties
     @NotAudited //cannot be auditted. if not, WorkItem.id (hist_work_id) will be compulsorry when creating audit and when there is no historical approval, it should not
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy="workItem") //do not cascade. Will create problem due to 2 fields pointing to the same type i.e. Approvals
-    //@JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL/*, mappedBy="workItem"*/) //do not cascade. Will create problem due to 2 fields pointing to the same type i.e. Approvals
+    @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
     protected Set<Approval> historicalApprovals = new HashSet<>();
     
     @ElementCollection(fetch = FetchType.EAGER)
@@ -316,10 +309,26 @@ public abstract class WorkItem {
      * @param owners the owners to set
      */
     public void setOwners(Set<BizUser> owners) {
-        for (BizUser owner:owners){
-            owner.setWorkItem(this);
-        }
+//        for (BizUser owner:owners){
+//            owner.setWorkItem(this);
+//        }
         this.owners = owners;
+    }
+    
+    public Boolean getOwnerIsEmpty(){
+        return owners.isEmpty();
+    }
+    
+    public void setOwnerIsEmpty(Boolean b){
+        
+    }
+    
+    public List<String> getUndecidedApprovalsUsers(){
+        return approvals.stream().filter(a->a.getApproved()==null).map(a->a.getUsername()).collect(Collectors.toList());
+    }
+    
+    public void setUndecidedApprovalsUsers(List<String> users){
+    
     }
 
     /**
@@ -350,9 +359,10 @@ public abstract class WorkItem {
         this.worklistUpdateTime = worklistUpdateTime;
     }
 
+    
    
     
-    public abstract String getTitle();
+    public abstract String title();
     
      /**
      * @return the properties
@@ -369,12 +379,12 @@ public abstract class WorkItem {
     }
     
     public void addApproval(Approval approval){
-        approval.setWorkItem(this);
+        //approval.setWorkItem(this);
         this.getApprovals().add(approval);
     }
     
     public void addOwner(BizUser bizUser){
-        bizUser.setWorkItem(this);
+        //bizUser.setWorkItem(this);
         this.getOwners().add(bizUser);
     }
 
