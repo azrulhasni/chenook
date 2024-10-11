@@ -5,8 +5,6 @@
 package com.azrul.chenook.domain;
 
 import com.azrul.chenook.annotation.WorkField;
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -17,6 +15,7 @@ import jakarta.persistence.ManyToOne;
 import java.util.ArrayList;
 import java.util.List;
 import org.hibernate.envers.Audited;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -40,34 +39,32 @@ public class BizUser {
     
     @WorkField(displayName = "Username")
     private String username;
-
+     
     @WorkField(displayName = "First name")
     private String firstName;
-
+    
     @WorkField(displayName = "Last name")
     private String lastName;
     
     @WorkField(displayName = "Email")
     private String email;
-
+    
     @WorkField(displayName = "Manager")
     private String manager;
     
-    @JsonIgnoreProperties
     @WorkField(displayName = "Group")
     private List<String> groups = new ArrayList<>();
     
-    @JsonIgnoreProperties
     @WorkField(displayName = "Roles")
     private List<String> clientRoles = new ArrayList<>();
     
     @WorkField(displayName = "Enabled")
     private Boolean enabled;
     
-//    @JsonBackReference
-//    @ManyToOne
-//    @JoinColumn(name = "work_id", referencedColumnName = "id")
-//    private WorkItem workItem;
+    @Transient
+    @ManyToOne
+    @JoinColumn(name = "work_id", referencedColumnName = "id")
+    private WorkItem workItem;
 
     /**
      * @return the username
@@ -129,8 +126,7 @@ public class BizUser {
         return username;
     }
     
-    @JsonIgnoreProperties
-    public String userDispalyName() {
+    public String getUserDispalyName() {
         String userDisplayName = getFirstName() + " " + getLastName() + " (" + getUsername() + ")";
         return userDisplayName;
     }
@@ -205,19 +201,19 @@ public class BizUser {
         this.id = id;
     }
 
-//    /**
-//     * @return the work
-//     */
-//    public WorkItem getWorkItem() {
-//        return workItem;
-//    }
-//
-//    /**
-//     * @param work the work to set
-//     */
-//    public void setWorkItem(WorkItem work) {
-//        this.workItem = work;
-//    }
+    /**
+     * @return the work
+     */
+    public WorkItem getWorkItem() {
+        return workItem;
+    }
+
+    /**
+     * @param work the work to set
+     */
+    public void setWorkItem(WorkItem work) {
+        this.workItem = work;
+    }
 
    
 }

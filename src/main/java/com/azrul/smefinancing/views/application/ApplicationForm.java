@@ -289,7 +289,7 @@ public class ApplicationForm extends Dialog {
         Button btnSeeMore = new Button("See more", e -> buildApplicantDialog(app, finapp, user, gridApplicants));
         WorkflowAwareButton btnRemove = WorkflowAwareButton.create(group);
         btnRemove.setText("Remove");
-        btnRemove.addClickListener( e -> createRemoveApplicantDialog(finapp,app, applicantService, gridApplicants).open());
+        btnRemove.addClickListener( e -> createRemoveApplicantDialog(app, applicantService, gridApplicants).open());
 
         HorizontalLayout buttonPanel = new HorizontalLayout(btnSeeMore, btnRemove);
         card.add(buttonPanel);
@@ -297,7 +297,6 @@ public class ApplicationForm extends Dialog {
     }
 
     private ConfirmDialog createRemoveApplicantDialog(
-            FinApplication finapp,
             Applicant app,
             ApplicantService applicantService,
             Grid<Applicant> gridApplicants
@@ -308,7 +307,7 @@ public class ApplicationForm extends Dialog {
         dialog.setCancelable(true);
         dialog.setConfirmText("Remove");
         dialog.addConfirmListener(event -> {
-            applicantService.remove(finapp,app);
+            applicantService.remove(app);
             gridApplicants.getDataProvider().refreshAll();
 
             dialog.close();

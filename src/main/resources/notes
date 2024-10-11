@@ -2,28 +2,4 @@
 To include manager in Keycloak
 1) In User federation > Settings > Mapper details, create a user-attribute-ldap-mapper.
 2) map 'manager' to 'manager' in ldap
-3) tick 'Always Read Value From LDAP'   
-
-
-4) ELASTIC
-==========
-lasticsearch security features have been automatically configured!
-2024-10-11 14:03:46 ✅ Authentication is enabled and cluster connections are encrypted.
-2024-10-11 14:03:46 
-2024-10-11 14:03:46 ℹ️  Password for the elastic user (reset with `bin/elasticsearch-reset-password -u elastic`):
-2024-10-11 14:03:46   eqwabeWorxxjO+WXCsWO
-2024-10-11 14:03:46 
-2024-10-11 14:03:46 ℹ️  HTTP CA certificate SHA-256 fingerprint:
-2024-10-11 14:03:46   e07fa9727a77129bd7945d3f9dcf97afdc2e04c9099ef933c11123686cc0ff7a
-2024-10-11 14:03:46 
-2024-10-11 14:03:46 ℹ️  Configure Kibana to use this cluster:
-2024-10-11 14:03:46 • Run Kibana and click the configuration link in the terminal when Kibana starts.
-2024-10-11 14:03:46 • Copy the following enrollment token and paste it into Kibana in your browser (valid for the next 30 minutes):
-2024-10-11 14:03:46   eyJ2ZXIiOiI4LjE0LjAiLCJhZHIiOlsiMTcyLjE4LjAuMjo5MjAwIl0sImZnciI6ImUwN2ZhOTcyN2E3NzEyOWJkNzk0NWQzZjlkY2Y5N2FmZGMyZTA0YzkwOTllZjkzM2MxMTEyMzY4NmNjMGZmN2EiLCJrZXkiOiJRMHd0ZXBJQnlsRXN3R2NKQ0hKNjpRVGcxaVFOTVJScTZtN2VDMWxDUE1RIn0=
-2024-10-11 14:03:46 
-2024-10-11 14:03:46 ℹ️ Configure other nodes to join this cluster:
-2024-10-11 14:03:46 • Copy the following enrollment token and start new Elasticsearch nodes with `bin/elasticsearch --enrollment-token <token>` (valid for the next 30 minutes):
-2024-10-11 14:03:46   eyJ2ZXIiOiI4LjE0LjAiLCJhZHIiOlsiMTcyLjE4LjAuMjo5MjAwIl0sImZnciI6ImUwN2ZhOTcyN2E3NzEyOWJkNzk0NWQzZjlkY2Y5N2FmZGMyZTA0YzkwOTllZjkzM2MxMTEyMzY4NmNjMGZmN2EiLCJrZXkiOiJRa3d0ZXBJQnlsRXN3R2NKQ0hKUTpwVnFLbnpza1JHV3Y5Yk9haXJseWhnIn0=
-2024-10-11 14:03:46 
-2024-10-11 14:03:46   If you're running in Docker, copy the enrollment token and run:
-2024-10-11 14:03:46   `docker run -e "ENROLLMENT_TOKEN=<token>" docker.elastic.co/elasticsearch/elasticsearch:8.15.2` 
+3) tick 'Always Read Value From LDAP'    

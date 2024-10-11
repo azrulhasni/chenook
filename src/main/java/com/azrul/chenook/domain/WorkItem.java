@@ -5,12 +5,6 @@
 package com.azrul.chenook.domain;
 
 import com.azrul.chenook.annotation.WorkField;
-import com.azrul.chenook.service.serializer.LocalDateTimeJsonDeSerializer;
-import com.azrul.chenook.service.serializer.LocalDateTimeJsonSerializer;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -34,12 +28,11 @@ import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -47,14 +40,15 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  *
  * @author azrul
  */
+
 @Entity
 @Table(name = "work_item")
+@Document(indexName = "workitem")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "item_type",
         discriminatorType = DiscriminatorType.STRING)
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-@Document(indexName = "workitem")
 public abstract class WorkItem {
 
    
@@ -67,14 +61,17 @@ public abstract class WorkItem {
     @WorkField(displayName = "Creator")
     protected String creator;
 
+ 
     @WorkField(displayName = "Status")
     protected Status status;
 
     @WorkField(displayName = "Tenant")
     protected String tenant;
 
+
     @WorkField(displayName = "Priority")
     protected Priority priority;
+
 
     @WorkField(displayName = "Context")
     protected String context;
@@ -84,40 +81,27 @@ public abstract class WorkItem {
     @WorkField(displayName = "Start Event")
     protected String startEventDescription;
     
-//    @JsonManagedReference
-//    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy="workItem")
-//    protected Set<BizUser> owners;
-    @JsonManagedReference
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name = "work_id", referencedColumnName = "id")
+  
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy="workItem")
     protected Set<BizUser> owners;
 
     @WorkField(displayName = "Worklist")
     protected String worklist;
 
-    @JsonSerialize(using = LocalDateTimeJsonSerializer.class)
-    @JsonDeserialize(using =LocalDateTimeJsonDeSerializer.class)
+
     @WorkField(displayName = "Worklist update time")
     protected LocalDateTime worklistUpdateTime;
 
-//    @JsonManagedReference
-//    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy="workItem")
-//    protected Set<Approval> approvals = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name = "work_id", referencedColumnName = "id")
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy="workItem")
     protected Set<Approval> approvals = new HashSet<>();
 
-    @JsonIgnoreProperties
     protected String supervisorApprovalSeeker;
 
-    @JsonIgnoreProperties
     protected String supervisorApprovalLevel;
 
-    @JsonIgnoreProperties
     @NotAudited //cannot be auditted. if not, WorkItem.id (hist_work_id) will be compulsorry when creating audit and when there is no historical approval, it should not
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL/*, mappedBy="workItem"*/) //do not cascade. Will create problem due to 2 fields pointing to the same type i.e. Approvals
-    @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy="workItem") //do not cascade. Will create problem due to 2 fields pointing to the same type i.e. Approvals
     protected Set<Approval> historicalApprovals = new HashSet<>();
     
     @ElementCollection(fetch = FetchType.EAGER)
@@ -309,26 +293,10 @@ public abstract class WorkItem {
      * @param owners the owners to set
      */
     public void setOwners(Set<BizUser> owners) {
-//        for (BizUser owner:owners){
-//            owner.setWorkItem(this);
-//        }
+        for (BizUser owner:owners){
+            owner.setWorkItem(this);
+        }
         this.owners = owners;
-    }
-    
-    public Boolean getOwnerIsEmpty(){
-        return owners.isEmpty();
-    }
-    
-    public void setOwnerIsEmpty(Boolean b){
-        
-    }
-    
-    public List<String> getUndecidedApprovalsUsers(){
-        return approvals.stream().filter(a->a.getApproved()==null).map(a->a.getUsername()).collect(Collectors.toList());
-    }
-    
-    public void setUndecidedApprovalsUsers(List<String> users){
-    
     }
 
     /**
@@ -359,10 +327,9 @@ public abstract class WorkItem {
         this.worklistUpdateTime = worklistUpdateTime;
     }
 
-    
    
     
-    public abstract String title();
+    public abstract String getTitle();
     
      /**
      * @return the properties
@@ -379,12 +346,12 @@ public abstract class WorkItem {
     }
     
     public void addApproval(Approval approval){
-        //approval.setWorkItem(this);
+        approval.setWorkItem(this);
         this.getApprovals().add(approval);
     }
     
     public void addOwner(BizUser bizUser){
-        //bizUser.setWorkItem(this);
+        bizUser.setWorkItem(this);
         this.getOwners().add(bizUser);
     }
 

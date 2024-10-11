@@ -39,29 +39,21 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.azrul.chenook.annotation.NumberRange;
 import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.domain.converter.MoneyConverter;
-import com.azrul.chenook.service.serializer.LocalDateTimeJsonDeSerializer;
-import com.azrul.chenook.service.serializer.LocalDateTimeJsonSerializer;
-import com.azrul.chenook.service.serializer.MoneyJsonDeSerializer;
-import com.azrul.chenook.service.serializer.MoneyJsonSerializer;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.text.NumberFormat;
-import org.springframework.data.annotation.Transient;
-import org.springframework.data.convert.ValueConverter;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.ValueConverter;
 
 /**
  *
  * @author azrul
  */
+
 @Entity
 @DiscriminatorValue("FIN_APP")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-@Document(indexName = "finapplication")
 public class FinApplication extends WorkItem {
+
 
     @NotBlankValue
     @WorkField(displayName = "Name")
@@ -88,16 +80,14 @@ public class FinApplication extends WorkItem {
     @WorkField(displayName = "Main business activity")
     private String mainBusinessActivity;
 
-//    @JsonSerialize(using = MoneyJsonSerializer.class)
-//    @JsonDeserialize(using =MoneyJsonDeSerializer.class)
-    // @ValueConverter(MoneyConverter.class)
-    @Transient
+    @ValueConverter(MoneyConverter.class)
     @NotNullValue
-    @NumberRange(min = 1000, max = 50000, message = "Financing requested should be more than MYR 1000 and less than MYR50000")
+    @NumberRange(min = 1000, max=50000, message = "Financing requested should be more than MYR 1000 and less than MYR50000")
     @WorkField(displayName = "Financing requested", prefix = "MYR", sortable = true)
     @AttributeOverride(
             name = "amount",
             column = @Column(name = "financing_amount")
+            
     )
     @AttributeOverride(
             name = "currency",
@@ -107,10 +97,8 @@ public class FinApplication extends WorkItem {
     private MonetaryAmount financingRequested;
 
     @NotNullValue
-    @WorkField(displayName = "Application date", sortable = true)
+    @WorkField(displayName = "Application date", sortable=true)
     @DateTimeFormat(format = "${finapp.datetime.format}")
-    @JsonSerialize(using = LocalDateTimeJsonSerializer.class)
-    @JsonDeserialize(using = LocalDateTimeJsonDeSerializer.class)
     private LocalDateTime applicationDate;
 
     @NotBlankValue
@@ -119,43 +107,31 @@ public class FinApplication extends WorkItem {
             = "Reason for financing must be of at most 255 characters")
     private String reasonForFinancing;
 
-//    @JsonManagedReference
-//    @OneToMany(mappedBy = "finApplication", orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-//    private Set<Applicant> applicants = new HashSet<>();
-    @JoinColumn(name = "fk_finApplication")
-    @OneToMany(orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+
+    @OneToMany(mappedBy = "finApplication", orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<Applicant> applicants = new HashSet<>();
 
-    @JsonIgnoreProperties
     @Audited(withModifiedFlag = true)
     private Integer version;
 
-    @JsonIgnoreProperties
     @CreatedBy
     private String createdBy;
 
-    @JsonIgnoreProperties
     @CreatedDate
-    @JsonSerialize(using = LocalDateTimeJsonSerializer.class)
-    @JsonDeserialize(using = LocalDateTimeJsonDeSerializer.class)
     private LocalDateTime creationDate;
 
-    @JsonIgnoreProperties
     @LastModifiedBy
     private String lastModifiedBy;
 
-    @JsonIgnoreProperties
     @LastModifiedDate
-    @JsonSerialize(using = LocalDateTimeJsonSerializer.class)
-    @JsonDeserialize(using = LocalDateTimeJsonDeSerializer.class)
     private LocalDateTime lastModifiedDate;
 
-    @JsonIgnoreProperties
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "finapplication_error_mapping",
             joinColumns = {
                 @JoinColumn(name = "id", referencedColumnName = "id")})
     private Set<String> errors = new HashSet<>();
+
 
     /**
      * @return the name
@@ -273,10 +249,10 @@ public class FinApplication extends WorkItem {
     public LocalDateTime getWorklistUpdateTime() {
         return super.getWorklistUpdateTime();
     }
-
+    
     @Override
     //@KeywordField
-    @WorkField(displayName = "Status", sortable = true)
+    @WorkField(displayName = "Status", sortable=true)
     public Status getStatus() {
         return super.getStatus();
     }
@@ -430,8 +406,8 @@ public class FinApplication extends WorkItem {
     }
 
     @Override
-    public String title() {
-
+    public String getTitle() {
+        
         if (this.getFinancingRequested() != null) {
             return "SME Financing ("
                     + this.getFinancingRequested().getCurrency().getCurrencyCode()

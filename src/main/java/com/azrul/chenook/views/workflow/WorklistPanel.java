@@ -182,7 +182,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
         grid.addComponentColumn(work -> {
             VerticalLayout content = cardBuilder.apply(work);
             Span badge = badgeUtils.createStatusBadge(work.getStatus());
-            Card card = new Card(work.title(), badge);
+            Card card = new Card(work.getTitle(), badge);
             card.add(content);
             HorizontalLayout btnPanel = new HorizontalLayout();
             Button btnBookThis = new Button("Book this work", e -> {

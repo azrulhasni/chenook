@@ -7,26 +7,27 @@ package com.azrul.chenook.domain.converter;
 import jakarta.persistence.PersistenceContext;
 import java.util.Locale;
 import javax.money.MonetaryAmount;
-import org.springframework.data.convert.PropertyValueConverter;
-import org.springframework.data.convert.ValueConversionContext;
 import org.springframework.format.number.money.MonetaryAmountFormatter;
+import org.springframework.data.elasticsearch.core.mapping.PropertyValueConverter;
 
 /**
  *
  * @author azrul
  */
-public class MoneyConverter implements PropertyValueConverter<MonetaryAmount, String,ValueConversionContext<? extends PersistenceContext>> {
+public class MoneyConverter implements PropertyValueConverter{
 
+
+  
 
     @Override
-    public MonetaryAmount read(String value, ValueConversionContext context) {
-       MonetaryAmountFormatter formatter =  new MonetaryAmountFormatter();
-       return formatter.parse(value, Locale.getDefault());
+    public Object write(Object value) {
+        return value.toString();
     }
 
     @Override
-    public String write(MonetaryAmount value, ValueConversionContext context) {
-        return value.toString();
+    public Object read(Object value) {
+        MonetaryAmountFormatter formatter =  new MonetaryAmountFormatter();
+       return formatter.parse((String) value, Locale.getDefault());
     }
 
 }

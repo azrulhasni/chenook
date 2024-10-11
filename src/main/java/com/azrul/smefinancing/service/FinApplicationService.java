@@ -154,9 +154,9 @@ public class FinApplicationService extends WorkflowService<FinApplication> {
 
     @Override
     public FinApplication save(FinApplication finapp) {
-//            for (Applicant a:finapp.getApplicants()){
-//                a.setFinApplication(finapp);
-//            }
+            for (Applicant a:finapp.getApplicants()){
+                a.setFinApplication(finapp);
+            }
             
             return finAppRepo.save(finapp);
     }

@@ -8,12 +8,6 @@ import com.azrul.chenook.annotation.Matcher;
 import com.azrul.chenook.annotation.NotBlankValue;
 import com.azrul.chenook.annotation.NotNullValue;
 import com.azrul.chenook.annotation.WorkField;
-import com.azrul.chenook.service.serializer.LocalDateTimeJsonDeSerializer;
-import com.azrul.chenook.service.serializer.LocalDateTimeJsonSerializer;
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -35,6 +29,7 @@ import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -45,6 +40,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 public class Applicant {
+
+   
+    
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="id")
@@ -65,7 +63,10 @@ public class Applicant {
     @WorkField(displayName = "Date of birth")
     private LocalDate dateOfBirth;
     
-
+//    @NotBlankValue
+//    @WorkField(displayName = "Position")
+//    private String position;
+    
     @NotBlankValue
     @WorkField(displayName = "Phone number")
     private String phoneNumber;
@@ -80,40 +81,33 @@ public class Applicant {
     @WorkField(displayName = "Position")
     private ApplicantType type;
     
-    @JsonIgnoreProperties
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "applicant_error_mapping", 
       joinColumns = {@JoinColumn(name = "id", referencedColumnName = "id")})
     private Set<String> errors = new HashSet<>();
     
-    @JsonIgnoreProperties
     @Audited(withModifiedFlag = true)
     private Integer version;
 
-    @JsonIgnoreProperties
     @CreatedBy
     private String createdBy;
 
-    @JsonIgnoreProperties
     @CreatedDate
-     @JsonSerialize(using = LocalDateTimeJsonSerializer.class)
-    @JsonDeserialize(using =LocalDateTimeJsonDeSerializer.class)
     private LocalDateTime creationDate;
 
-    @JsonIgnoreProperties
     @LastModifiedBy
     private String lastModifiedBy;
 
     @LastModifiedDate
-     @JsonSerialize(using = LocalDateTimeJsonSerializer.class)
-    @JsonDeserialize(using =LocalDateTimeJsonDeSerializer.class)
     private LocalDateTime lastModifiedDate;
     
-//    @JsonBackReference
-//    @ManyToOne
-//    @JoinColumn(name = "fk_finApplication")
-//    private FinApplication finApplication;
+    @Transient
+    @ManyToOne
+    @JoinColumn(name = "fk_finApplication")
+    private FinApplication finApplication;
     
+//    @OneToMany(mappedBy = "applicant",orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+//    private Set<Attachment> documents = new HashSet<>();
 
     /**
      * @return the id
@@ -204,16 +198,16 @@ public class Applicant {
     /**
      * @return the business
      */
-//    public FinApplication getFinApplication() {
-//        return finApplication;
-//    }
-//
-//    /**
-//     * @param business the business to set
-//     */
-//    public void setFinApplication(FinApplication finApplication) {
-//        this.finApplication = finApplication;
-//    }
+    public FinApplication getFinApplication() {
+        return finApplication;
+    }
+
+    /**
+     * @param business the business to set
+     */
+    public void setFinApplication(FinApplication finApplication) {
+        this.finApplication = finApplication;
+    }
 
     /**
      * @return the version

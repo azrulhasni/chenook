@@ -37,6 +37,8 @@ public class SearchIndexer {
          for (WorkItem item:items){
             wiSearchRepo.save(item);
          }
+         
+         
      }
 
 //    @Transactional

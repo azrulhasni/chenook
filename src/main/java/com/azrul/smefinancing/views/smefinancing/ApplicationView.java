@@ -113,6 +113,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
                     finapp -> createCard(finapp, fieldNameDisplayNameMap, dateTimeFormatter)
             );
             
+            
             var workflowCreatePanel = WorkflowCreatePanel.create(
                     FinApplication.class,
                     oidcUser, 
