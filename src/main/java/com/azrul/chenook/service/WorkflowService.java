@@ -67,6 +67,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  *
@@ -122,6 +123,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         return (work.getSupervisorApprovalSeeker() != null);
     }
 
+    @Transactional
     public T run(
             final T work,
             final String username,
@@ -343,7 +345,7 @@ public abstract class WorkflowService<T extends WorkItem> {
 
             } else {
                 //don't move to next step but takeout the current owners (i.e. the approvers) so that he doesn't see it in his ownership any more
-                work.getOwners().remove(user);
+                work.removeOwner(user);
             }
             //dealWithNextStep(root, tenant, getActivities().get(activity.getNext()), nextSteps, container);
         } else if (activity.getClass().equals(XorAtleastOneApprovalActivity.class)) {
@@ -402,7 +404,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                         nextSteps);
             } else {
                 //don't move to next step but takeout the current owner so that he doesn't see it in his ownership any more
-                work.getOwners().remove(user);
+                work.removeOwner(user);
             }
             //dealWithNextStep(root, tenant, getActivities().get(activity.getNext()), nextSteps, container);
         } else if (activity.getClass().equals(XorMajorityApprovalActivity.class)) {
@@ -458,7 +460,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                         nextSteps);
             } else {
                 //don't move to next step but takeout the current owner so that he doesn't see it in his ownership any more
-                work.getOwners().remove(user);
+                work.removeOwner(user);
             }
 
         }
@@ -497,7 +499,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                         }).findAny().ifPresent(approverLookup -> {
                             approverLookup.lookupApprover((T) root, root.getSupervisorApprovalSeeker())
                                     .ifPresent(approver -> {
-                                        root.getOwners().clear();
+                                        root.clearOwners();
                                         root.addOwner(approver);
                                         //root.getOwners().add(approver);
 //                                        if (approver.getUsername() != null) {
@@ -526,7 +528,7 @@ public abstract class WorkflowService<T extends WorkItem> {
 
                 }
             } else {//not approved. Reassign back to original user
-                root.getOwners().clear();
+                 root.clearOwners();
                 BizUser supervisorApprovalSeeker = bizUserService.getUser(root.getSupervisorApprovalSeeker());
                 //root.getOwners().add(supervisorApprovalSeeker);
                 root.addOwner(supervisorApprovalSeeker);
@@ -548,7 +550,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                     return nextRole.equals(qualifier.value());
                 }).findAny().ifPresent(approverLookup -> {
                     approverLookup.lookupApprover((T) root, user.getUsername()).ifPresent(approver -> {
-                        root.getOwners().clear();
+                         root.clearOwners();
                         root.addOwner(approver);
                         //root.getOwners().add(approver);
 //                                        if (approver.getUsername() != null) {
@@ -581,7 +583,7 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     private void dealWithNextStep(T work, String tenant, Activity nextActivity, List<Activity> nextSteps) {
 
-        work.getOwners().clear(); //so that the next folks can pick it up
+        work.clearOwners(); //so that the next folks can pick it up
 
         work.setSupervisorApprovalSeeker(null);//nullify the approval seeker too
 
@@ -865,7 +867,7 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     private T archiveApprovalsAndSave(T work) {
         work.getHistoricalApprovals().addAll(work.getApprovals());
-        work.getApprovals().clear();
+        work.clearApprrovals();
         return work;
     }
 

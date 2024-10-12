@@ -155,5 +155,9 @@ public class BizUserService<T extends WorkItem> {
         Long count = bizUserRepo.countOwnersByWork(work.getId());
         return count.intValue();
     }
+    
+    public BizUser save(BizUser user){
+        return bizUserRepo.save(user);
+    }
 
 }

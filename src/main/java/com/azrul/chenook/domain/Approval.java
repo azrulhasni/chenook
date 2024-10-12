@@ -48,15 +48,15 @@ public class Approval {
     @WorkField(displayName = "Approval date")
     private LocalDateTime approvalDateTime;
     
-    @Transient
-    @ManyToOne
-    @JoinColumn(name = "work_id", referencedColumnName = "id")
-    private WorkItem workItem;
-    
-    @Transient
-    @ManyToOne
-    @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
-    private WorkItem historicalWorkItem;
+//    @Transient
+//    @ManyToOne
+//    @JoinColumn(name = "work_id", referencedColumnName = "id")
+//    private WorkItem workItem;
+//    
+//    @Transient
+//    @ManyToOne
+//    @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
+//    private WorkItem historicalWorkItem;
     
     
     
@@ -180,32 +180,32 @@ public class Approval {
         this.worklist = worklist;
     }
 
-    /**
-     * @return the workItem
-     */
-    public WorkItem getWorkItem() {
-        return workItem;
-    }
-
-    /**
-     * @param workItem the workItem to set
-     */
-    public void setWorkItem(WorkItem workItem) {
-        this.workItem = workItem;
-    }
-
-    /**
-     * @return the historicalWorkItem
-     */
-    public WorkItem getHistoricalWorkItem() {
-        return historicalWorkItem;
-    }
-
-    /**
-     * @param historicalWorkItem the historicalWorkItem to set
-     */
-    public void setHistoricalWorkItem(WorkItem historicalWorkItem) {
-        this.historicalWorkItem = historicalWorkItem;
-    }
+//    /**
+//     * @return the workItem
+//     */
+//    public WorkItem getWorkItem() {
+//        return workItem;
+//    }
+//
+//    /**
+//     * @param workItem the workItem to set
+//     */
+//    public void setWorkItem(WorkItem workItem) {
+//        this.workItem = workItem;
+//    }
+//
+//    /**
+//     * @return the historicalWorkItem
+//     */
+//    public WorkItem getHistoricalWorkItem() {
+//        return historicalWorkItem;
+//    }
+//
+//    /**
+//     * @param historicalWorkItem the historicalWorkItem to set
+//     */
+//    public void setHistoricalWorkItem(WorkItem historicalWorkItem) {
+//        this.historicalWorkItem = historicalWorkItem;
+//    }
     
 }

@@ -61,10 +61,10 @@ public class BizUser {
     @WorkField(displayName = "Enabled")
     private Boolean enabled;
     
-    @Transient
-    @ManyToOne
-    @JoinColumn(name = "work_id", referencedColumnName = "id")
-    private WorkItem workItem;
+//    @Transient
+//    @ManyToOne
+//    @JoinColumn(name = "work_id", referencedColumnName = "id")
+//    private WorkItem workItem;
 
     /**
      * @return the username
@@ -204,16 +204,16 @@ public class BizUser {
     /**
      * @return the work
      */
-    public WorkItem getWorkItem() {
-        return workItem;
-    }
-
-    /**
-     * @param work the work to set
-     */
-    public void setWorkItem(WorkItem work) {
-        this.workItem = work;
-    }
+//    public WorkItem getWorkItem() {
+//        return workItem;
+//    }
+//
+//    /**
+//     * @param work the work to set
+//     */
+//    public void setWorkItem(WorkItem work) {
+//        this.workItem = work;
+//    }
 
    
 }

@@ -82,7 +82,8 @@ public abstract class WorkItem {
     protected String startEventDescription;
     
   
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy="workItem")
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL/*, mappedBy="workItem"*/)
+    @JoinColumn(name = "work_id", referencedColumnName = "id")
     protected Set<BizUser> owners;
 
     @WorkField(displayName = "Worklist")
@@ -93,7 +94,8 @@ public abstract class WorkItem {
     protected LocalDateTime worklistUpdateTime;
 
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy="workItem")
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL/*, mappedBy="workItem"*/)
+    @JoinColumn(name = "work_id", referencedColumnName = "id")
     protected Set<Approval> approvals = new HashSet<>();
 
     protected String supervisorApprovalSeeker;
@@ -101,7 +103,8 @@ public abstract class WorkItem {
     protected String supervisorApprovalLevel;
 
     @NotAudited //cannot be auditted. if not, WorkItem.id (hist_work_id) will be compulsorry when creating audit and when there is no historical approval, it should not
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy="workItem") //do not cascade. Will create problem due to 2 fields pointing to the same type i.e. Approvals
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL/*, mappedBy="workItem"*/) //do not cascade. Will create problem due to 2 fields pointing to the same type i.e. Approvals
+    @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
     protected Set<Approval> historicalApprovals = new HashSet<>();
     
     @ElementCollection(fetch = FetchType.EAGER)
@@ -293,9 +296,9 @@ public abstract class WorkItem {
      * @param owners the owners to set
      */
     public void setOwners(Set<BizUser> owners) {
-        for (BizUser owner:owners){
-            owner.setWorkItem(this);
-        }
+//        for (BizUser owner:owners){
+//            owner.setWorkItem(this);
+//        }
         this.owners = owners;
     }
 
@@ -346,13 +349,33 @@ public abstract class WorkItem {
     }
     
     public void addApproval(Approval approval){
-        approval.setWorkItem(this);
+//        approval.setWorkItem(this);
         this.getApprovals().add(approval);
     }
     
     public void addOwner(BizUser bizUser){
-        bizUser.setWorkItem(this);
+//        bizUser.setWorkItem(this);
         this.getOwners().add(bizUser);
     }
+    
+    public void removeOwner(BizUser bizUser){
+//        bizUser.setWorkItem(null);
+        this.getOwners().remove(bizUser);
+    }
+    
+    public void clearOwners(){
+//        for (BizUser user:this.getOwners()){
+//            user.setWorkItem(null);
+//        }
+        this.getOwners().clear();
+    }
+    
+    public void clearApprrovals(){
+//        for (Approval approval:this.getApprovals()){
+//            approval.setWorkItem(null);
+//        }
+        this.getApprovals().clear();
+    }
+
 
 }
