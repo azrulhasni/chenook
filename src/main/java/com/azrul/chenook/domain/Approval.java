@@ -5,6 +5,7 @@
 package com.azrul.chenook.domain;
 
 import com.azrul.chenook.annotation.WorkField;
+import com.azrul.chenook.domain.converter.LocalDateTimeConverter;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.elasticsearch.annotations.ValueConverter;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -45,6 +47,7 @@ public class Approval {
     @WorkField(displayName = "Approved")
     private Boolean approved;
     
+    @ValueConverter(LocalDateTimeConverter.class)
     @WorkField(displayName = "Approval date")
     private LocalDateTime approvalDateTime;
     

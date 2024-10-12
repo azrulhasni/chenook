@@ -38,8 +38,10 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.azrul.chenook.annotation.NumberRange;
 import com.azrul.chenook.domain.Status;
+import com.azrul.chenook.domain.converter.LocalDateTimeConverter;
 import com.azrul.chenook.domain.converter.MoneyConverter;
 import java.text.NumberFormat;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.ValueConverter;
 
@@ -96,6 +98,7 @@ public class FinApplication extends WorkItem {
     @CompositeType(MonetaryAmountType.class)
     private MonetaryAmount financingRequested;
 
+    @ValueConverter(LocalDateTimeConverter.class)
     @NotNullValue
     @WorkField(displayName = "Application date", sortable=true)
     @DateTimeFormat(format = "${finapp.datetime.format}")
@@ -111,18 +114,23 @@ public class FinApplication extends WorkItem {
     @OneToMany(mappedBy = "finApplication", orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<Applicant> applicants = new HashSet<>();
 
+    @Transient
     @Audited(withModifiedFlag = true)
     private Integer version;
 
+    @Transient
     @CreatedBy
     private String createdBy;
 
+    @Transient
     @CreatedDate
     private LocalDateTime creationDate;
 
+    @Transient
     @LastModifiedBy
     private String lastModifiedBy;
 
+    @Transient
     @LastModifiedDate
     private LocalDateTime lastModifiedDate;
 

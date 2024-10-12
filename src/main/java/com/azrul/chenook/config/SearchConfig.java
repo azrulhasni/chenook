@@ -10,12 +10,16 @@ import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 import org.apache.http.ssl.SSLContexts;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchConfiguration;
+import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 
 @Configuration
+@EnableElasticsearchRepositories(basePackages = {"com.azrul.smefinancing.search.repository","com.azrul.chenook.search.repository"})
+@ComponentScan(basePackages = {"com.azrul.search.*"})
 public class SearchConfig extends ElasticsearchConfiguration {
 
     @Value("${http.server.ssl.trust-store}")

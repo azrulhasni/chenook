@@ -8,6 +8,7 @@ import com.azrul.chenook.annotation.Matcher;
 import com.azrul.chenook.annotation.NotBlankValue;
 import com.azrul.chenook.annotation.NotNullValue;
 import com.azrul.chenook.annotation.WorkField;
+import com.azrul.chenook.domain.converter.LocalDateTimeConverter;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -30,6 +31,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.elasticsearch.annotations.ValueConverter;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -59,13 +61,11 @@ public class Applicant {
     @WorkField(displayName = "NRIC number")
     private String icNumber;
     
+    @ValueConverter(LocalDateTimeConverter.class)
     @NotNullValue
     @WorkField(displayName = "Date of birth")
     private LocalDate dateOfBirth;
     
-//    @NotBlankValue
-//    @WorkField(displayName = "Position")
-//    private String position;
     
     @NotBlankValue
     @WorkField(displayName = "Phone number")
@@ -86,18 +86,23 @@ public class Applicant {
       joinColumns = {@JoinColumn(name = "id", referencedColumnName = "id")})
     private Set<String> errors = new HashSet<>();
     
+    @Transient
     @Audited(withModifiedFlag = true)
     private Integer version;
 
+    @Transient
     @CreatedBy
     private String createdBy;
 
+    @Transient
     @CreatedDate
     private LocalDateTime creationDate;
 
+    @Transient
     @LastModifiedBy
     private String lastModifiedBy;
 
+    @Transient
     @LastModifiedDate
     private LocalDateTime lastModifiedDate;
     

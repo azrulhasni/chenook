@@ -5,6 +5,7 @@
 package com.azrul.chenook.domain;
 
 import com.azrul.chenook.annotation.WorkField;
+import com.azrul.chenook.domain.converter.LocalDateTimeConverter;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -34,6 +35,7 @@ import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.ValueConverter;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -89,7 +91,7 @@ public abstract class WorkItem {
     @WorkField(displayName = "Worklist")
     protected String worklist;
 
-
+    @ValueConverter(LocalDateTimeConverter.class)
     @WorkField(displayName = "Worklist update time")
     protected LocalDateTime worklistUpdateTime;
 

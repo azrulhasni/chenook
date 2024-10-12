@@ -28,7 +28,7 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
                     import java.time.LocalDateTime;
                  
                     System.out.println("===PRE RUN SCRIPT==");
-                    current.setStartTime(LocalDateTime.now());
+                    //current.setStartTime(LocalDateTime.now());
                 ;]]>
             </preRunScript>
         </startEvent>
@@ -44,7 +44,7 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
                     import java.time.LocalDateTime;
                  
                     System.out.println("===PRE RUN SCRIPT==");
-                    current.setStartTime(LocalDateTime.now());
+                    //current.setStartTime(LocalDateTime.now());
                 ;]]>
             </preRunScript>
         </startEvent>
@@ -54,11 +54,11 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
             next='S1.1.CALL_BUREAU_DECISION'
             description='Call bureau'>
             <script><![CDATA[
-                import com.azrul.smefinancing.integration.*;
+                //import com.azrul.smefinancing.integration.*;
 
-                ExperianBureauLogic logic = new ExperianBureauLogic();
-                logic.run(user,current);
-                current.getProperties().put("BUREAU_SCORE",1000);
+                //ExperianBureauLogic logic = new ExperianBureauLogic();
+                //logic.run(user,current);
+                //current.getProperties().put("BUREAU_SCORE",1000);
                 ;]]>
             </script>
         </service>
@@ -119,7 +119,7 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
             description='Set disapproved'>
             <script>
                 <![CDATA[
-                current.setStatus(Status.DENIED);
+                //current.setStatus(Status.DENIED);
                 System.out.println("ID:"+current.getId()+" - rejected");
                 ;]]>
             </script>
@@ -131,7 +131,7 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
             description='Set approved'>
             <script>
                 <![CDATA[
-                current.setStatus(Status.DONE);
+                //current.setStatus(Status.DONE);
                 System.out.println("ID:"+current.getId()+" - approved");
                 ;]]>
             </script>

@@ -12,9 +12,9 @@ import com.azrul.chenook.domain.Status;
 
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.repository.WorkItemRepository;
+import com.azrul.chenook.search.repository.WorkItemSearchRepository;
 import com.azrul.chenook.script.Expression;
 import com.azrul.chenook.script.Scripting;
-import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.views.workflow.SearchTermProvider;
 import com.azrul.chenook.workflow.model.Activity;
@@ -33,13 +33,8 @@ import com.azrul.chenook.workflow.model.XorUnanimousApprovalActivity;
 import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
-import com.vaadin.flow.data.provider.QuerySortOrder;
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.SetJoin;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -54,14 +49,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import java.util.Collection;
 import java.util.HashMap;
+import static java.util.List.of;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.SessionFactory;
-import org.hibernate.mapping.Column;
-import org.hibernate.metamodel.MappingMetamodel;
-import org.hibernate.persister.entity.AbstractEntityPersister;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -882,25 +873,20 @@ public abstract class WorkflowService<T extends WorkItem> {
             SearchTermProvider searchTermProvider
     ) {
 
-//        if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
-            Long count = getWorkItemRepo().countWhereOwnersOrUndecidedApprovalsContains(username);
+        if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+            Long count = getWorkItemRepo()
+                    .countWhereOwnersOrUndecidedApprovalsContains(
+                            username
+                    );
             return count.intValue();
-//        } else {
-//            EntityManager em = emFactory.createEntityManager();
-//            SearchSession searchSession = Search.session(em);
-//            Set<String> fieldNames = WorkflowUtils.getSearchFields(workItemClass);
-//            Long hitCounts = searchSession.search(workItemClass)
-//                    .where(
-//                            f
-//                            -> f.and(
-//                                    f.match().fields(fieldNames.toArray(new String[]{}))
-//                                            .matching(searchTermProvider.getSearchTerm(),ValueModel.INDEX)
-//                                            .toPredicate(),
-//                                    whereOwnersOrUndecidedApprovalsContains(f, username)
-//                            )
-//                    ).fetchTotalHitCount();
-//            return hitCounts.intValue();
-//        }
+        } else {
+             Long count = getWorkItemSearchRepo()
+                     .countWhereOwnersOrUndecidedApprovalsContains(
+                             searchTermProvider.getSearchTerm(),
+                             username
+                     );
+            return count.intValue();
+        }
     }
 
     public DataProvider getWorkByOwner(
@@ -916,30 +902,26 @@ public abstract class WorkflowService<T extends WorkItem> {
                 Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
                 String sorted = pageNav.getSortField();
                 query.getPage();
-//                if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
-                    Page<T> finapps = getWorkItemRepo().findAllWhereOwnersOrUndecidedApprovalsContains(username,
+                if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+                    Page<T> finapps = getWorkItemRepo().findAllWhereOwnersOrUndecidedApprovalsContains(
+                            username,
                             PageRequest.of(
                                     pageNav.getPage() - 1,
                                     pageNav.getMaxCountPerPage(),
                                     Sort.by(sort, sorted))
                     );
                     return finapps.stream();
-//                } else {
-//                    EntityManager em = emFactory.createEntityManager();
-//                    SearchSession searchSession = Search.session(em);
-//                    Set<String> fieldNames = WorkflowUtils.getSearchFields(workItemClass);
-//                    SearchResult<T> result = searchSession.search(workItemClass)
-//                            .where(
-//                                    f-> f.and(
-//                                            f.match().fields(fieldNames.toArray(new String[]{}))
-//                                                    .matching(searchTermProvider.getSearchTerm(),ValueConvert.NO)
-//                                                    .toPredicate(),
-//                                            whereOwnersOrUndecidedApprovalsContains(f, username)
-//                            ))
-//                    .sort(f->f.field(sorted))
-//                    .fetch(pageNav.getPage() - 1, pageNav.getMaxCountPerPage());
-//                    return result.hits().stream();
-//                }
+                } else {
+                    Page<T> finapps = getWorkItemSearchRepo().findAllWhereOwnersOrUndecidedApprovalsContains(
+                            searchTermProvider.getSearchTerm(),
+                            username,
+                            PageRequest.of(
+                                    pageNav.getPage() - 1,
+                                    pageNav.getMaxCountPerPage(),
+                                    Sort.by(sort, sorted))
+                    );
+                    return finapps.stream();
+                }
             }
 
             @Override
@@ -961,23 +943,13 @@ public abstract class WorkflowService<T extends WorkItem> {
             String username, 
             SearchTermProvider searchTermProvider
     ) {
-//        if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+        if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
             Long count = getWorkItemRepo().count(whereCreatorEquals(username));
             return count.intValue();
-//        } else {
-//            EntityManager em = emFactory.createEntityManager();
-//            SearchSession searchSession = Search.session(em);
-//            Set<String> fieldNames = WorkflowUtils.getSearchFields(workItemClass);
-//            Long hitCount = searchSession.search(workItemClass)
-//                    .where(f -> f.and(
-//                    f.match().fields(fieldNames.toArray(new String[]{}))
-//                            .matching(searchTermProvider.getSearchTerm(),ValueModel.INDEX)
-//                            .toPredicate(),
-//                    whereCreatorEquals(f, username)
-//            )
-//                    ).fetchTotalHitCount();
-//            return hitCount.intValue();
-//        }
+        } else {
+            Long count = getWorkItemSearchRepo().countByCreator(searchTermProvider.getSearchTerm(), username);
+            return count.intValue();
+        }
     }
 
     public DataProvider getWorkByCreator(
@@ -992,7 +964,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                 Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
                 String sorted = pageNav.getSortField();
                 query.getPage();
-//                if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+                if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
                     Page<T> finapps = getWorkItemRepo().findAll(
                             whereCreatorEquals(username),
                             PageRequest.of(
@@ -1001,22 +973,15 @@ public abstract class WorkflowService<T extends WorkItem> {
                                     Sort.by(sort, sorted))
                     );
                     return finapps.stream();
-//                } else {
-//                    EntityManager em = emFactory.createEntityManager();
-//                    SearchSession searchSession = Search.session(em);
-//                    Set<String> fieldNames = WorkflowUtils.getSearchFields(workItemClass);
-//                    SearchResult<T> result = searchSession.search(workItemClass)
-//                            .where(f -> f.and(
-//                            f.match().fields(fieldNames.toArray(new String[]{}))
-//                                    .matching(searchTermProvider.getSearchTerm())
-//                                    .toPredicate(),
-//                            whereCreatorEquals(f, username)
-//                    ))
-//                    .sort(f->f.field(sorted))
-//                    .fetch(pageNav.getPage() - 1, pageNav.getMaxCountPerPage());
-//                    return result.hits().stream();
-//
-//                }
+                } else {
+                    Page<T> finapps = getWorkItemSearchRepo().findByCreator(searchTermProvider.getSearchTerm(), username,
+                            PageRequest.of(
+                                    pageNav.getPage() - 1,
+                                    pageNav.getMaxCountPerPage(),
+                                    Sort.by(sort, sorted))
+                    );
+                    return finapps.stream();
+                }
             }
 
             @Override
@@ -1136,6 +1101,11 @@ public abstract class WorkflowService<T extends WorkItem> {
      * @return the workItemRepo
      */
     public abstract WorkItemRepository<T> getWorkItemRepo();
+    
+    /**
+     * @return the workItemSearchRepo
+     */
+    public abstract WorkItemSearchRepository<T> getWorkItemSearchRepo();
 
     /**
      * @return the scripting

@@ -5,7 +5,8 @@
 package com.azrul.chenook.batch;
 
 import com.azrul.chenook.domain.WorkItem;
-import com.azrul.chenook.repository.WorkItemSearchRepository;
+import com.azrul.chenook.search.repository.WorkItemSearchRepository;
+import com.azrul.smefinancing.search.repository.FinApplicationSearchRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.List;
@@ -26,19 +27,26 @@ public class SearchIndexer {
     private EntityManager entityManager;
     
     @Autowired
-    WorkItemSearchRepository wiSearchRepo;
+    FinApplicationSearchRepository wiSearchRepo;
     
      @Transactional
-    @EventListener(ApplicationReadyEvent.class)
+   // @EventListener(ApplicationReadyEvent.class)
      public void startIndexing(){
          List<WorkItem> items  =entityManager
                       .createQuery("Select w from WorkItem w", WorkItem.class)
                       .getResultList();
          for (WorkItem item:items){
-            wiSearchRepo.save(item);
+            //wiSearchRepo.save(item);
          }
-         
-         
+//         List<WorkItem> res = wiSearchRepo.findByStatus("IN_PROGRESS");
+//         for (WorkItem r:res){
+//             System.out.println("id:"+r.getId());
+//         }
+//         
+//         List<WorkItem> res2 = wiSearchRepo.findByOwnersIsEmpty();
+//         for (WorkItem r:res2){
+//             System.out.println("id:"+r.getId());
+//         }
      }
 
 //    @Transactional
