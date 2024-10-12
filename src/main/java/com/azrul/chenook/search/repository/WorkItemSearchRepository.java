@@ -7,6 +7,7 @@ package com.azrul.chenook.search.repository; //Must be outside of @EnableJpaRepo
 import com.azrul.chenook.domain.WorkItem;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.annotations.CountQuery;
 import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
@@ -20,79 +21,84 @@ import org.springframework.data.repository.NoRepositoryBean;
 public interface WorkItemSearchRepository<T extends WorkItem> extends ElasticsearchRepository<T, Long> {
 
     @Query(value = """
-            "bool": {
-              "must": [
-                  {
-                       "simple_query_string": {
-                         "query": "#{#searchTerm}"
-                       }
-                  },
-                  {
-                       "match": { "creator":"#{#name}"}
-                  }]
-            }
+            {
+                "bool": {
+                   "must": [
+                       {
+                            "simple_query_string": {
+                              "query": "sme"
+                            }
+                       },
+                       {
+                            "match": { "creator":"yuser111"}
+                       }]
+                }
+            }       
     """)
     public Page<T> findByCreator(String searchTerm, String username, Pageable page);
 
-    @Query(value = """
+    @CountQuery(value = """
+        {
             "bool": {
-              "must": [
-                  {
-                       "simple_query_string": {
-                         "query": "#{#searchTerm}"
-                       }
-                  },
-                  {
-                       "match": { "creator":"#{#name}"}
-                  }]
+               "must": [
+                   {
+                        "simple_query_string": {
+                          "query": "?0"
+                        }
+                   },
+                   {
+                        "match": { "creator":"?1"}
+                   }]
             }
-          }
-        }
+        }                
     """)
     public Long countByCreator(String searchTerm, String username);
 
     @Query(value = """
-                "bool": {
-                  "must": [
-                  {
-                       "simple_query_string": {
-                         "query": "#{#searchTerm}"
-                       }
-                  },
-                  {
-                   "bool":{
-                       "should": [
-                            { "match": { "owners.username": "#{#name}" }},
-                            { "bool": {"must":[
-                                { "match":{"apprrovals.username": "#{#name}" }},
-                                { "exists":{"field": "approved"}}
-                            ]} }
-                    ]}
-                  }]
-                }   
+    {
+        "bool": {
+          "must": [
+          {
+               "simple_query_string": {
+                 "query": "#{#searchTerm}"
+               }
+          },
+          {
+           "bool":{
+               "should": [
+                    { "match": { "owners.username": "#{#name}" }},
+                    { "bool": {"must":[
+                        { "match":{"apprrovals.username": "#{#name}" }},
+                        { "exists":{"field": "approved"}}
+                    ]} }
+            ]}
+          }]
+        }
+    }
     """)
     public Page<T> findAllWhereOwnersOrUndecidedApprovalsContains(String searchTerm, String username, Pageable page);
 
-    @Query(value = """
-     
-                "bool": {
-                  "must": [
-                  {
-                       "simple_query_string": {
-                         "query": "#{#searchTerm}"
-                       }
-                  },
-                  {
-                   "bool":{
-                       "should": [
-                            { "match": { "owners.username": "#{#name}" }},
-                            { "bool": {"must":[
-                                { "match":{"apprrovals.username": "#{#name}" }},
-                                { "exists":{"field": "approved"}}
-                            ]} }
-                    ]}
-                  }]
-                }
+    @CountQuery(value = """
+    {
+        "bool": {
+              "must": [
+              {
+                   "simple_query_string": {
+                     "query": "#{#searchTerm}"
+                   }
+              },
+              {
+               "bool":{
+                   "should": [
+                        { "match": { "owners.username": "#{#name}" }},
+                        { "bool": {"must":[
+                            { "match":{"apprrovals.username": "#{#name}" }},
+                            { "exists":{"field": "approved"}}
+                        ]} }
+                ]}
+              }]
+        }
+    }
     """)
     public Long countWhereOwnersOrUndecidedApprovalsContains(String searchTerm, String username);
 

@@ -46,6 +46,7 @@ public class Applicant {
    
     
     @Id
+    @org.springframework.data.annotation.Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="id")
     @WorkField(displayName = "User id number")

@@ -67,8 +67,9 @@ public class FinApplicationService extends WorkflowService<FinApplication> {
             for (Applicant a:finapp.getApplicants()){
                 a.setFinApplication(finapp);
             }
-            finAppSearchRepo.save(finapp);
-            return finAppRepo.save(finapp);
+            var finappWithId = finAppRepo.save(finapp);
+            finAppSearchRepo.save(finappWithId);
+            return finappWithId;
             
     }
     

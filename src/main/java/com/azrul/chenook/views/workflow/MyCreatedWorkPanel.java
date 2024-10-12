@@ -52,17 +52,17 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
     private final BadgeUtils badgeUtils;
     private final WorkflowConfig workflowConfig;
 
-    public static <T extends WorkItem> MyOwnWorkPanel create(final Class<T> workItemClass,
+    public static <T extends WorkItem> MyCreatedWorkPanel create(final Class<T> workItemClass,
             final OidcUser oidcUser,
             final TriConsumer<MyOwnWorkPanel, StartEvent, T> showUpdateDialog,
             final Function<T, VerticalLayout> cardBuilder) {
-        var myWorkPanel = ApplicationContextHolder.getBean(MyOwnWorkPanel.class);
-        myWorkPanel.init(
+        var myCreatedWorkPanel = ApplicationContextHolder.getBean(MyCreatedWorkPanel.class);
+        myCreatedWorkPanel.init(
                 workItemClass,
                 oidcUser,
                 showUpdateDialog,
                 cardBuilder);
-        return myWorkPanel;
+        return myCreatedWorkPanel;
     }
 
     private MyCreatedWorkPanel(
@@ -126,11 +126,14 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
     ) {
         SearchPanel searchPanel = new SearchPanel();
         searchPanel.searchRunner(s->refresh());
-        PageNav nav = new PageNav();
+        
         Integer count = counter.apply(oidcUser.getPreferredUsername(), searchPanel);//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
+        PageNav nav = new PageNav();
         DataProvider dataProvider = dataProviderCreator.apply(oidcUser.getPreferredUsername(), searchPanel, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
+        
         Grid<T> grid = createGrid(title, btnIdDiscriminator, oidcUser, bizProcess, dataProvider, showUpdateDialog, cardBuilder);
         nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
+       
 
         Triple<SearchTermProvider, PageNav, Grid<T>> triple = Triple.of(searchPanel, nav, grid);
         return triple;

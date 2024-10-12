@@ -33,7 +33,9 @@ public class BizUser {
     public Boolean getEnabled() {
         return enabled;
     }
+    
     @Id
+    @org.springframework.data.annotation.Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     
