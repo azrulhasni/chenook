@@ -60,15 +60,15 @@ public interface WorkItemSearchRepository<T extends WorkItem> extends Elasticsea
           "must": [
           {
                "simple_query_string": {
-                 "query": "#{#searchTerm}"
+                 "query": "?0"
                }
           },
           {
            "bool":{
                "should": [
-                    { "match": { "owners.username": "#{#name}" }},
+                    { "match": { "owners.username": "?1" }},
                     { "bool": {"must":[
-                        { "match":{"apprrovals.username": "#{#name}" }},
+                        { "match":{"apprrovals.username": "?1" }},
                         { "exists":{"field": "approved"}}
                     ]} }
             ]}
@@ -84,15 +84,15 @@ public interface WorkItemSearchRepository<T extends WorkItem> extends Elasticsea
               "must": [
               {
                    "simple_query_string": {
-                     "query": "#{#searchTerm}"
+                     "query": "?0"
                    }
               },
               {
                "bool":{
                    "should": [
-                        { "match": { "owners.username": "#{#name}" }},
+                        { "match": { "owners.username": "?1" }},
                         { "bool": {"must":[
-                            { "match":{"apprrovals.username": "#{#name}" }},
+                            { "match":{"apprrovals.username": "?1" }},
                             { "exists":{"field": "approved"}}
                         ]} }
                 ]}
