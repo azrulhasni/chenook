@@ -26,11 +26,11 @@ public interface WorkItemSearchRepository<T extends WorkItem> extends Elasticsea
                    "must": [
                        {
                             "simple_query_string": {
-                              "query": "sme"
+                              "query": "?0"
                             }
                        },
                        {
-                            "match": { "creator":"yuser111"}
+                            "match": { "creator":"?1"}
                        }]
                 }
             }       

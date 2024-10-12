@@ -54,7 +54,7 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
 
     public static <T extends WorkItem> MyCreatedWorkPanel create(final Class<T> workItemClass,
             final OidcUser oidcUser,
-            final TriConsumer<MyOwnWorkPanel, StartEvent, T> showUpdateDialog,
+            final TriConsumer<MyCreatedWorkPanel, StartEvent, T> showUpdateDialog,
             final Function<T, VerticalLayout> cardBuilder) {
         var myCreatedWorkPanel = ApplicationContextHolder.getBean(MyCreatedWorkPanel.class);
         myCreatedWorkPanel.init(
@@ -143,8 +143,8 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
 
         if (myCreatedWork != null) {
             myCreatedWork.getRight().getDataProvider().refreshAll();
-            Integer countMyOwnedWork = counter.apply(oidcUser.getPreferredUsername(), myCreatedWork.getLeft());
-            myCreatedWork.getMiddle().refresh(countMyOwnedWork);
+            Integer countMyCreatedWork = counter.apply(oidcUser.getPreferredUsername(), myCreatedWork.getLeft());
+            myCreatedWork.getMiddle().refresh(countMyCreatedWork);
         }
     }
 
