@@ -137,7 +137,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         //Pre-run script
         String worklist = work.getWorklist();
         Activity currentActivity = activities.get(worklist);
-        work.setStatus(Status.IN_PROGRESS);
+        
         if (!currentActivity.getClass().equals(End.class)) { //if not the end
             //transition to next steps
             List<Activity> nextSteps = runTransition(
@@ -169,8 +169,7 @@ public abstract class WorkflowService<T extends WorkItem> {
     ) {
         for (Activity activity : nextSteps) {
             if (this.isStartEvent(activity, bizProcess)) {
-                //do nothing as this is startEvent
-                //do nothing as this is startEvent
+                work.setStatus(Status.IN_PROGRESS);
             } else {
                 work.setWorklist(activity.getId());
                 work.setWorklistUpdateTime(LocalDateTime.now());
@@ -875,8 +874,10 @@ public abstract class WorkflowService<T extends WorkItem> {
 
         if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
             Long count = getWorkItemRepo()
-                    .countWhereOwnersOrUndecidedApprovalsContains(
-                            username
+                    .count(
+                        whereOwnersOrUndecidedApprovalsContains(
+                                username
+                        )
                     );
             return count.intValue();
         } else {
@@ -903,8 +904,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                 String sorted = pageNav.getSortField();
                 query.getPage();
                 if (searchTermProvider==null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
-                    Page<T> finapps = getWorkItemRepo().findAllWhereOwnersOrUndecidedApprovalsContains(
-                            username,
+                    Page<T> finapps = getWorkItemRepo().findAll(whereOwnersOrUndecidedApprovalsContains(username),
                             PageRequest.of(
                                     pageNav.getPage() - 1,
                                     pageNav.getMaxCountPerPage(),

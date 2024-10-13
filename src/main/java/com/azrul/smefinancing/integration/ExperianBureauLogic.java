@@ -7,6 +7,7 @@ package com.azrul.smefinancing.integration;
 import com.azrul.chenook.domain.BizUser;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Random;
 
 /**
  *
@@ -14,8 +15,9 @@ import java.util.Optional;
  */
 public class ExperianBureauLogic {
 
-    public void run(BizUser user,  Object oCurrentObject) {
-       System.out.println("Run:"+user.getUsername());
+    public Integer run(BizUser user,  Object oCurrentObject) {
+       Random rand = new Random();
+       return rand.nextInt(1000)+500;
         
     }
 }

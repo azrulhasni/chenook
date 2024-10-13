@@ -4,26 +4,12 @@
  */
 package com.azrul.chenook.views.workflow;
 
-import com.azrul.chenook.annotation.NotNullValue;
-import com.azrul.chenook.annotation.WorkField;
-import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.utils.WorkflowUtils;
-import com.vaadin.flow.component.html.NativeLabel;
-import com.vaadin.flow.component.shared.HasPrefix;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.Validator;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Predicate;
-import org.apache.commons.lang3.StringUtils;
-import com.azrul.chenook.annotation.NumberRange;
 
 /**
  *

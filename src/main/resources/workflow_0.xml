@@ -54,11 +54,11 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
             next='S1.1.CALL_BUREAU_DECISION'
             description='Call bureau'>
             <script><![CDATA[
-                //import com.azrul.smefinancing.integration.*;
+                import com.azrul.smefinancing.integration.*;
 
-                //ExperianBureauLogic logic = new ExperianBureauLogic();
-                //logic.run(user,current);
-                //current.getProperties().put("BUREAU_SCORE",1000);
+                ExperianBureauLogic logic = new ExperianBureauLogic();
+                ;
+                current.getProperties().put("BUREAU_SCORE",logic.run(user,current));
                 ;]]>
             </script>
         </service>
@@ -75,8 +75,8 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
             <script>
                 <![CDATA[
                 System.out.println(current.getId()+" - Bureau score low");
-                /*current.setBureauScore(current.getProperties().get("BUREAU_SCORE"));
-                current.setBureauResult("LOW");*/
+                current.setBureauScore(current.getProperties().get("BUREAU_SCORE"));
+                current.setBureauResult("LOW");
                  ;]]>
             </script>
         </service>
@@ -87,8 +87,8 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
             <script>
                 <![CDATA[
                 System.out.println(current.getId()+" - Bureau score high");
-                /*current.setBureauScore(current.getProperties().get("BUREAU_SCORE"));
-                current.setBureauResult("HIGH");*/
+                current.setBureauScore(current.getProperties().get("BUREAU_SCORE"));
+                current.setBureauResult("HIGH");
                   ;]]>
             </script>
         </service>
@@ -114,25 +114,32 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
         </xor-atleast-one-approval>
 
         <service
-            id='S50.SET_APPROVED'
-            next='S6.DISBURSEMENT_PROCESS'
+            id='S51.SET_DISAPPROVED'
+            next='S10.INFORM_CUSTOMER'
             description='Set disapproved'>
             <script>
                 <![CDATA[
-                //current.setStatus(Status.DENIED);
+                import com.azrul.chenook.domain.*;
+                
+                current.setStatus(Status.DENIED);
                 System.out.println("ID:"+current.getId()+" - rejected");
+                System.out.println("Status:"+current.getStatus().toString());
+                
                 ;]]>
             </script>
         </service>
 
         <service
-            id='S51.SET_DISAPPROVED'
+            id='S50.SET_APPROVED'
             next='S10.INFORM_CUSTOMER'
             description='Set approved'>
             <script>
                 <![CDATA[
-                //current.setStatus(Status.DONE);
+                import com.azrul.chenook.domain.*;
+                
+                current.setStatus(Status.DONE);
                 System.out.println("ID:"+current.getId()+" - approved");
+                System.out.println("Status:"+current.getStatus().toString());
                 ;]]>
             </script>
         </service>

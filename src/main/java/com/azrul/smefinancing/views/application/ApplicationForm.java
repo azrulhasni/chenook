@@ -27,6 +27,7 @@ import com.azrul.chenook.views.workflow.WorkflowAwareComboBox;
 import com.azrul.chenook.views.workflow.WorkflowAwareDateTimePicker;
 import com.azrul.chenook.views.workflow.WorkflowAwareGroup;
 import com.azrul.chenook.views.workflow.WorkflowAwareMoneyField;
+import com.azrul.chenook.views.workflow.WorkflowAwareNumberField;
 import com.azrul.chenook.views.workflow.WorkflowAwareTextArea;
 import com.azrul.chenook.views.workflow.WorkflowAwareTextField;
 import com.vaadin.flow.component.button.Button;
@@ -42,9 +43,11 @@ import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.converter.StringToIntegerConverter;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.time.LocalDateTime;
@@ -116,9 +119,33 @@ public class ApplicationForm extends Dialog {
         Binder<FinApplication> binder = new Binder<>(FinApplication.class);
         binder.setBean(work);
 
-        WorkflowAwareGroup typicalGroup = WorkflowAwareGroup.create(user, work, bizProcess);
+        WorkflowAwareGroup typicalGroup = WorkflowAwareGroup.create(
+                user, 
+                work, 
+                bizProcess
+        );
+        
+        WorkflowAwareGroup valuationGroup =  WorkflowAwareGroup.create(
+                user, 
+                work, 
+                bizProcess, 
+                Set.of("S3.VALUATION","S4.UNDERWRITING"),
+                Set.of("S3.VALUATION")
+        );
+        
+        WorkflowAwareGroup underwritingGroup =  WorkflowAwareGroup.create(
+                user, 
+                work, 
+                bizProcess, 
+                Set.of("S4.UNDERWRITING"),
+                Set.of("S4.UNDERWRITING")
+        );
+        
         WorkflowAwareGroup enableBeforeSubmissionGroup = WorkflowAwareGroup.createEnabledBeforeSubmission(work);
 
+        
+        
+                
         MessageButton msgBtn = new MessageButton(
                 work.getId(),
                 context,
@@ -130,7 +157,9 @@ public class ApplicationForm extends Dialog {
                 binder, 
                 bizProcess, 
                 user, 
-                typicalGroup
+                typicalGroup,
+                valuationGroup,
+                underwritingGroup
         );
 
         var workflowPanel = WorkflowPanel.create(
@@ -154,7 +183,9 @@ public class ApplicationForm extends Dialog {
                 work,
                 user,
                 binder,
-                typicalGroup
+                typicalGroup,
+                valuationGroup,
+                underwritingGroup
         );
 
         this.add(applicantPanel);
@@ -175,7 +206,9 @@ public class ApplicationForm extends Dialog {
             Binder<FinApplication> binder,
             BizProcess bizProcess,
             OidcUser user,
-            WorkflowAwareGroup group
+            WorkflowAwareGroup typicalGroup,
+            WorkflowAwareGroup valuationGroup,
+            WorkflowAwareGroup underwritingGroup
     ) {
         FormLayout form = new FormLayout();
         form.setResponsiveSteps(
@@ -183,16 +216,16 @@ public class ApplicationForm extends Dialog {
                 new FormLayout.ResponsiveStep("500px", 2)
         );
 
-        var tfID = WorkflowAwareTextField.create("id", false, binder, new StringToUngroupLongConverter("Not a number"), group);
+        var tfID = WorkflowAwareTextField.create("id", false, binder, new StringToUngroupLongConverter("Not a number"), typicalGroup);
         form.add(tfID);
 
-        TextField tfName = WorkflowAwareTextField.create("name", true, binder, group);
+        TextField tfName = WorkflowAwareTextField.create("name", true, binder, typicalGroup);
         form.add(tfName);
 
-        TextArea tfAddress = WorkflowAwareTextArea.create("address", binder, group);
+        TextArea tfAddress = WorkflowAwareTextArea.create("address", binder, typicalGroup);
         form.add(tfAddress);
 
-        TextField tfPostalCode = WorkflowAwareTextField.create("postalCode", true, binder, group);
+        TextField tfPostalCode = WorkflowAwareTextField.create("postalCode", true, binder, typicalGroup);
         form.add(tfPostalCode);
 //        tfPostalCode.setWidthFull();
 //        Div div = new Div(tfPostalCode);
@@ -215,7 +248,7 @@ public class ApplicationForm extends Dialog {
                 "W. Persekutuan Kuala Lumpur",
                 "W. Persekutuan Labuan",
                 "W. Persekutuan Putrajaya"
-        ), group);
+        ), typicalGroup);
         //cbState.setItems();
         form.add(cbState);
 
@@ -223,14 +256,25 @@ public class ApplicationForm extends Dialog {
         dtpApplicationDate.setReadOnly(true);
         form.add(dtpApplicationDate);//add non managed
 
-        TextField tfBizRegNumber = WorkflowAwareTextField.create("ssmRegistrationNumber", true, binder, group);
+        TextField tfBizRegNumber = WorkflowAwareTextField.create("ssmRegistrationNumber", true, binder, typicalGroup);
         form.add(tfBizRegNumber);
 
-        MoneyField tfFinRequested = WorkflowAwareMoneyField.create("financingRequested", "MYR", binder, group);
+        MoneyField tfFinRequested = WorkflowAwareMoneyField.create("financingRequested", "MYR", binder, typicalGroup);
         form.add(tfFinRequested);
 
-        TextArea taReasonForFinancing = WorkflowAwareTextArea.create("reasonForFinancing", binder, group);
+        TextArea taReasonForFinancing = WorkflowAwareTextArea.create("reasonForFinancing", binder, typicalGroup);
         form.add(taReasonForFinancing);
+        
+        TextArea taSiteVisitReport = WorkflowAwareTextArea.create("siteVisitReport", binder, valuationGroup);
+        form.add(taSiteVisitReport);
+        
+        TextField tfBureauScore = WorkflowAwareTextField.create("bureauScore",false, binder, new StringToIntegerConverter("Not a number"), underwritingGroup);
+        form.add(tfBureauScore );
+        
+        TextField tfBureauResult = WorkflowAwareTextField.create("bureauResult", false, binder,underwritingGroup);
+        form.add(tfBureauResult);
+        
+        
 
         return form;
     }
@@ -239,11 +283,13 @@ public class ApplicationForm extends Dialog {
             FinApplication finapp,
             OidcUser user,
             Binder<FinApplication> binder,
-            WorkflowAwareGroup group
+            WorkflowAwareGroup typicalGroup,
+            WorkflowAwareGroup valuationGroup,
+            WorkflowAwareGroup underwritingGroup
     ) {
-        Grid<Applicant> gridApplicants = createApplicantGrid(finapp, user, binder, group);
+        Grid<Applicant> gridApplicants = createApplicantGrid(finapp, user, binder, typicalGroup);
        
-        WorkflowAwareButton btnAddApplicant = createAddApplicantButton(finapp, user, group, gridApplicants);
+        WorkflowAwareButton btnAddApplicant = createAddApplicantButton(finapp, user, typicalGroup, gridApplicants);
 
         VerticalLayout applicantPanel = new VerticalLayout();
         applicantPanel.setPadding(true);

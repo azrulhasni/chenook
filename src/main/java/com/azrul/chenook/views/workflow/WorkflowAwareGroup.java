@@ -23,155 +23,173 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
  *
  * @author azrul
  */
-public class WorkflowAwareGroup<T extends WorkItem> extends Div{
+public class WorkflowAwareGroup<T extends WorkItem> extends Div {
+
     private final T workItem;
     private final Predicate<T> visibleCondition;
     private final Predicate<T> enableCondition;
-    
+
     private WorkflowAwareGroup(
-            Predicate<T> visibleCondition, 
+            Predicate<T> visibleCondition,
             Predicate<T> enableCondition,
             T workItem
-        ){
+    ) {
         this.workItem = workItem;
-        this.visibleCondition=visibleCondition;
-        this.enableCondition=enableCondition;
+        this.visibleCondition = visibleCondition;
+        this.enableCondition = enableCondition;
     }
-    
-    
-    
-    
-    
-    
-    public Boolean calculateEnable(){
+
+    public Boolean calculateEnable() {
         return enableCondition.test(workItem);
     }
-    
-    public Boolean calculateVisible(){
+
+    public Boolean calculateVisible() {
         return visibleCondition.test(workItem);
     }
-    
-    private static <T extends WorkItem> Predicate<T> getDefaultVisible(OidcUser user){
-        Predicate<T> visibleRule = (T item)->{
-            if (StringUtils.equals(item.getCreator(),user.getPreferredUsername())){
+
+    private static <T extends WorkItem> Predicate<T> getDefaultVisible(OidcUser user) {
+        Predicate<T> visibleRule = (T item) -> {
+            if (StringUtils.equals(item.getCreator(), user.getPreferredUsername())) {
                 return true;
-            }else if (item.getOwners().stream().map(bu->bu.getUsername()).anyMatch(u->StringUtils.equals(u,user.getPreferredUsername()))){
-                return true; 
-            }else if (item.getApprovals().stream().map(a->a.getUsername()).anyMatch(u->StringUtils.equals(u,user.getPreferredUsername()))){
+            } else if (item.getOwners().stream().map(bu -> bu.getUsername()).anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
                 return true;
-            }else{
+            } else if (item.getApprovals().stream().map(a -> a.getUsername()).anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
+                return true;
+            } else {
                 return false;
             }
-            
+
         };
         return visibleRule;
     }
-    
-   
-    
-    private static <T extends WorkItem> Predicate<T> getDefaultEnabled(
-             final OidcUser user,
-             final BizProcess bizProcess,
-             final Set<String> worklistsWhereItemIsEnabled
-     ){
-        Predicate<T> enabledRule = (T item)->{
+
+    private static <T extends WorkItem> Predicate<T> getDefaultVisibleByWorklist(
+            final OidcUser user,
+            final Set<String> worklistsWhereItemIsVisible) {
+        Predicate<T> enabledRule = (T item) -> {
+            //worklistsWhereItemIsVisible==null => visible anywhere
+            if (worklistsWhereItemIsVisible == null ) {
+                return true;
+            }
             
-            if (getDefaultVisible(user).test(item)==false){
+            //if we set worklistsWhereItemIsViisible and the item is in that worklist 
+            if (worklistsWhereItemIsVisible
+                    .contains(
+                            item.getWorklist()
+                    )
+                    && (item
+                            .getOwners()
+                            .stream()
+                            .map(bu -> bu.getUsername())
+                            .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername())))) {
+                return true;
+            } else {
                 return false;
             }
+        };
+        return enabledRule;
+    }
+
+    private static <T extends WorkItem> Predicate<T> getDefaultEnabled(
+            final OidcUser user,
+            final BizProcess bizProcess,
+            final Set<String> worklistsWhereItemIsEnabled
+    ) {
+        Predicate<T> enabledRule = (T item) -> {
+
             //if the workflow is at start (either just started or being routed there) and the user is the creator & owner, allow edition 
             if (bizProcess.getStartEvents()
                     .stream()
-                    .anyMatch(e->e.getId().equals(item.getWorklist())
-                ) &&
-                StringUtils.equals(
-                    item.getCreator(),
-                    user.getPreferredUsername()
-                ) &&
-                item.getOwners()
-                    .stream()
-                    .map(bu->bu.getUsername())
-                    .anyMatch(u->StringUtils.equals(u,user.getPreferredUsername()))){
+                    .anyMatch(e -> e.getId().equals(item.getWorklist())
+                    )
+                    && StringUtils.equals(
+                            item.getCreator(),
+                            user.getPreferredUsername()
+                    )
+                    && item.getOwners()
+                            .stream()
+                            .map(bu -> bu.getUsername())
+                            .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
                 return true;
-            }else{
-                //if we set worklistsWhereItemIsEnabled and the item is in that worklist and the use is the owner, then enable
-                if (worklistsWhereItemIsEnabled!=null || worklistsWhereItemIsEnabled.isEmpty()){
-                    return false;
+            } else {
+                //worklistsWhereItemIsEnabled==null => enabled anywhere
+                if (worklistsWhereItemIsEnabled == null) {
+                    return true;
                 }
+                //if we set worklistsWhereItemIsEnabled and the item is in that worklist and the use is the owner, then enable
                 if (worklistsWhereItemIsEnabled
                         .contains(
                                 item.getWorklist()
-                        ) &&
-                    (item
-                        .getOwners()
-                        .stream()
-                        .map(bu->bu.getUsername())
-                        .anyMatch(u->StringUtils.equals(u,user.getPreferredUsername())))){
+                        )
+                        && (item
+                                .getOwners()
+                                .stream()
+                                .map(bu -> bu.getUsername())
+                                .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername())))) {
                     return true;
-                }else{
+                } else {
                     return false;
                 }
             }
         };
         return enabledRule;
     }
-    
-    public static <T extends WorkItem>  WorkflowAwareGroup create(
+
+    public static <T extends WorkItem> WorkflowAwareGroup create(
             final OidcUser user,
             final T workItem,
             final BizProcess bizProcess,
+            final Set<String> worklistsWhereItemIsVisible,
             final Set<String> worklistsWhereItemIsEnabled
-             ){
-        Predicate<T> visiblePred = getDefaultVisible(user);
+            
+    ) {
+        Predicate<T> visiblePred = getDefaultVisibleByWorklist(user,worklistsWhereItemIsVisible);
         Predicate<T> enablePred = getDefaultEnabled(user, bizProcess, worklistsWhereItemIsEnabled);
-        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred,  workItem);
+        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred, workItem);
         return group;
     }
-    
-    
-    
-    public static <T extends WorkItem>  WorkflowAwareGroup createEnabledIfApprrovalNeeded(
+
+    public static <T extends WorkItem> WorkflowAwareGroup createEnabledIfApprrovalNeeded(
             final T workItem,
             final OidcUser user
-    ){
-       
-        Predicate<T> commonPred = w->{
-            if (w.getApprovals().stream().map(a->a.getUsername()).anyMatch(u->StringUtils.equals(u,user.getPreferredUsername()))){
+    ) {
+
+        Predicate<T> commonPred = w -> {
+            if (w.getApprovals().stream().map(a -> a.getUsername()).anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
                 return true;
-            }else{
+            } else {
                 return false;
             }
         };
-        WorkflowAwareGroup group = new WorkflowAwareGroup(commonPred, commonPred,  workItem);
+        WorkflowAwareGroup group = new WorkflowAwareGroup(commonPred, commonPred, workItem);
         return group;
     }
-    
-    
-    public static <T extends WorkItem>  WorkflowAwareGroup createEnabledBeforeSubmission(
+
+    public static <T extends WorkItem> WorkflowAwareGroup createEnabledBeforeSubmission(
             final T workItem
-    ){
-        Predicate<T> visiblePred = w->{
+    ) {
+        Predicate<T> visiblePred = w -> {
             return true;
         };
-        Predicate<T> enablePred = w->{
-            if (w.getStatus()==Status.NEWLY_CREATED || w.getStatus()==Status.DRAFT){
+        Predicate<T> enablePred = w -> {
+            if (w.getStatus() == Status.NEWLY_CREATED || w.getStatus() == Status.DRAFT) {
                 return true;
-            }else{
+            } else {
                 return false;
             }
         };
-        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred,  workItem);
+        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred, workItem);
         return group;
     }
-    
-     public static <T extends WorkItem>  WorkflowAwareGroup create(
+
+    public static <T extends WorkItem> WorkflowAwareGroup create(
             final OidcUser user,
             final T workItem,
             final BizProcess bizProcess
-             ){
+    ) {
         Predicate<T> visiblePred = getDefaultVisible(user);
         Predicate<T> enablePred = getDefaultEnabled(user, bizProcess, Set.of());
-        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred,  workItem);
+        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred, workItem);
         return group;
     }
 }

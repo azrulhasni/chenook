@@ -109,6 +109,15 @@ public class FinApplication extends WorkItem {
     @Size(max = 255, message
             = "Reason for financing must be of at most 255 characters")
     private String reasonForFinancing;
+    
+    @WorkField(displayName = "Bureau Score")
+    private Integer bureauScore;
+    
+    @WorkField(displayName = "Bureau Result")
+    private String bureauResult;
+    
+    @WorkField(displayName = "Site Visit Report")
+    private String siteVisitReport;
 
 
     @OneToMany(mappedBy = "finApplication", orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
@@ -133,6 +142,8 @@ public class FinApplication extends WorkItem {
     @Transient
     @LastModifiedDate
     private LocalDateTime lastModifiedDate;
+    
+    
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "finapplication_error_mapping",
@@ -425,5 +436,47 @@ public class FinApplication extends WorkItem {
         } else {
             return "SME Financing";
         }
+    }
+
+    /**
+     * @return the bureauScore
+     */
+    public Integer getBureauScore() {
+        return bureauScore;
+    }
+
+    /**
+     * @param bureauScore the bureauScore to set
+     */
+    public void setBureauScore(Integer bureauScore) {
+        this.bureauScore = bureauScore;
+    }
+
+    /**
+     * @return the bureauResult
+     */
+    public String getBureauResult() {
+        return bureauResult;
+    }
+
+    /**
+     * @param bureauResult the bureauResult to set
+     */
+    public void setBureauResult(String bureauResult) {
+        this.bureauResult = bureauResult;
+    }
+
+    /**
+     * @return the siteVisitReport
+     */
+    public String getSiteVisitReport() {
+        return siteVisitReport;
+    }
+
+    /**
+     * @param siteVisitReport the siteVisitReport to set
+     */
+    public void setSiteVisitReport(String siteVisitReport) {
+        this.siteVisitReport = siteVisitReport;
     }
 }

@@ -94,5 +94,7 @@ public class WorkflowAwareTextField<T> extends TextField {
     public static <T> WorkflowAwareTextField create(String fieldName, Boolean readOnly, Binder<T> binder) {
         return create(fieldName, readOnly, binder, null, null);
     }
+    
+    
 
 }
