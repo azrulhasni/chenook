@@ -16,6 +16,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.contextmenu.ContextMenu;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.html.Span;
@@ -53,21 +54,38 @@ public class MessageButton extends Button {
         this.setId("btnMessage");
         this.setText("Messages");
         
-        ContextMenu notifMenu = new ContextMenu();
-        
-        notifMenu.add(buildMessagePanel(id, context, oidcUser, msgService));
-        notifMenu.setTarget(this);
-        notifMenu.setOpenOnClick(true);
-        notifMenu.addDetachListener(e -> {
-            //if (e. == false) {
-            Long unreadNotifCount2 = msgService.countMessagesByParentIdStatusAndContext(id, MessageStatus.NEW, context);
-            
-            Span counter2 = buildNotifCounter(unreadNotifCount2);
-            this.setSuffixComponent(counter2);
-            String counterLabel2 = String.format("%d unread messages", unreadNotifCount2);
-            this.setTooltipText(counterLabel2);
-            //}
+        Dialog msgDialog = new Dialog("Messages");
+        msgDialog.add(buildMessagePanel(id, context, oidcUser, msgService));
+        msgDialog.addOpenedChangeListener(e->{
+            if (e.isOpened()==false){
+                Long unreadNotifCount2 = msgService.countMessagesByParentIdStatusAndContext(id, MessageStatus.NEW, context);
+                String counterLabel2 = String.format("%d unread messages", unreadNotifCount2);
+                Span counter2 = buildNotifCounter(unreadNotifCount2);
+                this.setSuffixComponent(counter2);
+                this.setTooltipText(counterLabel2);
+            }
         });
+        msgDialog.getFooter().add(new Button("Close",e->msgDialog.close()));
+        this.addClickListener(e->{
+            msgDialog.open();
+        });
+        
+//        ContextMenu notifMenu = new ContextMenu();
+//        
+//        notifMenu.add(buildMessagePanel(id, context, oidcUser, msgService));
+//        notifMenu.setTarget(this);
+//        notifMenu.setOpenOnClick(true);
+//        notifMenu.
+//        notifMenu.addDetachListener(e -> {
+//            //if (e. == false) {
+//            Long unreadNotifCount2 = msgService.countMessagesByParentIdStatusAndContext(id, MessageStatus.NEW, context);
+//            
+//            Span counter2 = buildNotifCounter(unreadNotifCount2);
+//            this.setSuffixComponent(counter2);
+//            String counterLabel2 = String.format("%d unread messages", unreadNotifCount2);
+//            this.setTooltipText(counterLabel2);
+//            //}
+//        });
         
         this.setTooltipText(counterLabel);
         this.setSuffixComponent(counter);
@@ -101,6 +119,7 @@ public class MessageButton extends Button {
             msgService.save(msg);
             gMsgs.getDataProvider().refreshAll();
         });
+        messagesPanel.setWidth("350px");
         return messagesPanel;
     }
 
@@ -138,19 +157,19 @@ public class MessageButton extends Button {
         // cardInfo.add(new Text("[#"+note.getId()+"] "));
         //cardInfo.add(new Text("[#"+msg.getId()+"] "));
         String name = msg.getFullName();
-        if (msg.getWriterUserName() != null && !msg.getWriterUserName().isEmpty()) {
-            name = name + " (" + msg.getWriterUserName() + ")";
-        }
+        String userName = msg.getWriterUserName();
+        
         HorizontalLayout nameLine = new HorizontalLayout();
         NativeLabel txtName = new NativeLabel(name);
         txtName.getStyle().set("fontWeight", "bold");
         nameLine.add(new Text("[#" + msg.getId() + "] "), txtName, new Text(" "));
         cardInfo.add(nameLine);
+        cardInfo.add(userName);
         cardInfo.add(new NativeLabel(msg.getCreatedDateTime().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy hh:mm:ss"))));
         HorizontalLayout msgPanel = new HorizontalLayout();
         msgPanel.setWidth("100%");
         TextArea txaMsg = new TextArea();
-        txaMsg.setValue(msg.getMessage());
+        txaMsg.setValue(msg.getMessage()); 
         txaMsg.setId("txaMsg");
         txaMsg.setWidth("100%");
         msgPanel.add(txaMsg);
@@ -218,7 +237,8 @@ public class MessageButton extends Button {
                 dialog.setConfirmText("Delete");
                 dialog.setConfirmButtonTheme("error primary");
                 dialog.addConfirmListener(event -> {
-
+                        msgService.remove(msg);
+                        gMsgs.getDataProvider().refreshAll();
 //                        noteService.deleteNote(note,oidcUser.getPreferredUsername());
 //                        List<Note> msgs = getNotesList.apply(doc, noteToBeHighlighted);
 //                        vlNotesList.setItems(msgs);

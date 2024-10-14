@@ -474,7 +474,7 @@ public class ApplicationForm extends Dialog {
                 oapproval.ifPresent(approval -> {
                     approval.setApprovalDateTime(LocalDateTime.now());
                     approval.setApproved(workflowPanel.getApproval());
-
+                    approval.setNote(workflowPanel.getApprovalNote());
                 });
                 finappService.run(finapp,
                         user.getPreferredUsername(),

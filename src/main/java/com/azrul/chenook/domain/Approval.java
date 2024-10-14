@@ -11,12 +11,8 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
-import java.util.Objects;
 import org.hibernate.envers.Audited;
-import org.springframework.data.annotation.Transient;
 import org.springframework.data.elasticsearch.annotations.ValueConverter;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -47,6 +43,9 @@ public class Approval {
     
     @WorkField(displayName = "Approved")
     private Boolean approved;
+    
+     @WorkField(displayName = "Note")
+    private String note;
     
     @ValueConverter(LocalDateTimeConverter.class)
     @WorkField(displayName = "Approval date")
@@ -211,5 +210,19 @@ public class Approval {
 //    public void setHistoricalWorkItem(WorkItem historicalWorkItem) {
 //        this.historicalWorkItem = historicalWorkItem;
 //    }
+
+    /**
+     * @return the note
+     */
+    public String getNote() {
+        return note;
+    }
+
+    /**
+     * @param note the note to set
+     */
+    public void setNote(String note) {
+        this.note = note;
+    }
     
 }

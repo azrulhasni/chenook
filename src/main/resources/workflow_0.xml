@@ -131,7 +131,7 @@ xsi:noNamespaceSchemaLocation="workflow.xsd">
 
         <service
             id='S50.SET_APPROVED'
-            next='S10.INFORM_CUSTOMER'
+            next='S6.DISBURSEMENT_PROCESS'
             description='Set approved'>
             <script>
                 <![CDATA[

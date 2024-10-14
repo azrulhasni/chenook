@@ -25,6 +25,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.provider.DataProvider;
@@ -101,28 +102,44 @@ public class WorkflowPanel<T extends WorkItem> extends FormLayout {
         this.add(workflowField);
 
         if (isWaitingApproval(work, user)) {
-            Binder<Approval> binder = new Binder<>(Approval.class);
-            binder.setBean(approval);
+            Button btnApproval = new Button("Approval", e -> {
+                Dialog approvalDialog = new Dialog();
+                VerticalLayout approvalPanel = new VerticalLayout();
 
-            WorkflowAwareComboBox<Approval, Boolean> cbApprove = WorkflowAwareComboBox.<Approval, Boolean>create("approved", binder, Set.of(Boolean.TRUE, Boolean.FALSE), group);
-            cbApprove.setId("approvalNeeded");
-            cbApprove.setItemLabelGenerator(a -> {
-                if (Boolean.FALSE.equals(a)) {
-                    return "Reject";
-                } else {
-                    return "Approve";
-                }
+                Binder<Approval> binder = new Binder<>(Approval.class);
+                binder.setBean(approval);
+
+                WorkflowAwareComboBox<Approval, Boolean> cbApprove = WorkflowAwareComboBox.<Approval, Boolean>create("approved", binder, Set.of(Boolean.TRUE, Boolean.FALSE), group);
+                cbApprove.setId("approvalNeeded");
+                cbApprove.setItemLabelGenerator(a -> {
+                    if (Boolean.FALSE.equals(a)) {
+                        return "Reject";
+                    } else {
+                        return "Approve";
+                    }
+                });
+
+                cbApprove.getStyle().setWidth("28em");
+                approvalPanel.add(cbApprove);
+
+                TextArea taApprovalNote = WorkflowAwareTextArea.create("note", binder, group);
+                taApprovalNote.setId("approvalNote");
+
+                taApprovalNote.getStyle().setWidth("28em");
+                approvalPanel.add(taApprovalNote);
+
+                approvalDialog.add(approvalPanel);
+
+                approvalDialog.getFooter().add(new Button("Close", e1 -> approvalDialog.close()));
+                approvalDialog.open();
             });
-
-            cbApprove.getStyle().setWidth("28em");
-            if (cbApprove != null) {
-                this.add(cbApprove);
-            }
+            btnApproval.setId("btnApproval");
+            this.add(btnApproval);
         }
     }
 
     private Boolean isWaitingApproval(
-            final T work, 
+            final T work,
             final OidcUser user
     ) {
         return work.getApprovals().stream().filter(
@@ -141,6 +158,8 @@ public class WorkflowPanel<T extends WorkItem> extends FormLayout {
         workflowDialog.add(tf);
         VerticalLayout approvalPanel = buildApprovalPanel(work, workflowDialog);
         workflowDialog.add(approvalPanel);
+        VerticalLayout histApprovalPanel = buildHistoricalApprovalPanel(work, workflowDialog);
+        workflowDialog.add(histApprovalPanel);
         VerticalLayout ownerPanel = buildOwnerPanel(work, workflowDialog);
         workflowDialog.add(ownerPanel);
         workflowDialog.add(new Button("Done", e -> workflowDialog.close()));
@@ -167,24 +186,84 @@ public class WorkflowPanel<T extends WorkItem> extends FormLayout {
                 Span confirmed = new Span("No decision");
                 confirmed.getElement().getThemeList().add("badge contrast pill");
                 panel.add(confirmed);
+            } else if (approval.getApproved()) {
+                Span confirmed = new Span("Approved");
+                confirmed.getElement().getThemeList().add("badge success pill");
+                panel.add(confirmed);
             } else {
-                if (approval.getApproved()) {
-                    Span confirmed = new Span("Approved");
-                    confirmed.getElement().getThemeList().add("badge success pill");
-                    panel.add(confirmed);
-                } else if (approval.getApproved()) {
-                    Span confirmed = new Span("Disapproved");
-                    confirmed.getElement().getThemeList().add("badge error pill");
-                    panel.add(confirmed);
-                }
+                Span confirmed = new Span("Disapproved");
+                confirmed.getElement().getThemeList().add("badge error pill");
+                panel.add(confirmed);
             }
 
+            if (approval.getNote() != null) {
+                TextArea note = new TextArea();
+
+                note.setValue(approval.getNote());
+                note.setReadOnly(true);
+                panel.add(note);
+            }
             return panel;
         });
         Map<String, String> sortableFields = WorkflowUtils.getSortableFields(Approval.class);
         grid.setMaxHeight("calc(" + COUNT_PER_PAGE + " * var(--lumo-size-m))");
         nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
         H4 approvalTitle = new H4("Approvals");
+        approvalPanel.add(approvalTitle);
+        approvalPanel.add(nav);
+        approvalPanel.add(grid);
+        return approvalPanel;
+    }
+
+    private VerticalLayout buildHistoricalApprovalPanel(WorkItem work, Dialog approvalDialog) {
+        VerticalLayout approvalPanel = new VerticalLayout();
+        PageNav nav = new PageNav();
+        Integer count = approvalService.countHistoricalApprovalsByWork(work);//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
+        DataProvider dataProvider = approvalService.getHistoricalApprovalsByWork(work, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
+        Grid<Approval> grid = new Grid<>();
+        grid.setItems(dataProvider);
+        grid.addComponentColumn(approval -> {
+            BizUser bizUser = new BizUser();
+            bizUser.setFirstName(approval.getFirstName());
+            bizUser.setLastName(approval.getLastName());
+            bizUser.setUsername(approval.getUsername());
+
+            UserField userField = new UserField(bizUser);
+
+            HorizontalLayout panel = new HorizontalLayout();
+            panel.add(userField);
+            if (approval.getApproved() == null) {
+                Span confirmed = new Span("No decision");
+                confirmed.getElement().getThemeList().add("badge contrast pill");
+                panel.add(confirmed);
+            } else if (approval.getApproved()) {
+                Span confirmed = new Span("Approved");
+                confirmed.getElement().getThemeList().add("badge success pill");
+                panel.add(confirmed);
+            } else {
+                Span confirmed = new Span("Disapproved");
+                confirmed.getElement().getThemeList().add("badge error pill");
+                panel.add(confirmed);
+            }
+
+            if (approval.getNote() != null) {
+                Dialog noteDialog = new Dialog();
+                TextArea note = new TextArea();
+
+                note.setValue(approval.getNote());
+                note.setReadOnly(true);
+                noteDialog.add(note);
+                noteDialog.getFooter().add(new Button("Close", e3 -> noteDialog.close()));
+                Button btnNote = new Button("...", e3 -> noteDialog.open());
+                btnNote.getStyle().set("align-self", "end");
+                panel.add(btnNote);
+            }
+            return panel;
+        });
+        Map<String, String> sortableFields = WorkflowUtils.getSortableFields(Approval.class);
+        grid.setMaxHeight("calc(" + COUNT_PER_PAGE + " * var(--lumo-size-m))");
+        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
+        H4 approvalTitle = new H4("Past Approvals");
         approvalPanel.add(approvalTitle);
         approvalPanel.add(nav);
         approvalPanel.add(grid);
@@ -236,6 +315,10 @@ public class WorkflowPanel<T extends WorkItem> extends FormLayout {
 
     public Boolean getApproval() {
         return approval.getApproved();
+    }
+
+    public String getApprovalNote() {
+        return approval.getNote();
     }
 
     private <T> Select<T> createSelect(

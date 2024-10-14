@@ -20,6 +20,12 @@ public interface ApprovalRepository extends JpaRepository<Approval, Long>, JpaSp
      @Query(value = "SELECT * FROM approval WHERE work_id = :workId", nativeQuery = true)    
     public Page<Approval> findByWork(Long workId, Pageable pageable);
     
+    @Query(value = "SELECT * FROM approval WHERE hist_work_id = :workId", nativeQuery = true)    
+    public Page<Approval> findHistoricalByWork(Long workId, Pageable pageable);
+    
     @Query(value = "SELECT COUNT(*) FROM approval WHERE work_id = :workId", nativeQuery = true)    
     public Long countByWork(Long workId);
+    
+    @Query(value = "SELECT COUNT(*) FROM approval WHERE hist_work_id = :workId", nativeQuery = true)    
+    public Long countHistoricalByWork(Long workId);
 }

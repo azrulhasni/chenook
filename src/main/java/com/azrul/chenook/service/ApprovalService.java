@@ -56,6 +56,10 @@ public class ApprovalService {
         return approvalRepo.countByWork(work.getId()).intValue();
     }
     
+    public Integer countHistoricalApprovalsByWork(WorkItem work){
+        return approvalRepo.countHistoricalByWork(work.getId()).intValue();
+    }
+    
     public DataProvider getApprovalsByWork(WorkItem work, PageNav pageNav) {
         //build data provider
         var dp = new AbstractBackEndDataProvider<Approval, Void>() {
@@ -70,6 +74,42 @@ public class ApprovalService {
     
                 query.getPage();
                 Page<Approval> finapps = approvalRepo.findByWork(work.getId(),
+                    PageRequest.of(
+                            pageNav.getPage() - 1,
+                            pageNav.getMaxCountPerPage(),
+                            Sort.by(sort, sorted))
+                );
+                return finapps.stream();
+            }
+
+            @Override
+            protected int sizeInBackEnd(Query<Approval, Void> query) {
+                return pageNav.getDataCountPerPage();
+            }
+
+            @Override
+            public String getId(Approval item) {
+                return item.getId().toString();
+            }
+
+        };
+        return dp;
+    }
+    
+    public DataProvider getHistoricalApprovalsByWork(WorkItem work, PageNav pageNav) {
+        //build data provider
+        var dp = new AbstractBackEndDataProvider<Approval, Void>() {
+            @Override
+            protected Stream<Approval> fetchFromBackEnd(Query<Approval, Void> query) {
+
+                Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
+                String sortedField = pageNav.getSortField();
+                SessionFactory sessionFactory = emFactory.unwrap(SessionFactory.class);
+                AbstractEntityPersister persister = ((AbstractEntityPersister) ((MappingMetamodel) sessionFactory.getMetamodel()).getEntityDescriptor(WorkItem.class));
+                String sorted = persister.getPropertyColumnNames(sortedField)[0];
+    
+                query.getPage();
+                Page<Approval> finapps = approvalRepo.findHistoricalByWork(work.getId(),
                     PageRequest.of(
                             pageNav.getPage() - 1,
                             pageNav.getMaxCountPerPage(),
