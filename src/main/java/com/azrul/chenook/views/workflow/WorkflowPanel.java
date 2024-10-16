@@ -17,6 +17,7 @@ import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.views.users.UserField;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
@@ -91,13 +92,11 @@ public class WorkflowPanel<T extends WorkItem> extends FormLayout {
             cbStatus.setValue(Status.NEWLY_CREATED);
         }
         cbStatus.setReadOnly(true);
-        Button btnWorkflow = new Button("...", e -> createWorkflowInfoDialog(work, user));
-        btnWorkflow.getStyle().set("align-self", "end");
-        btnWorkflow.setHeight(cbStatus.getHeight());
+
         cbStatus.getStyle().set("width", "50em");
         HorizontalLayout workflowField = new HorizontalLayout();
         workflowField.add(cbStatus);
-        workflowField.add(btnWorkflow);
+        
         workflowField.getStyle().set("width", "50em");
         this.add(workflowField);
 
@@ -129,12 +128,20 @@ public class WorkflowPanel<T extends WorkItem> extends FormLayout {
                 approvalPanel.add(taApprovalNote);
 
                 approvalDialog.add(approvalPanel);
-
-                approvalDialog.getFooter().add(new Button("Close", e1 -> approvalDialog.close()));
+                Button btnClose = new Button("Close", e1 -> approvalDialog.close());
+                approvalDialog.getFooter().add(btnClose);
+                btnClose.setId("btnClose");
                 approvalDialog.open();
             });
             btnApproval.setId("btnApproval");
-            this.add(btnApproval);
+            btnApproval.getStyle().set("align-self", "end");
+            btnApproval.setHeight(cbStatus.getHeight());
+            btnApproval.addThemeVariants(ButtonVariant.LUMO_SMALL);
+            Button btnWorkflow = new Button("Workflow Info.", e -> createWorkflowInfoDialog(work, user));
+            btnWorkflow.addThemeVariants(ButtonVariant.LUMO_SMALL);
+            btnWorkflow.getStyle().set("align-self", "end");
+            btnWorkflow.setHeight(cbStatus.getHeight());
+            this.add(new HorizontalLayout(btnApproval, btnWorkflow));
         }
     }
 
@@ -253,7 +260,9 @@ public class WorkflowPanel<T extends WorkItem> extends FormLayout {
                 note.setValue(approval.getNote());
                 note.setReadOnly(true);
                 noteDialog.add(note);
-                noteDialog.getFooter().add(new Button("Close", e3 -> noteDialog.close()));
+                Button btnClose =new Button("Close", e3 -> noteDialog.close());
+                btnClose.setId("btnClose");
+                noteDialog.getFooter().add(btnClose);
                 Button btnNote = new Button("...", e3 -> noteDialog.open());
                 btnNote.getStyle().set("align-self", "end");
                 panel.add(btnNote);
