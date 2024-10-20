@@ -58,7 +58,7 @@ public class FinApplication extends WorkItem {
 
 
     @NotBlankValue
-    @WorkField(displayName = "Name")
+    @WorkField(displayName = "Name", sortable=true)
     private String name;
 
     @NotBlankValue
@@ -251,7 +251,7 @@ public class FinApplication extends WorkItem {
     }
 
     @Override
-    @WorkField(displayName = "Application ID (AA Number)")
+    @WorkField(displayName = "Application ID (AA Number)",  sortable = true)
     public Long getId() {
         return super.getId();
     }

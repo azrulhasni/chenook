@@ -84,7 +84,7 @@ public class WorkflowUtils {
 //
 //        return Optional.empty();
 //    }
-    private static <T> Field getField(Class<T> itemClass, String fieldName) {
+    public static <T> Field getField(Class<T> itemClass, String fieldName) {
 
         try {
             return itemClass.getDeclaredField(fieldName);

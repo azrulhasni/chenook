@@ -125,6 +125,8 @@ public class ApplicationForm extends Dialog {
                 bizProcess
         );
         
+        WorkflowAwareGroup ifNewGroup = WorkflowAwareGroup.createEnabledIfNew(work);
+        
         WorkflowAwareGroup valuationGroup =  WorkflowAwareGroup.create(
                 user, 
                 work, 
@@ -141,8 +143,7 @@ public class ApplicationForm extends Dialog {
                 Set.of("S4.UNDERWRITING")
         );
         
-        WorkflowAwareGroup enableBeforeSubmissionGroup = WorkflowAwareGroup.createEnabledBeforeSubmission(work);
-
+        WorkflowAwareGroup enableBeforeSubmissionGroup = WorkflowAwareGroup.createEnabledBeforeSubmission(work,user);
         
         
                 
@@ -197,6 +198,7 @@ public class ApplicationForm extends Dialog {
                 workflowPanel,
                 typicalGroup,
                 enableBeforeSubmissionGroup,
+                ifNewGroup,
                 onPostSave,
                 onPostRemove,
                 onPostCancel);
@@ -387,6 +389,7 @@ public class ApplicationForm extends Dialog {
             WorkflowPanel workflowPanel,
             WorkflowAwareGroup typicalWorkflowGroup,
             WorkflowAwareGroup enabledBeforeSubmissionGroup,
+            WorkflowAwareGroup enabledIfNew,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel) {
@@ -395,14 +398,14 @@ public class ApplicationForm extends Dialog {
                 binder,
                 user,
                 workflowPanel,
-                typicalWorkflowGroup,
+                enabledBeforeSubmissionGroup,
                 onPostSave
         );
         btnSaveAndSubmitApp.setId("btnSaveAndSubmitApp");
 
         Button btnSaveDraft = createSaveDraftButton(
                 binder,
-                typicalWorkflowGroup,
+                enabledBeforeSubmissionGroup,
                 onPostSave
         );
         btnSaveDraft.setId("btnSaveDraft");
@@ -411,7 +414,6 @@ public class ApplicationForm extends Dialog {
         Button btnCancel = createCancelButton(
                 binder, 
                 finappService, 
-                typicalWorkflowGroup, 
                 onPostCancel
         );
         btnCancel.setId("btnCancel");
@@ -419,7 +421,7 @@ public class ApplicationForm extends Dialog {
         Button btnRemove = createRemoveButton(
                 binder, 
                 finappService, 
-                enabledBeforeSubmissionGroup,
+                enabledIfNew,
                 onPostRemove
         );
         btnRemove.setId("btnRemove");
@@ -440,7 +442,7 @@ public class ApplicationForm extends Dialog {
             WorkflowAwareGroup group,
             Consumer<FinApplication> onPostSave
     ) {
-        WorkflowAwareButton btnSaveDraft = WorkflowAwareButton.create();
+        WorkflowAwareButton btnSaveDraft = WorkflowAwareButton.create(group);
         btnSaveDraft.setText("Save draft");
         btnSaveDraft.addClickListener(e1 -> {
             FinApplication finapp = binder.getBean();
@@ -461,7 +463,7 @@ public class ApplicationForm extends Dialog {
             WorkflowAwareGroup group,
             Consumer<FinApplication> onPostSave
     ) {
-        WorkflowAwareButton btnSaveFinApp = WorkflowAwareButton.create();
+        WorkflowAwareButton btnSaveFinApp = WorkflowAwareButton.create(group);
         btnSaveFinApp.setText("Save and submit");
         btnSaveFinApp.addClickListener(e1 -> {
             Set<String> errors = validateApplication(applicantService, workflowPanel, binder);
@@ -495,10 +497,9 @@ public class ApplicationForm extends Dialog {
     private Button createCancelButton(
             Binder<FinApplication> binder,
             FinApplicationService finappService,
-            WorkflowAwareGroup group,
             Consumer<FinApplication> onPostCancel
     ) {
-        WorkflowAwareButton btnCancel = WorkflowAwareButton.create(group);
+        WorkflowAwareButton btnCancel = WorkflowAwareButton.create(); //always allow cancel
         btnCancel.setText("Cancel");
         btnCancel.addClickListener(e1 -> {
             FinApplication work = binder.getBean();

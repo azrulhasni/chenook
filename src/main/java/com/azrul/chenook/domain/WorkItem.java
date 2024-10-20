@@ -57,7 +57,7 @@ public abstract class WorkItem {
     @org.springframework.data.annotation.Id
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @WorkField(displayName = "Id")
+    @WorkField(displayName = "Id", sortable = true)
     protected Long id;
 
     @WorkField(displayName = "Creator")

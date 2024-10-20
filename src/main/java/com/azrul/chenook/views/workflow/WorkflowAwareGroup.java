@@ -68,10 +68,10 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
             final Set<String> worklistsWhereItemIsVisible) {
         Predicate<T> enabledRule = (T item) -> {
             //worklistsWhereItemIsVisible==null => visible anywhere
-            if (worklistsWhereItemIsVisible == null ) {
+            if (worklistsWhereItemIsVisible == null) {
                 return true;
             }
-            
+
             //if we set worklistsWhereItemIsViisible and the item is in that worklist 
             if (worklistsWhereItemIsVisible
                     .contains(
@@ -141,9 +141,8 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
             final BizProcess bizProcess,
             final Set<String> worklistsWhereItemIsVisible,
             final Set<String> worklistsWhereItemIsEnabled
-            
     ) {
-        Predicate<T> visiblePred = getDefaultVisibleByWorklist(user,worklistsWhereItemIsVisible);
+        Predicate<T> visiblePred = getDefaultVisibleByWorklist(user, worklistsWhereItemIsVisible);
         Predicate<T> enablePred = getDefaultEnabled(user, bizProcess, worklistsWhereItemIsEnabled);
         WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred, workItem);
         return group;
@@ -165,14 +164,35 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
         return group;
     }
 
+    public static <T extends WorkItem> WorkflowAwareGroup createEnabledIfNew(
+            final T workItem) {
+
+        Predicate<T> visiblePred = w -> {
+            return true;
+        };
+        Predicate<T> enablePred = w -> {
+            if (w.getStatus() == Status.NEWLY_CREATED || w.getStatus() == Status.DRAFT) {
+                return true;
+            }
+            return false;
+        };
+
+        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enablePred, workItem);
+        return group;
+
+    }
+
     public static <T extends WorkItem> WorkflowAwareGroup createEnabledBeforeSubmission(
-            final T workItem
+            final T workItem,
+            final OidcUser user
     ) {
         Predicate<T> visiblePred = w -> {
             return true;
         };
         Predicate<T> enablePred = w -> {
             if (w.getStatus() == Status.NEWLY_CREATED || w.getStatus() == Status.DRAFT) {
+                return true;
+            } else if (w.getApprovals().stream().map(a -> a.getUsername()).anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
                 return true;
             } else {
                 return false;

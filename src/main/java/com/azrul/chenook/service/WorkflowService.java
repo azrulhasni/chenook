@@ -15,6 +15,7 @@ import com.azrul.chenook.repository.WorkItemRepository;
 import com.azrul.chenook.search.repository.WorkItemSearchRepository;
 import com.azrul.chenook.script.Expression;
 import com.azrul.chenook.script.Scripting;
+import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.views.workflow.SearchTermProvider;
 import com.azrul.chenook.workflow.model.Activity;
@@ -36,7 +37,9 @@ import com.vaadin.flow.data.provider.Query;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.SetJoin;
+import java.lang.reflect.Field;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -48,6 +51,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import static java.util.List.of;
 import java.util.Optional;
@@ -921,7 +925,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                             PageRequest.of(
                                     pageNav.getPage() - 1,
                                     pageNav.getMaxCountPerPage(),
-                                    Sort.by(sort, sorted))
+                                    Sort.by(sort, modifySortFieldForSeearch(sorted,workItemClass)))
                     );
                     return finapps.stream();
                 }
@@ -981,7 +985,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                             PageRequest.of(
                                     pageNav.getPage() - 1,
                                     pageNav.getMaxCountPerPage(),
-                                    Sort.by(sort, sorted))
+                                    Sort.by(sort, modifySortFieldForSeearch(sorted,workItemClass)))
                     );
                     return finapps.stream();
                 }
@@ -1005,6 +1009,27 @@ public abstract class WorkflowService<T extends WorkItem> {
         Long count = getWorkItemRepo().count(whereNoOwnerAndWorklistEquals(worklist));//countByWorklistAndNoOwner(worklist);//count(whereWorklistEquals(worklist));
         return count.intValue();
     }
+    
+    private String modifySortFieldForSeearch(String sortField,Class<T> workItemClass ){
+        Field field = WorkflowUtils.getField(workItemClass, sortField);
+//        if (String.class.equals(field.getType())){
+//            return sortField+".keyword";
+//        }else  if (Status.class.equals(field.getType())){
+//            return sortField+".keyword";
+//        }else if (Priority.class.equals(field.getType())){
+//            return sortField+".keyword";
+        if (Number.class.isAssignableFrom(field.getType()) || 
+            LocalDateTime.class.isAssignableFrom(field.getType())||
+            LocalDate.class.isAssignableFrom(field.getType()) ||
+            Date.class.isAssignableFrom(field.getType())){
+           return sortField; 
+        }else {
+            
+            return sortField+".keyword";
+        }
+    }
+    
+    
 
     public DataProvider getWorkByWorklist(Class<T> workItemClass, String worklist, PageNav pageNav) {
         //build data provider
