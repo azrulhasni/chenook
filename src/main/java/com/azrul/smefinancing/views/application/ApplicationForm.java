@@ -125,7 +125,8 @@ public class ApplicationForm extends Dialog {
                 bizProcess
         );
         
-        WorkflowAwareGroup ifNewGroup = WorkflowAwareGroup.createEnabledIfNew(work);
+        WorkflowAwareGroup newlyCreatedGroup = WorkflowAwareGroup.createEnabledIfNew(work);
+        WorkflowAwareGroup approvalNeededGroup = WorkflowAwareGroup.createEnabledIfApprrovalNeeded(work, user);
         
         WorkflowAwareGroup valuationGroup =  WorkflowAwareGroup.create(
                 user, 
@@ -143,9 +144,8 @@ public class ApplicationForm extends Dialog {
                 Set.of("S4.UNDERWRITING")
         );
         
-        WorkflowAwareGroup enableBeforeSubmissionGroup = WorkflowAwareGroup.createEnabledBeforeSubmission(work,user);
-        
-        
+       
+      
                 
         MessageButton msgBtn = new MessageButton(
                 work.getId(),
@@ -193,15 +193,17 @@ public class ApplicationForm extends Dialog {
 
         configureButtons(
                 binder,
-                startEvent,
                 user,
                 workflowPanel,
                 typicalGroup,
-                enableBeforeSubmissionGroup,
-                ifNewGroup,
+                approvalNeededGroup,
+                newlyCreatedGroup,
+                valuationGroup,
+                underwritingGroup,
                 onPostSave,
                 onPostRemove,
-                onPostCancel);
+                onPostCancel
+        );
     }
 
     private FormLayout createForm(
@@ -229,9 +231,6 @@ public class ApplicationForm extends Dialog {
 
         TextField tfPostalCode = WorkflowAwareTextField.create("postalCode", true, binder, typicalGroup);
         form.add(tfPostalCode);
-//        tfPostalCode.setWidthFull();
-//        Div div = new Div(tfPostalCode);
-//        form.add(div);
 
         ComboBox<String> cbState = WorkflowAwareComboBox.create("state", binder, Set.of(
                 "Johor",
@@ -275,8 +274,6 @@ public class ApplicationForm extends Dialog {
         
         TextField tfBureauResult = WorkflowAwareTextField.create("bureauResult", false, binder,underwritingGroup);
         form.add(tfBureauResult);
-        
-        
 
         return form;
     }
@@ -384,12 +381,13 @@ public class ApplicationForm extends Dialog {
 
     private void configureButtons(
             Binder<FinApplication> binder,
-            StartEvent startEvent,
             OidcUser user,
             WorkflowPanel workflowPanel,
-            WorkflowAwareGroup typicalWorkflowGroup,
-            WorkflowAwareGroup enabledBeforeSubmissionGroup,
+            WorkflowAwareGroup typicalGroup,
+            WorkflowAwareGroup enabledIfApprovalNeeded,
             WorkflowAwareGroup enabledIfNew,
+            WorkflowAwareGroup valuationGroup,
+            WorkflowAwareGroup underwritingGroup,
             Consumer<FinApplication> onPostSave,
             Consumer<FinApplication> onPostRemove,
             Consumer<FinApplication> onPostCancel) {
@@ -398,19 +396,32 @@ public class ApplicationForm extends Dialog {
                 binder,
                 user,
                 workflowPanel,
-                enabledBeforeSubmissionGroup,
+               WorkflowAwareGroup.or(
+                        binder.getBean(),
+                        typicalGroup,
+                        enabledIfApprovalNeeded,
+                        enabledIfNew,
+                        valuationGroup,
+                        underwritingGroup
+                ) ,
                 onPostSave
         );
         btnSaveAndSubmitApp.setId("btnSaveAndSubmitApp");
 
         Button btnSaveDraft = createSaveDraftButton(
                 binder,
-                enabledBeforeSubmissionGroup,
+                WorkflowAwareGroup.or(
+                        binder.getBean(), 
+                        typicalGroup,
+                        enabledIfApprovalNeeded,
+                        enabledIfNew,
+                        valuationGroup,
+                        underwritingGroup
+                ),
                 onPostSave
         );
         btnSaveDraft.setId("btnSaveDraft");
 
-        //Button btnSave = createSaveButton(binder, finappService, applicantService, onPostSave);
         Button btnCancel = createCancelButton(
                 binder, 
                 finappService, 

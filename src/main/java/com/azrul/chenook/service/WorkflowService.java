@@ -125,10 +125,12 @@ public abstract class WorkflowService<T extends WorkItem> {
             final BizProcess bizProcess,
             final boolean isError
     ) {
-        //System.out.println("Incoming worklist:"+work.getWorklist());
+        System.out.println("ID:"+work.getId());
+        System.out.println("     User name:"+username);
+        System.out.println("     Incoming worklist:"+work.getWorklist());
         BizUser bizUser = getBizUserService().getUser(username);
         T w = runRecursive(work, bizUser, bizProcess, isError);
-        //System.out.println("Outging worklist:"+work.getWorklist());
+        System.out.println("     Outging worklist:"+work.getWorklist());
         return getWorkItemRepo().save(w);
         
     }
