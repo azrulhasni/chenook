@@ -56,9 +56,10 @@ public class WorkflowPanel<T extends WorkItem> extends FormLayout {
 
     public static <T extends WorkItem> WorkflowPanel create(
             final T work,
-            final OidcUser user) {
+            final OidcUser user,
+            final WorkflowAwareGroup group) {
         var workPanel = ApplicationContextHolder.getBean(WorkflowPanel.class);
-        workPanel.init(work, user);
+        workPanel.init(work, user, group );
         return workPanel;
     }
 
@@ -75,11 +76,11 @@ public class WorkflowPanel<T extends WorkItem> extends FormLayout {
 
     private void init(
             final T work,
-            final OidcUser user
+            final OidcUser user,
+            final WorkflowAwareGroup group
     ) {
         this.approval = new Approval();
         var fieldDisplayMap = WorkflowUtils.getFieldNameDisplayNameMap(work.getClass());
-        this.group = WorkflowAwareGroup.createEnabledIfApprrovalNeeded(work, user);
         this.work = work;
         this.user = user;
 

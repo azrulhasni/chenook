@@ -8,6 +8,8 @@ import com.azrul.chenook.utils.WorkflowUtils;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.Validator;
+
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,7 +72,7 @@ public class WorkflowAwareBigDecimalField<T> extends BigDecimalField {
 
         var bindingBuilder = binder.forField(field);
         
-        bindingBuilder.withNullRepresentation(0);
+        bindingBuilder.withNullRepresentation(new BigDecimal(0));
         for (var validator : validators) {
             bindingBuilder.withValidator(validator);
         }

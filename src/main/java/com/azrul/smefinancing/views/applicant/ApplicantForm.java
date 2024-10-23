@@ -44,9 +44,10 @@ public class ApplicantForm extends Dialog {
     public static ApplicantForm create(Applicant applicant,
             FinApplication finapp,
             OidcUser user,
+            WorkflowAwareGroup group,
             Consumer<Applicant> onPostSave){
         var applicantForm = ApplicationContextHolder.getBean(ApplicantForm.class);
-        applicantForm.init(applicant, finapp, user, onPostSave);
+        applicantForm.init(applicant, finapp, user,group, onPostSave);
         return applicantForm;
     }
     
@@ -67,13 +68,14 @@ public class ApplicantForm extends Dialog {
             Applicant applicant,
             FinApplication finapp,
             OidcUser user,
+            WorkflowAwareGroup group,
             Consumer<Applicant> onPostSave
     ) {
     
 
        FormLayout form = new FormLayout();
        BizProcess bizProcess = workflowConfig.rootBizProcess();
-       WorkflowAwareGroup group = WorkflowAwareGroup.create(user, finapp, bizProcess);
+       //WorkflowAwareGroup group = WorkflowAwareGroup.create(user, finapp, bizProcess);
 
        this.signPanel=SignaturePanel.create(group);
 

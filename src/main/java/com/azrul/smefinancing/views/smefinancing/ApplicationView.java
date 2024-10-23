@@ -67,6 +67,7 @@ public class ApplicationView extends VerticalLayout implements AfterNavigationOb
             
             Map<String,String> fieldNameDisplayNameMap = WorkflowUtils
                     .getFieldNameDisplayNameMap(FinApplication.class);
+            
             var myOwnWorkPanel = MyOwnWorkPanel.create(
                     FinApplication.class,
                     oidcUser,

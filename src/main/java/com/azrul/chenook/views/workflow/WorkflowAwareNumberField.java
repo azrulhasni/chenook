@@ -74,7 +74,7 @@ public class WorkflowAwareNumberField<T> extends NumberField {
             
             var bindingBuilder = binder.forField(field);
             
-            bindingBuilder.withNullRepresentation(0);
+            bindingBuilder.withNullRepresentation(0.0);
             for (var validator : validators) {
                 bindingBuilder.withValidator(validator);
             }
