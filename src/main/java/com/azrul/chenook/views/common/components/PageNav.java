@@ -39,7 +39,7 @@ public class PageNav extends HorizontalLayout {
     private Integer countPerPage;
     private Integer page = 1;
     private Integer totalPageCount;
-    private Integer totalDataCount;
+    private Integer totalDataCount=0;
     private String sortField;
     private Boolean asc;
     private Grid grid;

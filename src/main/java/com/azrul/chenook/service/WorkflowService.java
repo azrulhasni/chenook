@@ -927,7 +927,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                             PageRequest.of(
                                     pageNav.getPage() - 1,
                                     pageNav.getMaxCountPerPage(),
-                                    Sort.by(sort, modifySortFieldForSeearch(sorted,workItemClass)))
+                                    Sort.by(sort, modifySortFieldForSearch(sorted,workItemClass)))
                     );
                     return finapps.stream();
                 }
@@ -946,6 +946,9 @@ public abstract class WorkflowService<T extends WorkItem> {
         };
         return dp;
     }
+
+
+   
 
     public Integer countWorkByCreator(
             Class<T> workItemClass, 
@@ -987,7 +990,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                             PageRequest.of(
                                     pageNav.getPage() - 1,
                                     pageNav.getMaxCountPerPage(),
-                                    Sort.by(sort, modifySortFieldForSeearch(sorted,workItemClass)))
+                                    Sort.by(sort, modifySortFieldForSearch(sorted,workItemClass)))
                     );
                     return finapps.stream();
                 }
@@ -1012,7 +1015,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         return count.intValue();
     }
     
-    private String modifySortFieldForSeearch(String sortField,Class<T> workItemClass ){
+    private String modifySortFieldForSearch(String sortField,Class<T> workItemClass ){
         Field field = WorkflowUtils.getField(workItemClass, sortField);
 //        if (String.class.equals(field.getType())){
 //            return sortField+".keyword";

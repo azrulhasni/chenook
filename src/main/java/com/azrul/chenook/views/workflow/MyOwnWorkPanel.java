@@ -84,8 +84,8 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
     ) {
 
         this.oidcUser = oidcUser;
-        this.counter = (username, searchTermPrrovider) -> finappService.countWorkByOwner(workItemClass, username, searchTermPrrovider);
-        this.dataProviderCreator = (username, searchTermPrrovider, nav) -> finappService.getWorkByOwner(workItemClass, username, searchTermPrrovider, nav);
+        this.counter = (username, searchTermProvider) -> finappService.countWorkByOwner(workItemClass, username, searchTermProvider);
+        this.dataProviderCreator = (username, searchTermProvider, nav) -> finappService.getWorkByOwner(workItemClass, username, searchTermProvider, nav);
 
         Map<String, String> sortableFields = WorkflowUtils.getSortableFields(workItemClass);
 

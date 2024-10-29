@@ -6,6 +6,7 @@ import com.azrul.chenook.service.MessageService;
 import com.azrul.chenook.views.attachments.AttachmentsPanel;
 import com.azrul.chenook.views.common.components.Card;
 import com.azrul.chenook.views.message.MessageButton;
+import com.azrul.chenook.views.reference.ReferencePanel;
 import com.azrul.chenook.views.workflow.WorkflowPanel;
 import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.Approval;
@@ -14,8 +15,10 @@ import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.chenook.workflow.model.StartEvent;
 import com.azrul.smefinancing.domain.Applicant;
 import com.azrul.smefinancing.domain.FinApplication;
+import com.azrul.smefinancing.domain.Location;
 import com.azrul.smefinancing.service.ApplicantService;
 import com.azrul.smefinancing.service.FinApplicationService;
+import com.azrul.smefinancing.service.LocationService;
 import com.azrul.smefinancing.views.applicant.ApplicantForm;
 import com.azrul.chenook.service.BadgeUtils;
 import com.azrul.chenook.service.BizUserService;
@@ -70,6 +73,7 @@ public class ApplicationForm extends Dialog {
     private final ApplicantService applicantService;
     private final MessageService msgService;
     private final WorkflowConfig workflowConfig;
+    private final LocationService locationService;
 
     public static ApplicationForm create(
             StartEvent startEvent,
@@ -97,13 +101,14 @@ public class ApplicationForm extends Dialog {
             @Autowired ApplicantService applicantService,
             @Autowired MessageService msgService,
             @Autowired WorkflowConfig workflowConfig,
+            @Autowired LocationService locationService,
             @Value("${finapp.datetime.format}") String dateTimeFormat
     ) {
         this.finappService = finappService;
         this.applicantService = applicantService;
         this.msgService = msgService;
         this.workflowConfig = workflowConfig;
-
+        this.locationService = locationService;
     }
 
     private void init(
@@ -175,7 +180,9 @@ public class ApplicationForm extends Dialog {
         TextField tfPostalCode = WorkflowAwareTextField.create("postalCode", true, binder, typicalGroup);
         form.add(tfPostalCode);
 
-        ComboBox<String> cbState = WorkflowAwareComboBox.create("state", binder, Set.of(
+        ReferencePanel refPanel = ReferencePanel.create(Location.class,locationService,work.getId(),user,1);
+        form.add(refPanel);
+        /*ComboBox<String> cbState = WorkflowAwareComboBox.create("state", binder, Set.of(
                 "Johor",
                 "Kedah",
                 "Kelantan",
@@ -193,8 +200,8 @@ public class ApplicationForm extends Dialog {
                 "W. Persekutuan Labuan",
                 "W. Persekutuan Putrajaya"
         ), typicalGroup);
-        //cbState.setItems();
-        form.add(cbState);
+       
+        form.add(cbState);*/
 
         DateTimePicker dtpApplicationDate = WorkflowAwareDateTimePicker.create("applicationDate", binder, null);
         dtpApplicationDate.setReadOnly(true);

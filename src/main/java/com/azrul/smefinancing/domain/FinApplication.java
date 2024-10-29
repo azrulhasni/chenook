@@ -22,7 +22,7 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
-
+import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -74,9 +74,11 @@ public class FinApplication extends WorkItem {
     @WorkField(displayName = "Postal Code")
     private String postalCode;
 
-    @NotBlankValue
-    @WorkField(displayName = "State")
-    private String state;
+    /*@NotBlankValue
+    @WorkField(displayName = "Location")
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinColumn(name = "location_id", referencedColumnName = "id")
+    private Location location;*/
 
     @NotBlankValue
     @WorkField(displayName = "Main business activity")
@@ -194,20 +196,14 @@ public class FinApplication extends WorkItem {
         this.address = address;
     }
 
-    /**
-     * @return the state
-     */
-    public String getState() {
-        return state;
+    /*public Location getLocation() {
+        return location;
     }
 
-    /**
-     * @param state the state to set
-     */
-    public void setState(String state) {
-        this.state = state;
-    }
-
+    public void setLocation(Location location) {
+        this.location = location;
+    }*/
+   
     /**
      * @return the mainBusinessActivity
      */

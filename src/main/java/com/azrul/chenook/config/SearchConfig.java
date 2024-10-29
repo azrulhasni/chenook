@@ -28,6 +28,15 @@ public class SearchConfig extends ElasticsearchConfiguration {
     @Value("${http.server.ssl.trust-store-password}")
     private String trustStorePassword;
 
+    @Value("${spring.data.elasticsearch.username}")
+    private String elasticSearchUsername;
+
+    @Value("${spring.data.elasticsearch.cluster-nodes}")
+    private String[] elasticSearchClusterNodes;
+
+    @Value("${spring.data.elasticsearch.password}")
+    private String elasticSearchPassword;
+
     @Override
     public ClientConfiguration clientConfiguration() {
         try {
@@ -35,9 +44,9 @@ public class SearchConfig extends ElasticsearchConfiguration {
                     .loadTrustMaterial(trustStore.getURL(), trustStorePassword.toCharArray())
                     .build();
             return ClientConfiguration.builder()
-                    .connectedTo("localhost:9200")
+                    .connectedTo(elasticSearchClusterNodes)
                     .usingSsl(sslContext)
-                    .withBasicAuth("elastic", "eqwabeWorxxjO+WXCsWO")
+                    .withBasicAuth(elasticSearchUsername, elasticSearchPassword)
                     .build();
         } catch (IOException ex) {
             Logger.getLogger(SearchConfig.class.getName()).log(Level.SEVERE, null, ex);
