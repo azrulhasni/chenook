@@ -180,7 +180,7 @@ public class ApplicationForm extends Dialog {
         TextField tfPostalCode = WorkflowAwareTextField.create("postalCode", true, binder, typicalGroup);
         form.add(tfPostalCode);
 
-        ReferencePanel refPanel = ReferencePanel.create(Location.class,locationService,work.getId(),user,1);
+        ReferencePanel<Location,LocationService> refPanel = ReferencePanel.<Location,LocationService>create(Location.class,locationService,work.getId(),user,1, "SME_FIN");
         form.add(refPanel);
         /*ComboBox<String> cbState = WorkflowAwareComboBox.create("state", binder, Set.of(
                 "Johor",
@@ -307,74 +307,6 @@ public class ApplicationForm extends Dialog {
         this.getFooter().add(buttonLayout);
     }
 
-//    private FormLayout createForm(
-//            Binder<FinApplication> binder,
-//            BizProcess bizProcess,
-//            OidcUser user
-//    ) {
-//        FormLayout form = new FormLayout();
-//        form.setResponsiveSteps(
-//                new FormLayout.ResponsiveStep("0", 1),
-//                new FormLayout.ResponsiveStep("500px", 2)
-//        );
-//
-//        var tfID = WorkflowAwareTextField.create("id", false, binder, new StringToUngroupLongConverter("Not a number"), typicalGroup);
-//        form.add(tfID);
-//
-//        TextField tfName = WorkflowAwareTextField.create("name", true, binder, typicalGroup);
-//        form.add(tfName);
-//
-//        TextArea tfAddress = WorkflowAwareTextArea.create("address", binder, typicalGroup);
-//        form.add(tfAddress);
-//
-//        TextField tfPostalCode = WorkflowAwareTextField.create("postalCode", true, binder, typicalGroup);
-//        form.add(tfPostalCode);
-//
-//        ComboBox<String> cbState = WorkflowAwareComboBox.create("state", binder, Set.of(
-//                "Johor",
-//                "Kedah",
-//                "Kelantan",
-//                "Malacca",
-//                "Negeri Sembilan",
-//                "Pahang",
-//                "Penang",
-//                "Perak",
-//                "Perlis",
-//                "Sabah",
-//                "Sarawak",
-//                "Selangor",
-//                "Terengganu",
-//                "W. Persekutuan Kuala Lumpur",
-//                "W. Persekutuan Labuan",
-//                "W. Persekutuan Putrajaya"
-//        ), typicalGroup);
-//        //cbState.setItems();
-//        form.add(cbState);
-//
-//        DateTimePicker dtpApplicationDate = WorkflowAwareDateTimePicker.create("applicationDate", binder, null);
-//        dtpApplicationDate.setReadOnly(true);
-//        form.add(dtpApplicationDate);//add non managed
-//
-//        TextField tfBizRegNumber = WorkflowAwareTextField.create("ssmRegistrationNumber", true, binder, typicalGroup);
-//        form.add(tfBizRegNumber);
-//
-//        MoneyField tfFinRequested = WorkflowAwareMoneyField.create("financingRequested", "MYR", binder, typicalGroup);
-//        form.add(tfFinRequested);
-//
-//        TextArea taReasonForFinancing = WorkflowAwareTextArea.create("reasonForFinancing", binder, typicalGroup);
-//        form.add(taReasonForFinancing);
-//        
-//        TextArea taSiteVisitReport = WorkflowAwareTextArea.create("siteVisitReport", binder, valuationGroup);
-//        form.add(taSiteVisitReport);
-//        
-//        TextField tfBureauScore = WorkflowAwareTextField.create("bureauScore",false, binder, new StringToIntegerConverter("Not a number"), underwritingGroup);
-//        form.add(tfBureauScore );
-//        
-//        TextField tfBureauResult = WorkflowAwareTextField.create("bureauResult", false, binder,underwritingGroup);
-//        form.add(tfBureauResult);
-//
-//        return form;
-//    }
 
     private VerticalLayout createApplicantPanel(
             FinApplication finapp,

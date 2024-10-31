@@ -1,18 +1,15 @@
 package com.azrul.chenook.views.reference;
 
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
-import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.domain.Reference;
+import com.azrul.chenook.domain.ReferenceMap;
 import com.azrul.chenook.service.ReferenceService;
 import com.azrul.chenook.utils.WorkflowUtils;
-import com.azrul.chenook.views.attachments.AttachmentsPanel;
 import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.views.common.components.SearchPanel;
 import com.vaadin.flow.component.button.Button;
@@ -21,14 +18,14 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
-import com.vaadin.flow.data.provider.ListDataProvider;
 
 public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>> extends VerticalLayout{
     private final int COUNT_PER_PAGE = 3;
     private int maxSelection = 0;
+    private String context;
 
 
-    private ReferenceService refService;
+    private ReferenceService<R> refService;
 
     private ReferencePanel(
         RS refService
@@ -37,15 +34,17 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
                                               
     }
 
-    private void init(Class<R> referenceClass, Long dependencyId, final OidcUser oidcUser, final Integer maxSelection ){
+    private void init(Class<R> referenceClass, Long parentId, final OidcUser oidcUser, final Integer maxSelection , String context){
         setMaxSelection(maxSelection);
+        this.context=context;
 
-        Integer count = refService.countReferenceData(referenceClass, dependencyId);
+        Integer count = refService.countReferenceData(referenceClass, parentId);
         PageNav nav = new PageNav();
         
-        DataProvider dataProvider = refService.getReferenceData(referenceClass, nav, dependencyId);
+        DataProvider<R,Void> dataProvider = refService.getReferenceData(referenceClass, nav, parentId);
         Grid<R> grid = new Grid<>(referenceClass,false);
         grid.setItems(dataProvider);
+        grid.setAllRowsVisible(true);
 
         Map<String, String> sortableFields = WorkflowUtils.getSortableFields(referenceClass);
 
@@ -55,18 +54,27 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
                 .setSortable(sortableFields.containsKey(fieldEntry.getKey()))
                 .setHeader(fieldEntry.getValue());
         }
-
-        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
+        if (maxSelection==1){
+            nav.init(grid, count, 1);
+            grid.setHeight("calc("+2+" * var(--lumo-size-l))");
+        }else{
+            nav.init(grid, count, COUNT_PER_PAGE);
+            grid.setHeight("calc("+(COUNT_PER_PAGE+1)+" * var(--lumo-size-l))");
+        }
+        
        
         grid.setDataProvider(dataProvider);
+
         
         Button btnSelectDialog = new Button("Select", e->{
-            Dialog dialog = buildDialog(referenceClass, dependencyId);
+            Dialog dialog = buildDialog(referenceClass, parentId, grid, nav);
             dialog.open();
         });
         this.add(nav);
         this.add(btnSelectDialog);
         this.add(grid);
+        this.getStyle().set("border", "1px solid lightgrey");
+        this.getStyle().set("border-radius", "10px");
     }
 
     public void setMaxSelection(int maxSelection) {
@@ -77,13 +85,17 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
         return maxSelection;
     }
 
-    private Dialog buildDialog(Class<R> referenceClass, Long dependencyId){
+    private Dialog buildDialog(
+        Class<R> referenceClass, 
+        Long parentId, 
+        Grid<R> gSelectedItems,
+        PageNav navSelectedItems
+    ){
         Dialog dialog = new Dialog();
         SearchPanel searchPanel = new SearchPanel();
         Integer count = refService.countAllReferenceData(referenceClass, searchPanel);
         PageNav nav = new PageNav();
-        
-        DataProvider dataProvider = refService.getAllReferenceData(referenceClass, searchPanel,nav);
+        DataProvider<R,Void> dataProvider = refService.getAllReferenceData(referenceClass, searchPanel,nav);
         Grid<R> grid = new Grid<>(referenceClass, false);
         grid.setItems(dataProvider);
         Map<String, String> sortableFields = WorkflowUtils.getSortableFields(referenceClass);
@@ -93,16 +105,18 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
             grid.addColumn(fieldEntry.getKey())
                 .setSortable(sortableFields.containsKey(fieldEntry.getKey()))
                 .setHeader(fieldEntry.getValue());
+            grid.setAllRowsVisible(true);
         }
 
+        ReferenceMap<R> refMap = refService.getMap(parentId, referenceClass);
         for (int i=0;i<grid.getDataCommunicator().getItemCount();i++){
             R item = grid.getDataCommunicator().getItem(i);
-            if (item.getDependencies().contains(dependencyId)){
+            if (refMap.getReferences().contains(item)){
                 grid.getSelectionModel().select(item);
             }
         }
         
-        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
+        nav.init(grid, count, COUNT_PER_PAGE);
 
         grid.setDataProvider(dataProvider);
         if (maxSelection==1){ 
@@ -110,7 +124,7 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
         }else{
             grid.setSelectionMode(SelectionMode.MULTI);
         }
-
+        //grid.setHeight("calc("+COUNT_PER_PAGE+" * var(--lumo-size-m))");
         
 
         searchPanel.searchRunner(s->dataProvider.refreshAll());
@@ -119,12 +133,14 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
         Button btnClose = new Button("Close", e->dialog.close());
         Button btnSelect = new Button("Select", e->{
             Set<R> selectedItems = grid.getSelectedItems();
-            for (R selectedItem : selectedItems) {
-                selectedItem.getDependencies().add(dependencyId);
-                refService.save(selectedItem);
-            }
+            refService.saveMap(parentId, referenceClass, selectedItems, context);
+            Integer countSelected = refService.countReferenceData(referenceClass, parentId);
+            navSelectedItems.refresh(countSelected);
+            gSelectedItems.getDataProvider().refreshAll();
+            gSelectedItems.setAllRowsVisible(true);
+            dialog.close();
         });
-        dialog.getFooter().add();
+        dialog.getFooter().add(btnClose, btnSelect);
         return dialog;
     }
 
@@ -133,10 +149,11 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
         final RS refService,
         final Long dependencyId, 
         final OidcUser oidcUser,
-        final Integer maxSelection){
+        final Integer maxSelection,
+        final String context){
         
         var refPanel = new ReferencePanel<R,RS>(refService);
-        refPanel.init(referenceClass, dependencyId, oidcUser, maxSelection);
+        refPanel.init(referenceClass, dependencyId, oidcUser, maxSelection, context);
         return refPanel;
     }
 }

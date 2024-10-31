@@ -18,15 +18,15 @@ import com.azrul.chenook.domain.Reference;
 public class Location extends Reference implements Serializable {
 
 
-    @WorkField(displayName = "District")
+    @WorkField(displayName = "District",sortable = true)
     @Column(name = "district", nullable = false)
     private String district;
 
-    @WorkField(displayName = "State")
+    @WorkField(displayName = "State",sortable = true)
     @Column(name = "state", nullable = false)
     private String state;
 
-    @WorkField(displayName = "Country")
+    @WorkField(displayName = "Country",sortable = true)
     @Column(name = "country", nullable = false)
     private String country;
 
@@ -64,6 +64,8 @@ public class Location extends Reference implements Serializable {
     public void setCountry(String country) {
         this.country = country;
     }
+
+   
 
     // equals and hashCode methods
     @Override

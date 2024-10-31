@@ -30,17 +30,7 @@ public abstract class Reference {
     @WorkField(displayName = "Id", sortable = true)
     protected Long id;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    protected Set<Long> dependencies;
 
-
-    public Set<Long> getDependencies() {
-        return dependencies;
-    }
-
-    public void setDependencies(Set<Long> dependencies) {
-        this.dependencies = dependencies;
-    }
 
     public Long getId() {
         return id;
