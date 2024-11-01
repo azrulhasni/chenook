@@ -184,6 +184,7 @@ public class ApplicationForm extends Dialog {
             .<Location,LocationService>create(
                 Location.class,
                 locationService,
+                typicalGroup,
                 work.getId(),
                 user,
                 1, 

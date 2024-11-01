@@ -139,9 +139,10 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
     public void refresh() {
 
         if (myOwnWork != null) {
-            myOwnWork.getRight().getDataProvider().refreshAll();
             Integer countMyOwnedWork = counter.apply(oidcUser.getPreferredUsername(), myOwnWork.getLeft());
             myOwnWork.getMiddle().refresh(countMyOwnedWork);
+            myOwnWork.getRight().getDataProvider().refreshAll();
+            
         }
     }
 

@@ -24,7 +24,7 @@ public class WorkflowAwareSelect<T> extends Select {
     }
     
     public void applyGroup(){
-        if (group==null){
+        if (group!=null){
             this.setReadOnly(!group.calculateEnable());
             this.setVisible(group.calculateVisible());
         }

@@ -11,6 +11,9 @@ import com.azrul.smefinancing.domain.Applicant;
 import com.azrul.smefinancing.domain.FinApplication;
 import com.azrul.smefinancing.repository.FinApplicationRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,6 +47,12 @@ public class FinApplicationService extends WorkflowService<FinApplication> {
         this.contantPersonRepo = contantPersonRepo;
         this.finAppSearchRepo=finAppSearchRepo;
     }
+
+     @PostConstruct
+    public void indexForSearch(){
+        finAppRepo.findAll().forEach(finAppSearchRepo::save);   
+    }
+
     
     public FinApplication getById(Long id){
         Optional<FinApplication> ofinapp = finAppRepo.findById(id);

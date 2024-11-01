@@ -39,6 +39,7 @@ public abstract class ReferenceService<R extends Reference> {
 
     public void save(R entity) {
         getRefRepo().save(entity);
+        getRefSearchRepo().save(entity);
     }
 
     @Transactional

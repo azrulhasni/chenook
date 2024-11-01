@@ -11,6 +11,7 @@ import com.azrul.chenook.service.ReferenceService;
 import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.views.common.components.SearchPanel;
+import com.azrul.chenook.views.workflow.WorkflowAwareGroup;
 import com.vaadin.flow.component.HasLabel;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.customfield.CustomField;
@@ -33,21 +34,31 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
     private Long parentId;
 
     private ReferenceService<R> refService;
+    private WorkflowAwareGroup group;
+    private Button btnSelectDialog;
+    private ReferenceMap<R> currentReferenceMap;
+
+  
 
     private ReferencePanel(
-            RS refService) {
+        final RS refService,
+        final WorkflowAwareGroup group,
+        final Class<R> referenceClass, 
+        final Long parentId, 
+        final OidcUser oidcUser, 
+        final Integer maxSelection,
+        final String label, 
+        final String context
+    ) {
         this.refService = refService;
-
-    }
-
-    private void init(Class<R> referenceClass, Long parentId, final OidcUser oidcUser, final Integer maxSelection,
-            String label, String context) {
+        this.group = group;
         setMaxSelection(maxSelection);
         this.context = context;
         this.label = label;
         this.referenceClass = referenceClass;   
         this.parentId = parentId;
         this.setReadOnly(true);
+        
         this.setLabel(label);
         if (maxSelection > 1) {
             Integer count = refService.countReferenceData(referenceClass, parentId);
@@ -72,7 +83,7 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
 
             grid.setDataProvider(dataProvider);
 
-            Button btnSelectDialog = new Button("Select", e -> {
+            btnSelectDialog = new Button("Select", e -> {
                 Dialog dialog = buildDialog(referenceClass, parentId, ()->{
                     Integer countSelected = refService.countReferenceData(referenceClass, parentId);
                     nav.refresh(countSelected);
@@ -90,7 +101,7 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
             TextField textField = new TextField();
             
             textField.setReadOnly(true);
-            Button btnSelectDialog = new Button("Select", e -> {
+            btnSelectDialog = new Button("Select", e -> {
                 Dialog dialog = buildDialog(referenceClass, parentId, ()->{
                     ReferenceMap<R> refMap2 = refService.getMap(parentId, referenceClass);
                     R ref = refMap2.getReferences().iterator().next();
@@ -112,9 +123,22 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
 
             this.add(refPanel);
         }
+    }
+
+    public void applyGroup(){
+        if (group!=null){
+            this.setReadOnly(!group.calculateEnable());
+            this.btnSelectDialog.setEnabled(group.calculateEnable());
+            this.setVisible(group.calculateVisible());
+            this.btnSelectDialog.setVisible(group.calculateVisible());
+        }
+    }
+
+   // private void init() {
+        
         //this.getStyle().set("border", "1px solid lightgrey");
         //this.getStyle().set("border-radius", "10px");
-    }
+    //}
 
     public void setMaxSelection(int maxSelection) {
         this.maxSelection = maxSelection;
@@ -139,6 +163,7 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
         PageNav nav = new PageNav();
         DataProvider<R, Void> dataProvider = refService.getAllReferenceData(referenceClass, searchPanel, nav);
         Grid<R> grid = new Grid<>(referenceClass, false);
+        nav.init(grid, count, COUNT_PER_PAGE);
         grid.setItems(dataProvider);
         Map<String, String> sortableFields = WorkflowUtils.getSortableFields(referenceClass);
 
@@ -158,7 +183,7 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
             }
         }
 
-        nav.init(grid, count, COUNT_PER_PAGE);
+        
 
         grid.setDataProvider(dataProvider);
         if (maxSelection == 1) {
@@ -168,7 +193,11 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
         }
         // grid.setHeight("calc("+COUNT_PER_PAGE+" * var(--lumo-size-m))");
 
-        searchPanel.searchRunner(s -> dataProvider.refreshAll());
+        searchPanel.searchRunner(s ->{
+            Integer count2 = refService.countAllReferenceData(referenceClass, searchPanel);
+            nav.refresh(count2);
+            dataProvider.refreshAll();
+        });
 
         dialog.add(searchPanel, nav, grid);
         Button btnClose = new Button("Close", e -> dialog.close());
@@ -186,23 +215,41 @@ public class ReferencePanel<R extends Reference, RS extends ReferenceService<R>>
     public static <R extends Reference, RS extends ReferenceService<R>> ReferencePanel<R, RS> create(
             final Class<R> referenceClass,
             final RS refService,
-            final Long dependencyId,
+            final WorkflowAwareGroup group,
+            final Long parentId,
             final OidcUser oidcUser,
             final Integer maxSelection,
             final String label,
             final String context) {
 
-        var refPanel = new ReferencePanel<R, RS>(refService);
-        refPanel.init(referenceClass, dependencyId, oidcUser, maxSelection, label, context);
+        var refPanel = new ReferencePanel<R, RS>(
+            refService,
+            group,
+            referenceClass, 
+            parentId, 
+            oidcUser, 
+            maxSelection, 
+            label, 
+            context);
+        refPanel.applyGroup();
         return refPanel;
     }
 
     @Override
     protected Set<R> generateModelValue() {
-            return refService.getMap(parentId, referenceClass).getReferences();
+            return currentReferenceMap.getReferences();
     }
 
     @Override
     protected void setPresentationValue(Set<R> arg0) {
+        
+    }
+
+    public ReferenceMap<R> getCurrentReferenceMap() {
+        return currentReferenceMap;
+    }
+
+    public void setCurrentReferenceMap(ReferenceMap<R> currentReferenceMap) {
+        this.currentReferenceMap = currentReferenceMap;
     }
 }

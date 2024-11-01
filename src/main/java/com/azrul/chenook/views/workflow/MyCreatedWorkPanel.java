@@ -142,9 +142,10 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
     public void refresh() {
 
         if (myCreatedWork != null) {
-            myCreatedWork.getRight().getDataProvider().refreshAll();
             Integer countMyCreatedWork = counter.apply(oidcUser.getPreferredUsername(), myCreatedWork.getLeft());
             myCreatedWork.getMiddle().refresh(countMyCreatedWork);
+            myCreatedWork.getRight().getDataProvider().refreshAll();
+            
         }
     }
 
