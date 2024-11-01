@@ -94,11 +94,11 @@ public class WorkflowPanel<T extends WorkItem> extends FormLayout {
         }
         cbStatus.setReadOnly(true);
 
-        cbStatus.getStyle().set("width", "50em");
+        cbStatus.getStyle().set("width", "100%");
         HorizontalLayout workflowField = new HorizontalLayout();
         workflowField.add(cbStatus);
         
-        workflowField.getStyle().set("width", "50em");
+        workflowField.getStyle().set("width", "100%");
         this.add(workflowField);
 
         if (isWaitingApproval(work, user)) {

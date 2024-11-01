@@ -180,7 +180,16 @@ public class ApplicationForm extends Dialog {
         TextField tfPostalCode = WorkflowAwareTextField.create("postalCode", true, binder, typicalGroup);
         form.add(tfPostalCode);
 
-        ReferencePanel<Location,LocationService> refPanel = ReferencePanel.<Location,LocationService>create(Location.class,locationService,work.getId(),user,1, "SME_FIN");
+        ReferencePanel<Location,LocationService> refPanel = ReferencePanel
+            .<Location,LocationService>create(
+                Location.class,
+                locationService,
+                work.getId(),
+                user,
+                1, 
+                "Location",
+                "SME_FIN"
+        );
         form.add(refPanel);
         /*ComboBox<String> cbState = WorkflowAwareComboBox.create("state", binder, Set.of(
                 "Johor",

@@ -8,6 +8,8 @@ import com.azrul.chenook.search.repository.ReferenceSearchRepository;
 import com.azrul.chenook.service.ReferenceService;
 import com.azrul.smefinancing.domain.Location;
 
+import jakarta.annotation.PostConstruct;
+
 @Service
 public class LocationService extends ReferenceService<Location> {
 
@@ -20,6 +22,11 @@ public class LocationService extends ReferenceService<Location> {
     ) {
         this.refRepo = refRepo;
         this.refSearchRepo = refSearchRepo;
+    }
+
+    @PostConstruct
+    public void indexForSearch(){
+        refRepo.findAll().forEach(refSearchRepo::save);   
     }
 
     @Override

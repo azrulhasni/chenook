@@ -87,11 +87,6 @@ public class Location extends Reference implements Serializable {
     // toString method
     @Override
     public String toString() {
-        return "Location{" +
-               "id=" + id +
-               ", district='" + district + '\'' +
-               ", state='" + state + '\'' +
-               ", country='" + country + '\'' +
-               '}';
+        return district + ", " + state + ", " + country;
     }
 }

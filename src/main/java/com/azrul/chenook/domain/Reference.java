@@ -48,6 +48,8 @@ public abstract class Reference {
         return result;
     }
 
+    public abstract String toString();
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
