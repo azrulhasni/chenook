@@ -21,6 +21,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.Size;
@@ -74,11 +76,11 @@ public class FinApplication extends WorkItem {
     @WorkField(displayName = "Postal Code")
     private String postalCode;
 
-    /*@NotBlankValue
+    @NotBlankValue
     @WorkField(displayName = "Location")
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "location_id", referencedColumnName = "id")
-    private Location location;*/
+    @ManyToMany( fetch = FetchType.EAGER)
+	@JoinTable(name="finapp_locations", joinColumns=@JoinColumn(name="finapps_id"), inverseJoinColumns=@JoinColumn(name="location_id"))
+    private Set<Location> location;
 
     @NotBlankValue
     @WorkField(displayName = "Main business activity")
@@ -474,5 +476,13 @@ public class FinApplication extends WorkItem {
      */
     public void setSiteVisitReport(String siteVisitReport) {
         this.siteVisitReport = siteVisitReport;
+    }
+
+    public void setLocation(Set<Location> location) {
+        this.location = location;
+    }
+
+    public Set<Location> getLocation() {
+        return location;
     }
 }

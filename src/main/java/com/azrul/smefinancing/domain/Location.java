@@ -11,10 +11,13 @@ import jakarta.persistence.Id;
 import java.io.Serializable;
 import java.util.Objects;
 
+import org.hibernate.envers.Audited;
+
 import com.azrul.chenook.annotation.WorkField;
 import com.azrul.chenook.domain.Reference;
 
 @Entity
+@Audited
 public class Location extends Reference implements Serializable {
 
 

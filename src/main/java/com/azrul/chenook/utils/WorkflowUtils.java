@@ -87,7 +87,9 @@ public class WorkflowUtils {
     public static <T> Field getField(Class<T> itemClass, String fieldName) {
 
         try {
-            return itemClass.getDeclaredField(fieldName);
+            Field field = itemClass.getDeclaredField(fieldName);
+            field.setAccessible(true);
+            return field;
         } catch (NoSuchFieldException | SecurityException ex) {
             try {
                 return itemClass.getSuperclass().getDeclaredField(fieldName);

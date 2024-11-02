@@ -14,8 +14,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import com.azrul.chenook.domain.Reference;
-import com.azrul.chenook.domain.ReferenceMap;
-import com.azrul.chenook.repository.ReferenceMapRepository;
+//import com.azrul.chenook.domain.ReferenceMap;
+//import com.azrul.chenook.repository.ReferenceMapRepository;
 import com.azrul.chenook.repository.ReferenceRepository;
 import com.azrul.chenook.search.repository.ReferenceSearchRepository;
 import com.azrul.chenook.utils.WorkflowUtils;
@@ -27,7 +27,7 @@ import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 import com.vaadin.flow.data.provider.SortDirection;
 
-import jakarta.transaction.Transactional;
+//import jakarta.transaction.Transactional;
 
 public abstract class ReferenceService<R extends Reference> {
 
@@ -35,14 +35,14 @@ public abstract class ReferenceService<R extends Reference> {
 
     protected abstract ReferenceSearchRepository<R> getRefSearchRepo();
 
-    protected ReferenceMapRepository<R> refMapRepo;
+    //protected ReferenceMapRepository<R> refMapRepo;
 
     public void save(R entity) {
         getRefRepo().save(entity);
         getRefSearchRepo().save(entity);
     }
 
-    @Transactional
+    /*@Transactional
     public void saveMap(Long parentId, Class<R> referenceClass, Set<R> references, String context) {
         ReferenceMap<R> refMap = refMapRepo.findReferencesByParent(parentId, referenceClass.getCanonicalName());
         if (refMap == null) {
@@ -59,7 +59,7 @@ public abstract class ReferenceService<R extends Reference> {
     @Transactional
     public ReferenceMap<R> getMap(Long parentId, Class<R> referenceClass) {
         return refMapRepo.findReferencesByParent(parentId, referenceClass.getCanonicalName());
-    }
+    }*/
 
     public Integer countReferenceData(
             Class<R> referenceClass, 
@@ -193,8 +193,5 @@ public abstract class ReferenceService<R extends Reference> {
         }
     }
 
-    @Autowired
-    public void setRefMapRepo(ReferenceMapRepository refMapRepo) {
-        this.refMapRepo = refMapRepo;
-    }
+   
 }
