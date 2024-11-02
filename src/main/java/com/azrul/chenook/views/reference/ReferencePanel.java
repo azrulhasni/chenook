@@ -46,7 +46,12 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
             final RS refService) {
         this.refService = refService;
         this.group = group;
-        VirtualList<R> textField = new VirtualList<>();
+        VirtualList<R> refList = new VirtualList<>();
+        refList.setHeight("auto");
+        refList.getStyle().set("border","1px solid lightgray");
+        refList.getStyle().set("border-radius", "10px"); 
+        refList.getStyle().set("padding=leeft", "5px");
+
         Class<? extends WorkItem> workClass = binder.getBean().getClass();
         
         try {
@@ -56,7 +61,9 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
            
             Class<R> referenceClass = (Class<R>) ((ParameterizedType) workField.getGenericType())
                     .getActualTypeArguments()[0];
-            textField.setItems(currentReferences);
+            if (currentReferences!=null && !currentReferences.isEmpty()){
+                refList.setItems(currentReferences);
+            }
 
             // textField.setReadOnly(true);
             btnSelectDialog = new Button("Select", e -> {
@@ -68,7 +75,7 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
                      */
                     this.currentReferences.clear();
                     this.currentReferences.addAll(selections);
-                    textField.setItems(currentReferences);
+                    refList.setItems(currentReferences);
                 });
                 dialog.open();
             });
@@ -76,9 +83,9 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
             HorizontalLayout refPanel = new HorizontalLayout();
             refPanel.setWidthFull();
             refPanel.setAlignItems(FlexComponent.Alignment.CENTER);
-            refPanel.add(textField, btnSelectDialog);
+            refPanel.add(refList, btnSelectDialog);
             btnSelectDialog.getStyle().set("margin-left", "auto");
-            textField.setWidthFull();
+            refList.setWidthFull();
 
             this.add(refPanel);
         } catch ( SecurityException 
@@ -86,77 +93,6 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
         | IllegalAccessException e) {
             e.printStackTrace();
         }
-
-        /*
-         * if (maxSelection > 1) {
-         * Integer count = this.currentReferenceMap.getReferences().size();
-         * PageNav nav = new PageNav();
-         * 
-         * var dataProvider = new
-         * ListDataProvider<>(this.currentReferenceMap.getReferences());
-         * Grid<R> grid = new Grid<>(referenceClass, false);
-         * grid.setItems(dataProvider);
-         * grid.setAllRowsVisible(true);
-         * 
-         * Map<String, String> sortableFields =
-         * WorkflowUtils.getSortableFields(referenceClass);
-         * 
-         * var fieldMap = WorkflowUtils.getFieldNameDisplayNameMap(referenceClass);
-         * for (var fieldEntry : fieldMap.entrySet()) {
-         * grid.addColumn(fieldEntry.getKey())
-         * .setSortable(sortableFields.containsKey(fieldEntry.getKey()))
-         * .setHeader(fieldEntry.getValue());
-         * }
-         * 
-         * nav.init(grid, count, COUNT_PER_PAGE);
-         * grid.setHeight("calc(" + (COUNT_PER_PAGE + 1) + " * var(--lumo-size-l))");
-         * 
-         * grid.setDataProvider(dataProvider);
-         * 
-         * btnSelectDialog = new Button("Select", e -> {
-         * Dialog dialog = buildDialog(referenceClass, parentId, ()->{
-         * this.currentReferenceMap = refService.getMap(parentId, referenceClass);
-         * Integer countSelected = this.currentReferenceMap.getReferences().size();
-         * nav.refresh(countSelected);
-         * var dataProvider2 = new
-         * ListDataProvider<>(this.currentReferenceMap.getReferences());
-         * grid.setDataProvider(dataProvider2);
-         * grid.setAllRowsVisible(true);
-         * });
-         * dialog.open();
-         * });
-         * 
-         * this.add(nav);
-         * this.add(btnSelectDialog);
-         * this.add(grid);
-         * }else{
-         * Integer count = this.currentReferenceMap.getReferences().size();
-         * TextField textField = new TextField();
-         * 
-         * textField.setReadOnly(true);
-         * btnSelectDialog = new Button("Select", e -> {
-         * Dialog dialog = buildDialog(referenceClass, parentId, ()->{
-         * this.currentReferenceMap = refService.getMap(parentId, referenceClass);
-         * R ref = currentReferenceMap.getReferences().iterator().next();
-         * textField.setValue(ref.toString());
-         * });
-         * dialog.open();
-         * });
-         * 
-         * if (refMap.getReferences().size()>0){
-         * R ref = refMap.getReferences().iterator().next();
-         * textField.setValue(ref.toString());
-         * }
-         * HorizontalLayout refPanel = new HorizontalLayout();
-         * refPanel.setWidthFull();
-         * refPanel.setAlignItems(FlexComponent.Alignment.CENTER);
-         * refPanel.add(textField,btnSelectDialog);
-         * btnSelectDialog.getStyle().set("margin-left", "auto");
-         * textField.setWidthFull();
-         * 
-         * this.add(refPanel);
-         * }
-         */
     }
 
     public void applyGroup() {
@@ -229,7 +165,7 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
             postSelection.accept(selectedItems);
             dialog.close();
         });
-        dialog.getFooter().add(btnClose, btnSelect);
+        dialog.getFooter().add( btnSelect,btnClose);
         return dialog;
     }
 
@@ -270,21 +206,6 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
             bindingBuilder.withValidator(validator);
         }
 
-        /*
-         * if (!editable) {
-         * if (converter != null) {
-         * bindingBuilder.withConverter(converter).bindReadOnly(fieldName);
-         * } else {
-         * bindingBuilder.bindReadOnly(fieldName);
-         * }
-         * } else {
-         * if (converter != null) {
-         * bindingBuilder.withConverter(converter).bind(fieldName);
-         * } else {
-         * bindingBuilder.bind(fieldName);
-         * }
-         * }
-         */
 
         return field;
     }
