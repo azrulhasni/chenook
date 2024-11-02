@@ -4,14 +4,15 @@ import com.azrul.chenook.annotation.DateTimeFormat;
 import com.azrul.chenook.annotation.Matcher;
 import com.azrul.chenook.annotation.MoneyRange;
 import com.azrul.chenook.annotation.NotBlankValue;
+import com.azrul.chenook.annotation.NotEmpty;
 import com.azrul.chenook.annotation.NotNullValue;
 import com.azrul.chenook.annotation.NumberRange;
 import com.azrul.chenook.annotation.WorkField;
 import com.azrul.chenook.views.common.validator.MatcherValidator;
 import com.azrul.chenook.views.common.validator.MoneyRangeValidator;
+import com.azrul.chenook.views.common.validator.NotEmptyValidator;
 import com.azrul.chenook.views.common.validator.NumberRangeValidator;
 import com.azrul.chenook.views.common.validator.PresenceValidator;
-import com.azrul.chenook.views.workflow.WorkflowAwareBigDecimalField;
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasLabel;
@@ -21,8 +22,6 @@ import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.shared.HasPrefix;
 import com.vaadin.flow.data.binder.Validator;
-import com.vaadin.flow.data.validator.AbstractValidator;
-import com.vaadin.flow.data.validator.RangeValidator;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -35,11 +34,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -59,31 +56,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class WorkflowUtils {
 
-//    public static <T, A extends Annotation> Optional<A> getAnnotation(Class<A> annoClass, T item, String fieldName) {
-//
-//        List<java.lang.reflect.Field> fields = new ArrayList<>();
-//        Collections.addAll(fields, item.getClass().getDeclaredFields());
-//        Collections.addAll(fields, item.getClass().getSuperclass().getDeclaredFields());
-//        Optional<Field> ofield = fields.stream().filter(f -> f.getName().equals(fieldName)).findFirst();
-//        Optional<A> oa = ofield.flatMap(field -> {
-//            try {
-//                var anno = field.getAnnotation(annoClass);
-//                if (anno != null) {
-//                    return Optional.of(anno);
-//                } else {
-//                    BeanInfo info = Introspector.getBeanInfo(item.getClass());
-//                    Optional<PropertyDescriptor> property = Stream.of(info.getPropertyDescriptors()).filter(p -> StringUtils.equals(fieldName, p.getName())).findFirst();
-//
-//                    return property.map(p -> p.getReadMethod().getAnnotation(annoClass));
-//                }
-//            } catch (SecurityException | IntrospectionException ex) {
-//                Logger.getLogger(WorkflowUtils.class.getName()).log(Level.SEVERE, null, ex);
-//            }
-//            return Optional.empty();
-//        });
-//
-//        return Optional.empty();
-//    }
+
     public static <T> Field getField(Class<T> itemClass, String fieldName) {
 
         try {
@@ -209,18 +182,6 @@ public class WorkflowUtils {
         return result;
     }
 
-//    public static <T> Map<Field, Annotation> getFieldAnnotationMap(Class annoClass, Class<T> itemClass) {
-//        Map<Field, Map<Class, Annotation>> annosPerField = getAnnotations(annoClass, itemClass);
-//
-//        Map<Field, Annotation> results = new HashMap<>();
-//        for (var fieldAnno : annosPerField.entrySet()) {
-//            if (fieldAnno.getValue().containsKey(annoClass)) {
-//                var anno = fieldAnno.getValue().get(annoClass);
-//                results.put(fieldAnno.getKey(), anno);
-//            }
-//        }
-//        return results;
-//    }
 
     public static <T> Map<String, String> getSortableFields(Class<T> itemClass) {
         Map<Field,  Map<String, Object>> fieldAnnoMap = getAnnotations(WorkField.class, itemClass);
@@ -255,35 +216,7 @@ public class WorkflowUtils {
                 );
        
     }
-    
-//    public static <T> Set<String> getSearchFields(Class<T> itemClass) {
-//       Set<String> fieldNames = new HashSet<>();
-//       Map<Field,  Map<String, Object>> fieldAnnoMap = getAnnotations(FullTextField.class, itemClass,true);
-//       fieldNames.addAll(
-//               fieldAnnoMap
-//                .entrySet()
-//                .stream()
-//                .filter(e->String.class.equals(e.getKey().getType()))
-//                .map(e->e.getKey().getName())
-//                .collect(Collectors.toSet()));
-//       Map<Field,  Map<String, Object>> fieldAnnoMap2 = getAnnotations(KeywordField.class, itemClass,true);
-//       fieldNames.addAll(
-//               fieldAnnoMap2
-//                .entrySet()
-//                .stream()
-//                .filter(e->String.class.equals(e.getKey().getType()))
-//                .map(e->e.getKey().getName())
-//                .collect(Collectors.toSet()));
-//       Map<Field,  Map<String, Object>> fieldAnnoMap3 = getAnnotations(GenericField.class, itemClass,true);
-//       fieldNames.addAll(
-//               fieldAnnoMap3
-//                .entrySet()
-//                .stream()
-//                 .filter(e->String.class.equals(e.getKey().getType()))
-//                .map(e->e.getKey().getName())
-//                .collect(Collectors.toSet()));
-//       return fieldNames;
-//    }
+ 
     
      public static List<Validator> applyMoneyRange(
             Map<Class<? extends Annotation>, Map<String, Object>> annoFieldDisplayMap, 
@@ -396,6 +329,34 @@ public class WorkflowUtils {
                     validators.add(new PresenceValidator("Field " + (String)workfieldMap.get("displayName") + " is empty"));
                 } else {
                     validators.add(new PresenceValidator("Field " + fieldName + " is empty"));
+                }
+            }
+        }
+        return validators;
+    }
+
+    public static  List<Validator> applyNotEmpty(
+            Map<Class<? extends Annotation>, Map<String, Object>> annoFieldDisplayMap,
+            Component field,  
+            Map<String, Object> workfieldMap, 
+            String fieldName
+    ) {
+         List<Validator> validators = new ArrayList<>();
+       
+        Map<String,Object> notEmptyMap = annoFieldDisplayMap.get(NotEmpty.class);
+        
+        if (notEmptyMap!=null) {
+            if (HasValue.class.isAssignableFrom(field.getClass())){
+                ((HasValue)field).setRequiredIndicatorVisible(true);
+            }
+            
+            if (((String[])notEmptyMap.get("message")).length > 0) {
+                validators.add(new NotEmptyValidator(((String[])notEmptyMap.get("message"))[0]));
+            } else {
+                if (workfieldMap!=null) {
+                    validators.add(new NotEmptyValidator("Field " + (String)workfieldMap.get("displayName") + " is empty"));
+                } else {
+                    validators.add(new NotEmptyValidator("Field " + fieldName + " is empty"));
                 }
             }
         }

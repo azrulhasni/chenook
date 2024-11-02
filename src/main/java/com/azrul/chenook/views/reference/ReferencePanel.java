@@ -189,23 +189,22 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
                 annoFieldDisplayMap,
                 field);
 
+        
         validators.addAll(
-                WorkflowUtils.applyNotBlank(
+                WorkflowUtils.applyNotEmpty(
                         annoFieldDisplayMap,
                         field,
                         workfieldMap,
                         fieldName));
 
-        validators.addAll(
-                WorkflowUtils.applyMatcher(
-                        annoFieldDisplayMap));
+       
 
         var bindingBuilder = binder.forField(field);
         bindingBuilder.withNullRepresentation(Set.of());
         for (var validator : validators) {
             bindingBuilder.withValidator(validator);
         }
-
+        bindingBuilder.bind(fieldName);
 
         return field;
     }

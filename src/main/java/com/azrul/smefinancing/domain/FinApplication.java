@@ -7,6 +7,7 @@ package com.azrul.smefinancing.domain;
 import com.azrul.chenook.annotation.DateTimeFormat;
 import com.azrul.chenook.annotation.Matcher;
 import com.azrul.chenook.annotation.NotBlankValue;
+import com.azrul.chenook.annotation.NotEmpty;
 import com.azrul.chenook.annotation.NotNullValue;
 import com.azrul.chenook.annotation.WorkField;
 import com.azrul.chenook.domain.WorkItem;
@@ -24,7 +25,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -39,6 +39,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.azrul.chenook.annotation.NumberRange;
+import com.azrul.chenook.annotation.SingleValue;
 import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.domain.converter.LocalDateTimeConverter;
 import com.azrul.chenook.domain.converter.MoneyConverter;
@@ -76,7 +77,8 @@ public class FinApplication extends WorkItem {
     @WorkField(displayName = "Postal Code")
     private String postalCode;
 
-    @NotBlankValue
+    @NotEmpty(message = "At least one location must be selected")
+    @SingleValue
     @WorkField(displayName = "Location")
     @ManyToMany( fetch = FetchType.EAGER)
 	@JoinTable(name="finapp_locations", joinColumns=@JoinColumn(name="finapps_id"), inverseJoinColumns=@JoinColumn(name="location_id"))
@@ -268,7 +270,6 @@ public class FinApplication extends WorkItem {
     }
     
     @Override
-    //@KeywordField
     @WorkField(displayName = "Status", sortable=true)
     public Status getStatus() {
         return super.getStatus();
