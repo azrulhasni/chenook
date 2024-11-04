@@ -96,7 +96,7 @@ public class ApprovalService {
         return dp;
     }
     
-    public DataProvider getHistoricalApprovalsByWork(WorkItem work, PageNav pageNav) {
+    public DataProvider<Approval,Void> getHistoricalApprovalsByWork(WorkItem work, PageNav pageNav) {
         //build data provider
         var dp = new AbstractBackEndDataProvider<Approval, Void>() {
             @Override

@@ -84,6 +84,12 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
                     return true;
                 //... or my approval is needed
                 } else{
+                    if (w.getApprovals()==null) {
+                        return false;
+                    }
+                    if (w.getApprovals().isEmpty()) {
+                        return false;
+                    }
                     if (w.getApprovals().stream().map(a -> a.getUsername()).anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
                         return true;
                     } else {
@@ -320,13 +326,19 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
                 if (!worklistsWhereItemIsEnabled.contains("ANY_WORKLIST")) {
                     //... and the item is allowed to be visible
                     if (worklistsWhereItemIsEnabled.contains(item.getWorklist())) {
+                        if (w.getApprovals()==null){
+                            return false;
+                        }
+                        if (w.getApprovals().isEmpty()){
+                            return false;
+                        }
                         //...if you need to approve something
                         if (w.getApprovals().stream()
                                 .map(a -> a.getUsername())
                                 .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))){
-                            return false;
-                        }else{
                             return true;
+                        }else{
+                            return false;
                         }
                     } else {
                         return false;

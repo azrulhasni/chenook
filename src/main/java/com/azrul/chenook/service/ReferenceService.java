@@ -61,7 +61,7 @@ public abstract class ReferenceService<R extends Reference> {
         return refMapRepo.findReferencesByParent(parentId, referenceClass.getCanonicalName());
     }*/
 
-    public Integer countReferenceData(
+    /*public Integer countReferenceData(
             Class<R> referenceClass, 
             Long parentId
     ) {
@@ -103,7 +103,7 @@ public abstract class ReferenceService<R extends Reference> {
 
         };
         return dp;
-    }
+    }*/
 
     public Integer countAllReferenceData(
             Class<R> referenceClass,

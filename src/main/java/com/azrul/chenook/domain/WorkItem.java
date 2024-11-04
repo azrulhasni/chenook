@@ -350,6 +350,9 @@ public abstract class WorkItem {
     
     public void addApproval(Approval approval){
 //        approval.setWorkItem(this);
+        if (this.getApprovals()==null){
+            this.setApprovals(new HashSet<>());
+        }
         this.getApprovals().add(approval);
     }
     

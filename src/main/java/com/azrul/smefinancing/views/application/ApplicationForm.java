@@ -50,6 +50,7 @@ import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.converter.StringToIntegerConverter;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -211,13 +212,15 @@ public class ApplicationForm extends Dialog {
         
         TextField tfBureauResult = WorkflowAwareTextField.create("bureauResult", false, binder,underwritingGroup);
         form.add(tfBureauResult);
-        this.add(form);
+        
 
         var workflowPanel = WorkflowPanel.create(
-                work, 
+                "approvals",
+                binder,
                 user,
                 approvalGroup
         );
+        form.add(workflowPanel);
 
         var attachmentsPanel = AttachmentsPanel.create(
                 work.getId(),
@@ -229,7 +232,7 @@ public class ApplicationForm extends Dialog {
 
         this.add(msgBtn);
         this.add(form);
-        this.add(workflowPanel);
+        
         this.add(attachmentsPanel);
 
         VerticalLayout applicantPanel = createApplicantPanel(
@@ -397,66 +400,7 @@ public class ApplicationForm extends Dialog {
         return btnAddApplicant;
     }
 
-//    private void configureButtons(
-//            Binder<FinApplication> binder,
-//            OidcUser user,
-//            BizProcess bizProcess,
-//            WorkflowPanel workflowPanel,
-//            Consumer<FinApplication> onPostSave,
-//            Consumer<FinApplication> onPostRemove,
-//            Consumer<FinApplication> onPostCancel) {
-//        
-//         WorkflowAwareGroup saveAndSubmitBtnGroup = WorkflowAwareGroup
-//                .createSaveAndSubmitBtnGroup(binder.getBean(),user);
-//        
-//        WorkflowAwareGroup cancelBtnGroup = WorkflowAwareGroup
-//                .createCancelBtnGroup(binder.getBean(),user);
-//        
-//         WorkflowAwareGroup removeBtnGroup = WorkflowAwareGroup
-//                .createRemoveBtnGroup(binder.getBean(),user, bizProcess);
-//
-//        Button btnSaveAndSubmitApp = createSaveAndSubmitButton(
-//                binder,
-//                user,
-//                workflowPanel,
-//                saveAndSubmitBtnGroup,
-//                onPostSave
-//        );
-//        btnSaveAndSubmitApp.setId("btnSaveAndSubmitApp");
-//
-//        Button btnSaveDraft = createSaveDraftButton(
-//                binder,
-//                saveAndSubmitBtnGroup,
-//                onPostSave
-//        );
-//        btnSaveDraft.setId("btnSaveDraft");
-//
-//        Button btnCancel = createCancelButton(
-//                binder, 
-//                finappService,
-//                cancelBtnGroup,
-//                onPostCancel
-//        );
-//        btnCancel.setId("btnCancel");
-//        
-//        Button btnRemove = createRemoveButton(
-//                binder, 
-//                finappService, 
-//                removeBtnGroup,
-//                onPostRemove
-//        );
-//        btnRemove.setId("btnRemove");
-//
-//        HorizontalLayout buttonLayout = new HorizontalLayout(
-//                btnSaveAndSubmitApp,
-//                btnSaveDraft,
-//                btnCancel,
-//                btnRemove
-//        );
-//        buttonLayout.setSpacing(true);
-//        this.getFooter().add(buttonLayout);
-//
-//    }
+
 
     private Button createSaveDraftButton(
             Binder<FinApplication> binder,
@@ -466,13 +410,15 @@ public class ApplicationForm extends Dialog {
         WorkflowAwareButton btnSaveDraft = WorkflowAwareButton.create(group);
         btnSaveDraft.setText("Save draft");
         btnSaveDraft.addClickListener(e1 -> {
-            FinApplication finapp = binder.getBean();
+            FinApplication finapp = new FinApplication();
+            finapp = binder.getBean();  
+            finappService.save(finapp);
+            onPostSave.accept(finapp);
             if (finapp.getStatus() == Status.NEWLY_CREATED) {
                 finapp.setStatus(Status.DRAFT);
             }
-            finappService.save(finapp);
-            onPostSave.accept(finapp);
             this.close();
+           
         });
         return btnSaveDraft;
     }
@@ -488,17 +434,18 @@ public class ApplicationForm extends Dialog {
         btnSaveFinApp.setText("Save and submit");
         btnSaveFinApp.addClickListener(e1 -> {
             Set<String> errors = validateApplication(applicantService, workflowPanel, binder);
+            FinApplication ff = binder.getBean();
             if (errors.isEmpty()) {
                 FinApplication finapp = binder.getBean();
                 if (finapp.getStatus() == Status.NEWLY_CREATED) {
                     finapp.setStatus(Status.DRAFT);
                 }
-                Optional<Approval> oapproval = finapp.getApprovals().stream().filter(a -> StringUtils.equals(user.getPreferredUsername(), a.getUsername())).findAny();
+                /*Optional<Approval> oapproval = finapp.getApprovals().stream().filter(a -> StringUtils.equals(user.getPreferredUsername(), a.getUsername())).findAny();
                 oapproval.ifPresent(approval -> {
                     approval.setApprovalDateTime(LocalDateTime.now());
                     approval.setApproved(workflowPanel.getApproval());
                     approval.setNote(workflowPanel.getApprovalNote());
-                });
+                });*/
                 finappService.run(finapp,
                         user.getPreferredUsername(),
                         workflowConfig.rootBizProcess(),
@@ -576,9 +523,9 @@ public class ApplicationForm extends Dialog {
         if (applicantService.countApplicants(finapp) <= 0) {
             errors.add("No applicant");
         }
-        if (workflowPanel.validate() == false) {
+        /*if (workflowPanel.validate() == false) {
             errors.add("Approval not set");
-        }
+        }*/
         applicantService.getApplicants(finapp).forEach(applicant -> {
             for (String err : applicant.getErrors()) {
                 errors.add("[" + applicant.getFullName() + "] " + err);

@@ -22,12 +22,18 @@ import java.util.function.Consumer;
 public class SearchPanel extends HorizontalLayout implements SearchTermProvider,HasValue<AbstractField.ComponentValueChangeEvent<TextField,String>,String> {
     private final TextField searchField;
     private final Button searchBtn;
-    
+
     public SearchPanel(){
+        this("");
+    }
+    
+    public SearchPanel(String idDiscriminator){
         searchField = new TextField();
+        searchField.setId("searchField-"+idDiscriminator);
         this.add(searchField);
         searchBtn = new Button();
         searchBtn.setText("");
+        searchBtn.setId("searchBtn-"+idDiscriminator);
         searchBtn.setIcon(VaadinIcon.SEARCH.create());
         this.add(searchBtn);
     }

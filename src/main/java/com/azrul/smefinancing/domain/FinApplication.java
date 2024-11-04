@@ -78,11 +78,11 @@ public class FinApplication extends WorkItem {
     private String postalCode;
 
     @NotEmpty(message = "At least one location must be selected")
-    @SingleValue
+    //@SingleValue
     @WorkField(displayName = "Location")
     @ManyToMany( fetch = FetchType.EAGER)
 	@JoinTable(name="finapp_locations", joinColumns=@JoinColumn(name="finapps_id"), inverseJoinColumns=@JoinColumn(name="location_id"))
-    private Set<Location> location;
+    private Set<Location> location = new HashSet<>();
 
     @NotBlankValue
     @WorkField(displayName = "Main business activity")

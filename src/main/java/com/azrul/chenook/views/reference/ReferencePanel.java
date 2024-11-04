@@ -3,11 +3,17 @@ package com.azrul.chenook.views.reference;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
+import com.azrul.chenook.annotation.SingleValue;
+import com.azrul.chenook.config.SearchConfig;
 import com.azrul.chenook.domain.Reference;
 //import com.azrul.chenook.domain.ReferenceMap;
 import com.azrul.chenook.domain.WorkItem;
@@ -21,6 +27,7 @@ import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
+import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.virtuallist.VirtualList;
@@ -34,87 +41,111 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
     private int maxSelection = 0;
 
     private ReferenceService<R> refService;
-    private WorkflowAwareGroup group;
+    private WorkflowAwareGroup<T> group;
     private Button btnSelectDialog;
-    private Set<R> currentReferences;
+    private Button btnDelete;
+    private ListBox<R> refList =new ListBox<>();;
 
     @SuppressWarnings("unchecked")
     private ReferencePanel(
             final String fieldName,
             final Binder<T> binder,
-            final WorkflowAwareGroup group,
+            final WorkflowAwareGroup<T> group,
             final RS refService) {
         this.refService = refService;
         this.group = group;
-        VirtualList<R> refList = new VirtualList<>();
+        
+       
         refList.setHeight("auto");
-        refList.getStyle().set("border","1px solid lightgray");
-        refList.getStyle().set("border-radius", "10px"); 
-        refList.getStyle().set("padding=leeft", "5px");
+        refList.setMinHeight("var(--lumo-size-s)");
+        refList.getStyle().set("border", "1px solid lightgray");
+        refList.getStyle().set("border-radius", "10px");
+        refList.getStyle().set("padding-left", "5px");
 
         Class<? extends WorkItem> workClass = binder.getBean().getClass();
-        
+
         try {
             Field workField = WorkflowUtils.getField(workClass, fieldName);
+            if (workField.isAnnotationPresent(SingleValue.class)) {
+                maxSelection = 1;
+            } else {
+                maxSelection = 0;
+            }
 
-            this.currentReferences = (Set<R>) workField.get(binder.getBean());
-           
             Class<R> referenceClass = (Class<R>) ((ParameterizedType) workField.getGenericType())
                     .getActualTypeArguments()[0];
-            if (currentReferences!=null && !currentReferences.isEmpty()){
-                refList.setItems(currentReferences);
+
+
+            if (workField.get(binder.getBean())!=null){
+                refList.setItems((Set<R>)workField.get(binder.getBean()));
+            }else{
+                refList.setItems(Set.of()); 
+                workField.set(binder.getBean(), Set.of());
             }
+
+            btnDelete = new Button("Delete", e -> {
+                try {
+                    Set<R> currentValues = new HashSet<>((Set<R>)workField.get(binder.getBean()));
+                    currentValues.remove(refList.getValue());
+                    workField.set(binder.getBean(), currentValues);
+                    refList.setItems((Set<R>)workField.get(binder.getBean()));
+                } catch (IllegalArgumentException | IllegalAccessException e1) {
+                    Logger.getLogger(ReferencePanel.class.getName()).log(Level.SEVERE, null, e1);
+                }
+             });
+             btnDelete.setId("btnDelete-"+fieldName);
 
             // textField.setReadOnly(true);
             btnSelectDialog = new Button("Select", e -> {
-                Dialog dialog = buildDialog(referenceClass, (selections) -> {
-                    /*
-                     * this.currentReferenceMap = refService.getMap(parentId, referenceClass);
-                     * R ref = currentReferenceMap.getReferences().iterator().next();
-                     * textField.setValue(ref.toString());
-                     */
-                    this.currentReferences.clear();
-                    this.currentReferences.addAll(selections);
-                    refList.setItems(currentReferences);
+                Dialog dialog = buildDialog(fieldName,referenceClass, (selections) -> {
+                    try {
+                        workField.set(binder.getBean(), selections);
+                        refList.setItems(selections);
+                    } catch (IllegalArgumentException | IllegalAccessException e1) {
+                        // TODO Auto-generated catch block
+                        Logger.getLogger(ReferencePanel.class.getName()).log(Level.SEVERE, null, e1);
+                    }
                 });
                 dialog.open();
             });
+            btnSelectDialog.setId("btnSelectDialog-"+fieldName);
 
             HorizontalLayout refPanel = new HorizontalLayout();
             refPanel.setWidthFull();
-            refPanel.setAlignItems(FlexComponent.Alignment.CENTER);
-            refPanel.add(refList, btnSelectDialog);
+            refPanel.setAlignItems(FlexComponent.Alignment.START);
+            refPanel.add(refList,btnDelete, btnSelectDialog);
             btnSelectDialog.getStyle().set("margin-left", "auto");
             refList.setWidthFull();
 
             this.add(refPanel);
-        } catch ( SecurityException 
-        | IllegalArgumentException 
-        | IllegalAccessException e) {
-            e.printStackTrace();
-        }
+        } catch (SecurityException
+                | IllegalArgumentException
+                | IllegalAccessException e) {
+                    Logger.getLogger(ReferencePanel.class.getName()).log(Level.SEVERE, null, e);
+        } 
     }
 
     public void applyGroup() {
         if (group != null) {
             this.setReadOnly(!group.calculateEnable());
+            this.btnDelete.setEnabled(group.calculateEnable());
+            this.refList.setReadOnly(!group.calculateEnable());
             this.btnSelectDialog.setEnabled(group.calculateEnable());
             this.setVisible(group.calculateVisible());
             this.btnSelectDialog.setVisible(group.calculateVisible());
+            this.btnDelete.setVisible(group.calculateVisible());
+            this.refList.setVisible(group.calculateVisible());
         }
     }
 
-    // private void init() {
 
-    // this.getStyle().set("border", "1px solid lightgrey");
-    // this.getStyle().set("border-radius", "10px");
-    // }
 
     private Dialog buildDialog(
+            String fieldName,
             Class<R> referenceClass,
             Consumer<Set<R>> postSelection) {
         Dialog dialog = new Dialog();
-        SearchPanel searchPanel = new SearchPanel();
+        SearchPanel searchPanel = new SearchPanel(fieldName);
         Integer count = refService.countAllReferenceData(referenceClass, searchPanel);
         PageNav nav = new PageNav();
         DataProvider<R, Void> dataProvider = refService.getAllReferenceData(referenceClass, searchPanel, nav);
@@ -131,33 +162,28 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
             grid.setAllRowsVisible(true);
         }
 
-        /*
-         * ReferenceMap<R> refMap = refService.getMap(parentId, referenceClass);
-         * for (int i = 0; i < grid.getDataCommunicator().getItemCount(); i++) {
-         * R item = grid.getDataCommunicator().getItem(i);
-         * if (refMap.getReferences().contains(item)) {
-         * grid.getSelectionModel().select(item);
-         * }
-         * }
-         */
-        for (R ref : currentReferences) {
-            grid.getSelectionModel().select(ref);
-        }
 
         grid.setDataProvider(dataProvider);
         if (maxSelection == 1) {
             grid.setSelectionMode(SelectionMode.SINGLE);
+            if (!refList.isEmpty()) {
+                grid.asSingleSelect().setValue(refList.getValue());
+            }
+
         } else {
             grid.setSelectionMode(SelectionMode.MULTI);
+            if (!refList.isEmpty()) {
+                grid.asMultiSelect().select(refList.getListDataView().getItems().toList());
+            }
         }
-        // grid.setHeight("calc("+COUNT_PER_PAGE+" * var(--lumo-size-m))");
+
 
         searchPanel.searchRunner(s -> {
             Integer count2 = refService.countAllReferenceData(referenceClass, searchPanel);
             nav.refresh(count2);
             dataProvider.refreshAll();
         });
-
+     
         dialog.add(searchPanel, nav, grid);
         Button btnClose = new Button("Close", e -> dialog.close());
         Button btnSelect = new Button("Select", e -> {
@@ -165,14 +191,15 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
             postSelection.accept(selectedItems);
             dialog.close();
         });
-        dialog.getFooter().add( btnSelect,btnClose);
+        btnSelect.setId("btnSelect-"+fieldName);
+        dialog.getFooter().add(btnSelect, btnClose);
         return dialog;
     }
 
     public static <T extends WorkItem, R extends Reference, RS extends ReferenceService<R>> ReferencePanel<T, R, RS> create(
             final String fieldName,
             final Binder<T> binder,
-            final WorkflowAwareGroup group,
+            final WorkflowAwareGroup<T> group,
             final RS refService) {
 
         T workItem = binder.getBean();
@@ -189,15 +216,12 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
                 annoFieldDisplayMap,
                 field);
 
-        
         validators.addAll(
                 WorkflowUtils.applyNotEmpty(
                         annoFieldDisplayMap,
                         field,
                         workfieldMap,
                         fieldName));
-
-       
 
         var bindingBuilder = binder.forField(field);
         bindingBuilder.withNullRepresentation(Set.of());
@@ -211,22 +235,22 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
 
     @Override
     protected Set<R> generateModelValue() {
-        return this.currentReferences;
+        return refList.getListDataView().getItems().collect(Collectors.toSet());
     }
 
     @Override
+    public Set<R> getValue() {
+        return generateModelValue();
+    }   
+
+    @Override
     protected void setPresentationValue(Set<R> arg0) {
-        this.currentReferences.clear();
-        this.currentReferences.addAll(arg0);
+       refList.setItems(arg0);
     }
 
-    /*
-     * public ReferenceMap<R> getCurrentReferenceMap() {
-     * return currentReferenceMap;
-     * }
-     * 
-     * public void setCurrentReferenceMap(ReferenceMap<R> currentReferenceMap) {
-     * this.currentReferenceMap = currentReferenceMap;
-     * }
-     */
+    @Override
+    public void setValue(Set<R> arg0) {
+        setPresentationValue(arg0);
+    }   
+
 }

@@ -1,5 +1,6 @@
 package com.azrul.chenook.views;
 
+import com.azrul.chenook.config.SearchConfig;
 import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.service.MapperService;
 import com.azrul.chenook.views.about.AboutView;
@@ -24,6 +25,8 @@ import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -93,7 +96,7 @@ public class MainLayout extends AppLayout {
             }
             return nav;
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.getLogger(MainLayout.class.getName()).log(Level.SEVERE, null, e);
         }
         return null;
     }
