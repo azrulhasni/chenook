@@ -6,8 +6,8 @@ package com.azrul.chenook.service;
 
 //import com.azrul.smefinancing.domain.Applicant;
 import com.azrul.chenook.domain.Attachment;
+import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.repository.AttachmentRepository;
-import com.azrul.smefinancing.repository.FinApplicationRepository;
 import com.vaadin.flow.data.provider.CallbackDataProvider;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 import com.vaadin.flow.data.provider.SortDirection;
@@ -39,14 +39,13 @@ import org.springframework.transaction.annotation.Transactional;
  * @author azrul
  */
 @Service
-public class AttachmentService {
+public class AttachmentService<T extends WorkItem> {
     private final MinioClient minioClient;
     private final String minioBucket;
     private final AttachmentRepository attachmentRepo;
 
     
     public AttachmentService(
-            @Autowired FinApplicationRepository finappRepo,
             @Autowired AttachmentRepository attachmentRepo,
             @Autowired MinioClient minioClient,
             @Value("${minio.bucket}") String minioBucket

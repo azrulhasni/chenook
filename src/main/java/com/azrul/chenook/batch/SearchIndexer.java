@@ -5,7 +5,7 @@
 package com.azrul.chenook.batch;
 
 import com.azrul.chenook.domain.WorkItem;
-import com.azrul.smefinancing.search.repository.FinApplicationSearchRepository;
+import com.azrul.chenook.search.repository.WorkItemSearchRepository;
 //import com.azrul.smefinancing.search.repository.FinApplicationSearchRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -24,8 +24,8 @@ public class SearchIndexer {
     @PersistenceContext
     private EntityManager entityManager;
     
-    @Autowired
-    FinApplicationSearchRepository wiSearchRepo;
+//    @Autowired
+//    WorkItemSearchRepository wiSearchRepo;
     
      @Transactional
      //@EventListener(ApplicationReadyEvent.class)

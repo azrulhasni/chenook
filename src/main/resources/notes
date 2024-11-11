@@ -22,3 +22,32 @@ curl -k -u elastic:eqwabeWorxxjO+WXCsWO -X GET "https://localhost:9200/_cat/indi
 * Read an index
 -----------------
 curl -k -u elastic:eqwabeWorxxjO+WXCsWO -X GET "https://localhost:9200/reference/_search?pretty" -H 'Content-Type: application/json'
+
+Parameters
+==========
+executor.thread-count
+
+chenook.keycloak.username
+chenook.keycloak.password
+chenook.keycloak.url
+chenook.keycloak.client-id
+chenook.keycloak.client-name
+chenook.keycloak.realm
+chenook.keycloak.query-batch-size
+
+minio.url
+minio.access-key
+minio.secret-key
+minio.bucket
+
+http.server.ssl.trust-store
+http.server.ssl.trust-store-password
+spring.data.elasticsearch.username
+spring.data.elasticsearch.cluster-nodes
+spring.data.elasticsearch.password
+
+spring.security.oauth2.resourceserver.jwt.jwk-set-uri
+
+chenook.lgWorkflowAbsLocation
+chenook.lgWorkflowFile
+chenook.lgWorkflowXsdUrl

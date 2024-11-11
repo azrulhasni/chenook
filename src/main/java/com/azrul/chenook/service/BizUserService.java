@@ -42,10 +42,7 @@ import org.springframework.stereotype.Service;
 public class BizUserService<T extends WorkItem> {
 
     private final MapperService mapperService;
-    private final ObjectMapper objectToKeyValueMaper = new ObjectMapper();
     private final String keycloakRealm;
-    //private final SearchEngine searchEngine;
-    private final Integer allUsersMaxCount;
     private final Keycloak keycloak;
     private final String clientId;
     private final Integer queryBatchSize;
@@ -59,11 +56,9 @@ public class BizUserService<T extends WorkItem> {
             @Autowired BizUserRepository bizUserRepo,
             @Value("${chenook.keycloak.realm}") String keycloakRealm,
             @Value("${chenook.keycloak.client-id}") String clientId,
-            @Value("${chenook.keycloak.query-batch-size}") Integer queryBatchSize,
-            @Value("${typesense.users.allUsersMaxCount}") Integer allUsersMaxCount
+            @Value("${chenook.keycloak.query-batch-size}") Integer queryBatchSize
     ) {
         this.mapperService = mapperService;
-        this.allUsersMaxCount = allUsersMaxCount;
         this.keycloakRealm = keycloakRealm;
         this.clientId = clientId;
         this.keycloak = keycloak;
@@ -115,7 +110,7 @@ public class BizUserService<T extends WorkItem> {
         return user.getFirstName() + " " + user.getLastName();
     }
 
-    public DataProvider getOwnersByWork(T work, PageNav pageNav) {
+    public DataProvider<BizUser,Void> getOwnersByWork(T work, PageNav pageNav) {
         //build data provider
         var dp = new AbstractBackEndDataProvider<BizUser, Void>() {
             @Override

@@ -172,25 +172,24 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
         return group;
     }
 
-    public static <T extends WorkItem> WorkflowAwareGroup createApproverForButtons(
+    public static <T extends WorkItem> WorkflowAwareGroup createForApproverrButtons(
             final T workItem,
-            final OidcUser user
+            final OidcUser user,
+             final BizProcess bizProcess
     ) {
-
+        
         Predicate<T> visiblePred = w -> {
-            if (w.getApprovals().stream().map(a -> a.getUsername()).anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
-                return true;
-            } else {
-                return false;
-            }
+            Boolean  approvalNeeded = w.getApprovals()!=null && !w.getApprovals().isEmpty();
+            return approvalNeeded;
         };
 
         Predicate<T> enabledPred = w -> {
-            if (w.getApprovals().stream().map(a -> a.getUsername()).anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
-                return true;
-            } else {
-                return false;
-            }
+            Boolean  approvalNeeded = w.getApprovals()!=null && !w.getApprovals().isEmpty();
+            Boolean isApprover = w.getApprovals()==null?false:w.getApprovals().stream()
+                                .map(a -> a.getUsername())
+                                .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()));
+                             
+            return (approvalNeeded && isApprover);
         };
         WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enabledPred, workItem);
         return group;
@@ -206,149 +205,22 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
     ) {
 
         Predicate<T> visiblePred = w -> {
-            //Case of creator:
-            //----------------
-
-            //if user is the creator
-            if (StringUtils.equals(
-                    item.getCreator(),
-                    user.getPreferredUsername()
-            )) {
-                //if the user is the owner
-                if (item.getOwners()
-                        .stream()
-                        .map(bu -> bu.getUsername())
-                        .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
-                    //...and the workflow is at start (either just started or being routed there after escalation approval 
-                    if (bizProcess.getStartEvents()
-                            .stream()
-                            .anyMatch(e -> e.getId().equals(item.getWorklist())
-                            )) {
-                        //...if we are filtering
-                        if (!worklistsWhereItemIsVisible.contains("ANY_WORKLIST")) {
-                            //... and the item is allowed to be visible
-                            if (worklistsWhereItemIsVisible.contains(item.getWorklist())) {
-                                return true;
-                            } else {
-                                return false;
-                            }
-                        } else {
-                            return true;
-                        }
-                    } else {
-                        return false;
-                    }
-                } else {
-                    //... but not owner
-                    //...if we are filtering
-                    if (!worklistsWhereItemIsVisible.contains("ANY_WORKLIST")) {
-                        if (worklistsWhereItemIsVisible.contains(item.getWorklist())) {
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    } else {
-                        return true;
-                    }
-                }
-                //if the user is the owner
-            } else if (item.getOwners()
-                    .stream()
-                    .map(bu -> bu.getUsername())
-                    .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
-
-                if (!worklistsWhereItemIsVisible.contains("ANY_WORKLIST")) {
-                    //... and the item is allowed to be visible
-                    //...if we are filtering
-                    if (worklistsWhereItemIsVisible.contains(item.getWorklist())) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                    
-                } else {
-                    return true;
-                }
-            } else {
-                //...if you need to approve something
-                if (w.getApprovals().stream()
-                        .map(a -> a.getUsername())
-                        .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))){
-                    return true;
-                }else{
-                    return false;
-                }
-            }
+            return worklistsWhereItemIsVisible.contains("ANY_WORKLIST")||
+                    worklistsWhereItemIsVisible.contains(w.getWorklist());
         };
 
         Predicate<T> enabledPred = w -> {
-            //Case of creator:
-            //----------------
-
-            //if user is the creator
-            if (StringUtils.equals(
-                    item.getCreator(),
-                    user.getPreferredUsername()
-            )) {
-                //if the user is the owner
-                if (item.getOwners()
-                        .stream()
-                        .map(bu -> bu.getUsername())
-                        .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
-                    //...and the workflow is at start (either just started or being routed there after escalation approval 
-                    if (bizProcess.getStartEvents()
-                            .stream()
-                            .anyMatch(e -> e.getId().equals(item.getWorklist())
-                            )) {
-                        if (!worklistsWhereItemIsEnabled.contains("ANY_WORKLIST")) {
-                            //... and the item is allowed to be visible
-                            if (worklistsWhereItemIsEnabled.contains(item.getWorklist())) {
-                                return true;
-                            } else {
-                                return false;
-                            }
-                        }else{
-                            return true; 
-                        }
-                    } else {
-                        return false;
-                    }
-                } else {
-                    //... but not owner
-                    return false;
-                }
-                //if the user is the owner
-            } else if (item.getOwners()
-                    .stream()
-                    .map(bu -> bu.getUsername())
-                    .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
-                //...if we are filtering
-                if (!worklistsWhereItemIsEnabled.contains("ANY_WORKLIST")) {
-                    //... and the item is allowed to be visible
-                    if (worklistsWhereItemIsEnabled.contains(item.getWorklist())) {
-                        if (w.getApprovals()==null){
-                            return false;
-                        }
-                        if (w.getApprovals().isEmpty()){
-                            return false;
-                        }
-                        //...if you need to approve something
-                        if (w.getApprovals().stream()
+             Boolean isOwner = w.getOwners()==null?false:w.getOwners().stream()
                                 .map(a -> a.getUsername())
-                                .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))){
-                            return true;
-                        }else{
-                            return false;
-                        }
-                    } else {
-                        return false;
-                    }
-                }else{
-                    return true;
-                }
-            } else {
-                return false;
-            }
+                                .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()));
+             Boolean isApprover = w.getApprovals()==null?false:w.getApprovals().stream()
+                                .map(a -> a.getUsername())
+                                .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()));
+             Boolean a = worklistsWhereItemIsEnabled.contains("ANY_WORKLIST");
+             Boolean b = worklistsWhereItemIsEnabled.contains(w.getWorklist());
+             
+             Boolean inWorklistWhereItemEnabled = a||b;
+             return isOwner && inWorklistWhereItemEnabled && !isApprover;
         };
 
         WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enabledPred, item);
@@ -418,3 +290,203 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
         this.enableCondition = enableCondition;
     }
 }
+
+/**
+ * public static <T extends WorkItem> WorkflowAwareGroup createApproverForButtons(
+            final T workItem,
+            final OidcUser user
+    ) {
+
+        Predicate<T> visiblePred = w -> {
+            if (w.getApprovals().stream().map(a -> a.getUsername()).anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
+                return true;
+            } else {
+                return false;
+            }
+        };
+
+        Predicate<T> enabledPred = w -> {
+            if (w.getApprovals().stream().map(a -> a.getUsername()).anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
+                return true;
+            } else {
+                return false;
+            }
+        };
+        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enabledPred, workItem);
+        return group;
+    }
+
+    public static <T extends WorkItem> WorkflowAwareGroup createDefaultForForm(
+            final T item,
+            final OidcUser user,
+            final BizProcess bizProcess,
+            //final Boolean filterByWorklist,
+            final Set<String> worklistsWhereItemIsVisible,
+            final Set<String> worklistsWhereItemIsEnabled
+    ) {
+
+        Predicate<T> visiblePred = w -> {
+            //Case of creator:
+            //----------------
+
+            //if user is the creator
+            if (StringUtils.equals(
+                    w.getCreator(),
+                    user.getPreferredUsername()
+            )) {
+                //if the user is the owner
+                if (w.getOwners()
+                        .stream()
+                        .map(bu -> bu.getUsername())
+                        .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
+                    //...and the workflow is at start (either just started or being routed there after escalation approval 
+                    if (bizProcess.getStartEvents()
+                            .stream()
+                            .anyMatch(e -> e.getId().equals(w.getWorklist())
+                            )) {
+                        
+                        return true;
+                    } else {
+                        //...if we are filtering
+                        if (!worklistsWhereItemIsVisible.contains("ANY_WORKLIST")) {
+                            //... and the item is allowed to be visible . E.g. for S10.INFORM_CUSTOMER 
+                            if (worklistsWhereItemIsVisible.contains(w.getWorklist())) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        } else {
+                            return true;
+                        }
+                    }
+                } else {
+                    //... but not owner
+                    //...if we are filtering
+                    if (!worklistsWhereItemIsVisible.contains("ANY_WORKLIST")) {
+                        if (worklistsWhereItemIsVisible.contains(w.getWorklist())) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    } else {
+                        return true;
+                    }
+                }
+                //if the user is the owner
+            } else if (w.getOwners()
+                    .stream()
+                    .map(bu -> bu.getUsername())
+                    .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
+
+                if (!worklistsWhereItemIsVisible.contains("ANY_WORKLIST")) {
+                    //... and the item is allowed to be visible
+                    //...if we are filtering
+                    if (worklistsWhereItemIsVisible.contains(w.getWorklist())) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                    
+                } else {
+                    return true;
+                }
+            } else {
+                //...if you need to approve something
+                if (w.getApprovals().stream()
+                        .map(a -> a.getUsername())
+                        .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))){
+                    return true;
+                }else{
+                    return false;
+                }
+            }
+        };
+
+        Predicate<T> enabledPred = w -> {
+            //Case of creator:
+            //----------------
+
+            //if user is the creator
+            if (StringUtils.equals(
+                    w.getCreator(),
+                    user.getPreferredUsername()
+            )) {
+                //if the user is the owner
+                if (w.getOwners()
+                        .stream()
+                        .map(bu -> bu.getUsername())
+                        .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
+                    //...and the workflow is at start (either just started or being routed there after escalation approval 
+                    if (bizProcess.getStartEvents()
+                            .stream()
+                            .anyMatch(e -> e.getId().equals(w.getWorklist())
+                            )) {
+//                        if (!worklistsWhereItemIsEnabled.contains("ANY_WORKLIST")) {
+                            //... and the item is allowed to be enabled
+//                            if (worklistsWhereItemIsEnabled.contains(w.getWorklist())) {
+                                return true;
+//                            } else {
+//                                return false;
+//                            }
+//                        }else{
+//                            //w is at the beginning and the user is both woner and creator
+//                            return true;
+////                            if (w.getStatus().equals(Status.NEWLY_CREATED)||w.getStatus().equals(Status.DRAFT)){
+////                                return true;
+////                            }else{
+////                                return false;
+////                            }
+//                        }
+                    } else {
+                         if (!worklistsWhereItemIsEnabled.contains("ANY_WORKLIST")) {
+                            if (worklistsWhereItemIsEnabled.contains(w.getWorklist())) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        }else{
+                            return true;
+                        }
+                    }
+                } else {
+                    //... but not owner
+                    return false;
+                }
+                //if the user is the owner
+            } else if (w.getOwners()
+                    .stream()
+                    .map(bu -> bu.getUsername())
+                    .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
+                //...if we are filtering
+                if (!worklistsWhereItemIsEnabled.contains("ANY_WORKLIST")) {
+                    //... and the item is allowed to be visible
+                    if (worklistsWhereItemIsEnabled.contains(w.getWorklist())) {
+                        if (w.getApprovals()==null){
+                            return false;
+                        }
+                        if (w.getApprovals().isEmpty()){
+                            return false;
+                        }
+                        //...if you need to approve something
+                        if (w.getApprovals().stream()
+                                .map(a -> a.getUsername())
+                                .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))){
+                            return true;
+                        }else{
+                            return false;
+                        }
+                    } else {
+                        return false;
+                    }
+                }else{
+                   return true;
+                }
+            } else {
+                return false;
+            }
+        };
+
+        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enabledPred, item);
+        return group;
+    }
+ */

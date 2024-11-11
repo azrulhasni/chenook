@@ -7,7 +7,7 @@ package com.azrul.chenook.views.workflow;
 import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.WorkItem;
-import com.azrul.chenook.service.BadgeUtils;
+import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.components.Card;
 import com.azrul.chenook.views.common.components.PageNav;
@@ -15,7 +15,6 @@ import com.azrul.chenook.views.common.components.SearchPanel;
 import com.azrul.chenook.views.common.function.TriFunction;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.chenook.workflow.model.StartEvent;
-import com.azrul.smefinancing.service.FinApplicationService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
@@ -45,18 +44,18 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
     private Triple<SearchTermProvider, PageNav, Grid<T>> myCreatedWork;
     private OidcUser oidcUser;
     private BiFunction<String, SearchTermProvider, Integer> counter;
-    private TriFunction<String, SearchTermProvider, PageNav, DataProvider> dataProviderCreator;
+    private TriFunction<String, SearchTermProvider, PageNav, DataProvider<T,Void>> dataProviderCreator;
 
-    private final FinApplicationService finappService;
+    private final WorkflowService<T> workflowService;
     private final int COUNT_PER_PAGE = 3;
-    private final BadgeUtils badgeUtils;
+    //private final BadgeUtils badgeUtils;
     private final WorkflowConfig workflowConfig;
 
-    public static <T extends WorkItem> MyCreatedWorkPanel create(final Class<T> workItemClass,
+    public static <T extends WorkItem> MyCreatedWorkPanel<T> create(final Class<T> workItemClass,
             final OidcUser oidcUser,
-            final TriConsumer<MyCreatedWorkPanel, StartEvent, T> showUpdateDialog,
-            final Function<T, VerticalLayout> cardBuilder) {
-        var myCreatedWorkPanel = ApplicationContextHolder.getBean(MyCreatedWorkPanel.class);
+            final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,
+            final Function<T, Card> cardBuilder) {
+        MyCreatedWorkPanel<T> myCreatedWorkPanel = ApplicationContextHolder.getBean(MyCreatedWorkPanel.class);
         myCreatedWorkPanel.init(
                 workItemClass,
                 oidcUser,
@@ -67,25 +66,24 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
 
     private MyCreatedWorkPanel(
             @Autowired WorkflowConfig workflowConfig,
-            @Autowired FinApplicationService finappService,
-            @Autowired BadgeUtils badgeUtils
+            @Autowired WorkflowService<T> finappService
     ) {
-        this.finappService = finappService;
-        this.badgeUtils = badgeUtils;
+        this.workflowService = finappService;
         this.workflowConfig = workflowConfig;
 
     }
 
+
     public void init(
-            final Class workItemClass,
+            final Class<T> workItemClass,
             final OidcUser oidcUser,
-            final TriConsumer<MyCreatedWorkPanel, StartEvent, T> showUpdateDialog,
-            final Function<T, VerticalLayout> cardBuilder
+            final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,
+            final Function<T, Card> cardBuilder
     ) {
 
         this.oidcUser = oidcUser;
-        this.counter = (username, searchTermProvider) -> finappService.countWorkByCreator(workItemClass, username, searchTermProvider);
-        this.dataProviderCreator = (username, searchTermProvider, nav) -> finappService.getWorkByCreator(workItemClass, username, searchTermProvider, nav);
+        this.counter = (username, searchTermProvider) -> workflowService.countWorkByCreator(workItemClass, username, searchTermProvider);
+        this.dataProviderCreator = (username, searchTermProvider, nav) -> workflowService.getWorkByCreator(workItemClass, username, searchTermProvider, nav);
 
         Map<String, String> sortableFields = WorkflowUtils.getSortableFields(workItemClass);
 
@@ -94,6 +92,7 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
         myCreatedWork = buildDataPanel(
                 "My work items",
                 "btnMyWork",
+                "workItems",
                 oidcUser,
                 workflowConfig.rootBizProcess(),
                 showUpdateDialog,
@@ -118,18 +117,19 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
     private Triple<SearchTermProvider, PageNav, Grid<T>> buildDataPanel(
             final String title,
             final String btnIdDiscriminator,
+            final String panelIdDiscriminator,
             final OidcUser oidcUser,
             final BizProcess bizProcess,
-            final TriConsumer<MyCreatedWorkPanel, StartEvent, T> showUpdateDialog,
-            final Function<T, VerticalLayout> cardBuilder,
+            final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,
+            final Function<T, Card> cardBuilder,
             final Map<String, String> sortableFields
     ) {
-        SearchPanel searchPanel = new SearchPanel();
+        SearchPanel searchPanel = new SearchPanel(panelIdDiscriminator);
         searchPanel.searchRunner(s->refresh());
         
         Integer count = counter.apply(oidcUser.getPreferredUsername(), searchPanel);//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
         PageNav nav = new PageNav();
-        DataProvider dataProvider = dataProviderCreator.apply(oidcUser.getPreferredUsername(), searchPanel, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
+        DataProvider<T,Void> dataProvider = dataProviderCreator.apply(oidcUser.getPreferredUsername(), searchPanel, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
         
         Grid<T> grid = createGrid(title, btnIdDiscriminator, oidcUser, bizProcess, dataProvider, showUpdateDialog, cardBuilder);
         nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
@@ -154,9 +154,9 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
             final String btnIdDiscriminator,
             final OidcUser oidcUser,
             final BizProcess bizProcess,
-            final DataProvider dataProvider,
-            final TriConsumer<MyCreatedWorkPanel, StartEvent, T> showUpdateDialog,
-            final Function<T, VerticalLayout> cardBuilder) {
+            final DataProvider<T,Void> dataProvider,
+            final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,
+            final Function<T, Card> cardBuilder) {
         Grid<T> grid = new Grid<>();
         H4 title = new H4(panelTitle);
         this.add(title);
@@ -165,10 +165,12 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
 
         this.add(grid);
         grid.addComponentColumn(work -> {
-            VerticalLayout content = cardBuilder.apply(work);
-            Span badge = badgeUtils.createStatusBadge(work.getStatus());
-            Card card = new Card(work.getTitle(), badge);
-            card.add(content);
+//            VerticalLayout content = cardBuilder.apply(work);
+//            Span badge = badgeUtils.createStatusBadge(work.getStatus());
+//            Card card = new Card(work.getTitle(), badge);
+//            card.add(content);
+            
+            Card card = cardBuilder.apply(work);   
             HorizontalLayout btnPanel = new HorizontalLayout();
             Button btnUpdate = new Button("See more", e -> {
                 showUpdateDialog.accept(this, null, work);

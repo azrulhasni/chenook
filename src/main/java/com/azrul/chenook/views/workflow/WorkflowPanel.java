@@ -7,23 +7,21 @@ package com.azrul.chenook.views.workflow;
 import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.domain.Approval;
 import com.azrul.chenook.domain.BizUser;
-import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.ApprovalService;
 import com.azrul.chenook.service.BizUserService;
-import com.azrul.chenook.service.BadgeUtils;
 import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.views.common.validator.ApprovalValidator;
-import com.azrul.chenook.views.reference.ReferencePanel;
 import com.azrul.chenook.views.users.UserField;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -32,11 +30,8 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.data.binder.ValidationResult;
 import com.vaadin.flow.data.binder.Validator;
-import com.vaadin.flow.data.binder.ValueContext;
 import com.vaadin.flow.data.provider.DataProvider;
-import com.vaadin.flow.data.validator.AbstractValidator;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 
 import java.util.ArrayList;
@@ -45,8 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-
+import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -58,28 +52,26 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 @SpringComponent
 public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>> {
 
-    private final BadgeUtils badgeUtils;
     private final ApprovalService approvalService;
-    private final BizUserService bizUserService;
-    private final WorkflowService workflowService;
+    private final BizUserService<T> bizUserService;
+    private final WorkflowService<T> workflowService;
     private final Integer COUNT_PER_PAGE = 3;
-    private       Binder<T> binder;
-    private       String fieldName;
-    private       WorkflowAwareGroup group;
-    private       OidcUser user;
+    private Binder<T> binder;
+    private String fieldName;
+    private WorkflowAwareGroup<T> group;
+    private OidcUser user;
     // private T work;
 
-    public static <T extends WorkItem> WorkflowPanel create(
+    public static <T extends WorkItem> WorkflowPanel<T> create(
             final String fieldName,
             final Binder<T> binder,
             final OidcUser user,
-            final WorkflowAwareGroup group) {
-        
-       
+            final WorkflowAwareGroup<T> group,
+            final Function<T,Component> workflowDisplay) {
 
         T workItem = binder.getBean();
         var field = ApplicationContextHolder.getBean(WorkflowPanel.class);
-        field.init(fieldName, binder, user, group);
+        field.init(fieldName, binder, user, group,workflowDisplay);
         List<Validator> validators = new ArrayList<>();
         field.setId(fieldName);
 
@@ -87,9 +79,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
                 workItem.getClass(),
                 fieldName);
 
-       
-
-        validators.add(new ApprovalValidator(binder,user,"Approval not done yet"));
+        validators.add(new ApprovalValidator(binder, user, "Approval not done yet"));
 
         var bindingBuilder = binder.forField(field);
         bindingBuilder.withNullRepresentation(Set.of());
@@ -102,48 +92,56 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
     }
 
     private WorkflowPanel(
-            @Autowired BadgeUtils badgeUtils,
             @Autowired ApprovalService approvalService,
-            @Autowired BizUserService bizUserService,
-            @Autowired WorkflowService workflowService) {
-        this.badgeUtils = badgeUtils;
+            @Autowired BizUserService<T> bizUserService,
+            @Autowired WorkflowService<T> workflowService) {
         this.approvalService = approvalService;
         this.bizUserService = bizUserService;
         this.workflowService = workflowService;
+    }
+
+    public void applyGroup() {
+        if (group != null) {
+            this.setReadOnly(!group.calculateEnable());
+            this.setVisible(group.calculateVisible());
+        }
     }
 
     private void init(
             final String fieldName,
             final Binder<T> binder,
             final OidcUser user,
-            final WorkflowAwareGroup group) {
+            final WorkflowAwareGroup<T> group,
+            final Function<T,Component> workflowDisplay) {
         T work = binder.getBean();
         this.user = user;
         this.binder = binder;
         this.fieldName = fieldName;
-        if (work.getApprovals()==null){
+        if (work.getApprovals() == null) {
             return;
         }
+        HorizontalLayout workflowField = new HorizontalLayout();
         Optional<Approval> oapproval = work.getApprovals().stream()
                 .filter(a -> StringUtils.equals(user.getPreferredUsername(), a.getUsername())).findAny();
         oapproval.ifPresent(approval -> {
-            var fieldDisplayMap = WorkflowUtils.getFieldNameDisplayNameMap(work.getClass());
-            // this.work = work;
-            
+//            var fieldDisplayMap = WorkflowUtils.getFieldNameDisplayNameMap(work.getClass());
+//            Select<T> select = new Select<>();
+//            select.setLabel(label);
+//            Select<Status> cbStatus = new Select<>();
+//            createSelect(fieldDisplayMap.get("status"));
+//            cbStatus.setItems(Status.values());
+//            cbStatus.setRenderer(badgeUtils.createStatusBadgeRenderer());
+//            if (work != null) {
+//                cbStatus.setValue(work.getStatus());
+//            } else {
+//                cbStatus.setValue(Status.NEWLY_CREATED);
+//            }
+//            cbStatus.setReadOnly(true);
+//
+//            cbStatus.getStyle().set("width", "100%");
 
-            Select<Status> cbStatus = createSelect(fieldDisplayMap.get("status"));
-            cbStatus.setItems(Status.values());
-            cbStatus.setRenderer(badgeUtils.createStatusBadgeRenderer());
-            if (work != null) {
-                cbStatus.setValue(work.getStatus());
-            } else {
-                cbStatus.setValue(Status.NEWLY_CREATED);
-            }
-            cbStatus.setReadOnly(true);
-
-            cbStatus.getStyle().set("width", "100%");
-            HorizontalLayout workflowField = new HorizontalLayout();
-            workflowField.add(cbStatus);
+            Component cWorkflowDisplay = workflowDisplay.apply(work);
+            workflowField.add(cWorkflowDisplay);
 
             workflowField.getStyle().set("width", "100%");
 
@@ -183,29 +181,34 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
                 });
                 btnApproval.setId("btnApproval");
                 btnApproval.getStyle().set("align-self", "end");
-                btnApproval.setHeight(cbStatus.getHeight());
+                //btnApproval.setHeight(cbStatus.getHeight());
                 btnApproval.addThemeVariants(ButtonVariant.LUMO_SMALL);
-                Button btnWorkflow = new Button("Workflow Info.", e -> createWorkflowInfoDialog(work, user));
-                btnWorkflow.addThemeVariants(ButtonVariant.LUMO_SMALL);
-                btnWorkflow.getStyle().set("align-self", "end");
-                btnWorkflow.setHeight(cbStatus.getHeight());
-                workflowField.add(btnApproval, btnWorkflow);
+
+                workflowField.add(btnApproval);
 
             }
-            this.add(workflowField);
+            
         });
+        Button btnWorkflow = new Button("Workflow Info.", e -> createWorkflowInfoDialog(work, user));
+        btnWorkflow.setId("btnWorkflowInfo");
+        btnWorkflow.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        btnWorkflow.getStyle().set("align-self", "end");
+        workflowField.add(btnWorkflow);
+        this.add(workflowField);
+        //btnWorkflow.setHeight(cbStatus.getHeight());
 
     }
 
-    
-
-    public void createWorkflowInfoDialog(WorkItem work, OidcUser oidcUser) {
+    public void createWorkflowInfoDialog(T work, OidcUser oidcUser) {
         Dialog workflowDialog = new Dialog();
+        workflowDialog.setWidth("40em");
         TextField tf = new TextField();
         tf.setLabel("Current worklist");
         tf.setValue(work.getWorklist());
         tf.setReadOnly(true);
-        workflowDialog.add(tf);
+        Div content = new Div();
+        content.add(tf);
+        workflowDialog.add(content);
         VerticalLayout approvalPanel = buildApprovalPanel(work, workflowDialog);
         workflowDialog.add(approvalPanel);
         VerticalLayout histApprovalPanel = buildHistoricalApprovalPanel(work, workflowDialog);
@@ -221,7 +224,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         PageNav nav = new PageNav();
         Integer count = approvalService.countApprovalsByWork(work);// finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
         DataProvider dataProvider = approvalService.getApprovalsByWork(work, nav);// finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(),
-                                                                                  // nav);
+        // nav);
         Grid<Approval> grid = new Grid<>();
         grid.setItems(dataProvider);
         grid.addComponentColumn(approval -> {
@@ -271,7 +274,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         PageNav nav = new PageNav();
         Integer count = approvalService.countHistoricalApprovalsByWork(work);// finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
         DataProvider<Approval, Void> dataProvider = approvalService.getHistoricalApprovalsByWork(work, nav);// finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(),
-                                                                                            // nav);
+        // nav);
         Grid<Approval> grid = new Grid<>();
         grid.setItems(dataProvider);
         grid.addComponentColumn(approval -> {
@@ -324,12 +327,12 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         return approvalPanel;
     }
 
-    private VerticalLayout buildOwnerPanel(WorkItem work, Dialog approvalDialog) {
+    private VerticalLayout buildOwnerPanel(T work, Dialog approvalDialog) {
         VerticalLayout ownerPanel = new VerticalLayout();
         PageNav nav = new PageNav();
         Integer count = bizUserService.countWorkByOwner(work);
-        DataProvider<BizUser,Void> dataProvider = bizUserService.getOwnersByWork(work, nav);// finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(),
-                                                                              // nav);
+        DataProvider<BizUser, Void> dataProvider = bizUserService.getOwnersByWork(work, nav);// finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(),
+        // nav);
         Grid<BizUser> grid = new Grid<>();
         grid.setItems(dataProvider);
         grid.setMaxHeight("calc(" + COUNT_PER_PAGE + " * var(--lumo-size-m))");
@@ -356,81 +359,43 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         return ownerPanel;
     }
 
-    /*public Boolean validate() {
-        if (isWaitingApproval(binder.getBean(), user)) {
-            Optional<Approval> oapproval = binder
-                .getBean()
-                .getApprovals()
-                .stream()
-                .filter(a -> StringUtils.equals(user.getPreferredUsername(), a.getUsername()))
-                .findAny();
-            return oapproval.map(
-                a->{
-                    if (a.getApproved() == null) {
-                        return false;
-                    } else {
-                        return true;
-                    }   
-                }
-            ).orElseGet(()->false);
-        } else {
-            return true;
-        }
-    }*/
-
-    /*
-     * public Boolean getApproval() {
-     * return approval.getApproved();
-     * }
-     * 
-     * public String getApprovalNote() {
-     * return approval.getNote();
-     * }
-     */
-
-    private <T> Select<T> createSelect(
-            final String label) {
-        Select<T> select = new Select<>();
-        select.setLabel(label);
-        return select;
-    }
-
+//    private <T> Select<T> createSelect(
+//            final String label) {
+//        Select<T> select = new Select<>();
+//        select.setLabel(label);
+//        return select;
+//    }
 
     @Override
     protected Set<Approval> generateModelValue() {
         var approvals = binder
                 .getBean()
                 .getApprovals();
-        if (approvals==null){
+        if (approvals == null) {
             return new HashSet<>();
-        }else{
+        } else {
             return approvals;
         }
     }
 
     @Override
-    public Set<Approval> getValue(){
+    public Set<Approval> getValue() {
         return generateModelValue();
     }
 
     @Override
     protected void setPresentationValue(Set<Approval> newPresentationValue) {
         T work = binder.getBean();
-        if (newPresentationValue!=null){
+        if (newPresentationValue != null) {
             work.setApprovals(newPresentationValue);
-        }else{
+        } else {
             work.setApprovals(new HashSet<>());
         }
     }
 
     @Override
     public void setValue(Set<Approval> value) {
-       setPresentationValue(value);
-    }   
-
-    
+        setPresentationValue(value);
+    }
 
 }
-
-
-

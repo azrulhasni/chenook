@@ -7,17 +7,14 @@ package com.azrul.chenook.views.workflow;
 import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.WorkItem;
-import com.azrul.chenook.utils.WorkflowUtils;
+import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.chenook.workflow.model.StartEvent;
-import com.azrul.smefinancing.service.FinApplicationService;
 import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
@@ -27,29 +24,29 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
  * @param <T>
  */
 public class WorkflowCreatePanel<T extends WorkItem> extends VerticalLayout{
-    private final FinApplicationService finappService;
     private final WorkflowConfig workflowConfig;
+    private final WorkflowService<T> workflowService;
     
     private WorkflowCreatePanel(
             @Autowired WorkflowConfig workflowConfig,
-            @Autowired  FinApplicationService finappService
+            @Autowired WorkflowService<T> workflowService
     ){
-         this.finappService = finappService;
         this.workflowConfig=workflowConfig;
+        this.workflowService=workflowService;
     }
     
-    public static <T extends WorkItem> WorkflowCreatePanel create(
-            final Class workItemClass,  
+    public static <T extends WorkItem> WorkflowCreatePanel<T> create(
+            final Class<T> workItemClass,  
             final OidcUser oidcUser,
-            final BiConsumer<StartEvent,WorkflowCreatePanel> showCreationDialog){
-        WorkflowCreatePanel panel = ApplicationContextHolder.getBean(WorkflowCreatePanel.class);
+            final BiConsumer<StartEvent,WorkflowCreatePanel<T>> showCreationDialog){
+        WorkflowCreatePanel<T> panel = ApplicationContextHolder.getBean(WorkflowCreatePanel.class);
         panel.init( oidcUser, showCreationDialog);
         return panel;
     }
     
     private void init(
             final OidcUser oidcUser,
-            final BiConsumer<StartEvent, WorkflowCreatePanel> showCreationDialog
+            final BiConsumer<StartEvent, WorkflowCreatePanel<T>> showCreationDialog
     ) {
 
         //this.oidcUser = oidcUser;
@@ -59,7 +56,7 @@ public class WorkflowCreatePanel<T extends WorkItem> extends VerticalLayout{
         
         this.setWidth("-webkit-fill-available");
 
-        List<StartEvent> startEvents = finappService.whatUserCanStart(oidcUser, bizProcess);
+        List<StartEvent> startEvents = workflowService.whatUserCanStart(oidcUser, bizProcess);
         if (!startEvents.isEmpty()) {
             MenuBar menu = new MenuBar();
 

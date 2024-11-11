@@ -8,7 +8,7 @@ package com.azrul.chenook.service;
 import com.azrul.chenook.domain.Approval;
 import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.Priority;
-import com.azrul.chenook.domain.Status;
+//import com.azrul.smefinancing.domain.Status;
 
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.repository.WorkItemRepository;
@@ -130,7 +130,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         BizUser bizUser = getBizUserService().getUser(username);
         T w = runRecursive(work, bizUser, bizProcess, isError);
         System.out.println("     Outging worklist:" + work.getWorklist());
-        return getWorkItemRepo().save(w);
+        return save(w);
 
     }
 
@@ -172,14 +172,11 @@ public abstract class WorkflowService<T extends WorkItem> {
             final BizProcess bizProcess,
             final boolean isError) {
         for (Activity activity : nextSteps) {
-            if (this.isStartEvent(activity, bizProcess)) {
-                work.setStatus(Status.IN_PROGRESS);
-            } else {
                 work.setWorklist(activity.getId());
                 work.setWorklistUpdateTime(LocalDateTime.now());
                 if (activity.getClass().equals(End.class)) {
                     // we reach the end, conclude
-                    work.setStatus(Status.DONE);
+                    //work.setStatus(Status.DONE);
                     return runRecursive(work, bizUser, bizProcess, isError); // for post run script exec
 
                 } else if (activity.getClass().equals(ServiceActivity.class)) {
@@ -192,7 +189,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                     return work; // <-- this is ok since nextStep will not contain more than 1 activity at one
                                  // time
                 }
-            }
+            
         }
         return work;
     }
@@ -856,7 +853,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         newwork.setContext(context);
         newwork.setCreator(oidcUser.getPreferredUsername());
         newwork.setPriority(Priority.NONE);
-        newwork.setStatus(Status.NEWLY_CREATED);
+        //newwork.setStatus(Status.NEWLY_CREATED);
 
         Set<BizUser> owners = new HashSet<>();
         owners.add(basicMapper.map(oidcUser));
@@ -968,7 +965,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         }
     }
 
-    public DataProvider getWorkByCreator(
+    public DataProvider<T,Void> getWorkByCreator(
             Class<T> workItemClass,
             String username,
             SearchTermProvider searchTermProvider,
@@ -1037,7 +1034,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         }
     }
 
-    public DataProvider getWorkByWorklist(Class<T> workItemClass, String worklist, PageNav pageNav) {
+    public DataProvider<T,Void> getWorkByWorklist(Class<T> workItemClass, String worklist, PageNav pageNav) {
         // build data provider
         var dp = new AbstractBackEndDataProvider<T, Void>() {
             @Override
@@ -1111,6 +1108,7 @@ public abstract class WorkflowService<T extends WorkItem> {
             SetJoin<T, BizUser> children = workItem.joinSet("owners", JoinType.LEFT);
             return cb.and(
                     cb.equal(workItem.get("worklist"), worklist),
+                    
                     children.isNull());
         };
     }

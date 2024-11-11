@@ -62,8 +62,7 @@ public abstract class WorkItem {
     protected String creator;
 
  
-    @WorkField(displayName = "Status")
-    protected Status status;
+
 
     @WorkField(displayName = "Tenant")
     protected String tenant;
@@ -143,19 +142,7 @@ public abstract class WorkItem {
         this.creator = creator;
     }
 
-    /**
-     * @return the status
-     */
-    public Status getStatus() {
-        return status;
-    }
-
-    /**
-     * @param status the status to set
-     */
-    public void setStatus(Status status) {
-        this.status = status;
-    }
+   
 
     /**
      * @return the tenant

@@ -8,7 +8,7 @@ import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.WorkItem;
-import com.azrul.chenook.service.BadgeUtils;
+//import com.azrul.smefinancing.service.BadgeUtils;
 import com.azrul.chenook.service.BizUserService;
 import com.azrul.chenook.service.MapperService;
 import com.azrul.chenook.service.WorkflowService;
@@ -17,16 +17,11 @@ import com.azrul.chenook.views.common.components.Card;
 import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.chenook.workflow.model.StartEvent;
-import com.azrul.smefinancing.domain.FinApplication;
-import com.azrul.smefinancing.service.FinApplicationService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
@@ -35,14 +30,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.util.Pair;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 /**
@@ -55,20 +48,20 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
     private final int COUNT_PER_PAGE = 3;
     private final List<Triple<Grid<T>, PageNav,String>> myWorklists = new ArrayList<>();
     private final WorkflowService<T> workflowService;
-    private final BizUserService bizUserService;
+    private final BizUserService<T> bizUserService;
     private final WorkflowConfig workflowConfig;
-    private       OidcUser oidcUser;
-    private final BadgeUtils badgeUtils;
+    //private final BadgeUtils badgeUtils;
     private final MapperService basicMapper;
     private       Function<String, Integer> counter;
-    private       BiFunction<String, PageNav, DataProvider> dataProviderCreator;
+   // private       OidcUser user;
+    private       BiFunction<String, PageNav, DataProvider<T,Void>> dataProviderCreator;
     
     public static <T extends WorkItem> WorklistPanel create( 
             final Class<T> workItemClass,
             final OidcUser oidcUser,
-            final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
-            final Function<T, VerticalLayout> cardBuilder){
-        var worklistPanel = ApplicationContextHolder.getBean(WorklistPanel.class);
+            final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
+            final Function<T, Card> cardBuilder){
+       WorklistPanel<T> worklistPanel = ApplicationContextHolder.getBean(WorklistPanel.class);
         worklistPanel.init(workItemClass, oidcUser, showUpdateDialog, cardBuilder);
         return worklistPanel;
     }
@@ -76,12 +69,12 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
     public WorklistPanel(
             @Autowired WorkflowService<T> workflowService,
             @Autowired  BizUserService bizUserService,
-            @Autowired  BadgeUtils badgeUtils,
+            //@Autowired  BadgeUtils badgeUtils,
             @Autowired  MapperService basicMapper,
             @Autowired  WorkflowConfig workflowConfig){
         this.workflowService=workflowService;
         this.bizUserService=bizUserService;
-        this.badgeUtils=badgeUtils;
+        //this.badgeUtils=badgeUtils;
         this.basicMapper=basicMapper;
         this.workflowConfig=workflowConfig;
     }
@@ -89,11 +82,11 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
     public void init(
             final Class<T> workItemClass,
             final OidcUser oidcUser,
-            final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
-            final Function<T, VerticalLayout> cardBuilder
+            final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
+            final Function<T, Card> cardBuilder
     ) {
 
-        this.oidcUser = oidcUser;
+        //this.user = oidcUser;
         this.counter = (w) -> workflowService.countWorkByWorklist(w);
         this.dataProviderCreator = (w, nav) -> workflowService.getWorkByWorklist(workItemClass,w, nav);
         
@@ -144,9 +137,9 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             final String w,
             final OidcUser oidcUser1,
             final BizProcess bizProcess,
-            final BizUserService bizUserService,
-            final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
-            final Function<T, VerticalLayout> cardBuilder,
+            final BizUserService<T> bizUserService,
+            final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
+            final Function<T, Card> cardBuilder,
             final Map<String, String> sortableFields1) {
         PageNav nav = new PageNav();
         Integer count = counter.apply(w);//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
@@ -169,10 +162,10 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             final String panelTitle,
             final OidcUser oidcUser,
             final BizProcess bizProcess,
-            final BizUserService bizUserService,
-            final DataProvider dataProvider,
-            final TriConsumer<WorklistPanel, StartEvent, T> showUpdateDialog,
-            final Function<T, VerticalLayout> cardBuilder) {
+            final BizUserService<T> bizUserService,
+            final DataProvider<T,Void> dataProvider,
+            final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
+            final Function<T, Card> cardBuilder) {
         Grid<T> grid = new Grid<>();
         H4 title = new H4(panelTitle);
         this.add(title);
@@ -180,10 +173,11 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
 
         this.add(grid);
         grid.addComponentColumn(work -> {
-            VerticalLayout content = cardBuilder.apply(work);
-            Span badge = badgeUtils.createStatusBadge(work.getStatus());
-            Card card = new Card(work.getTitle(), badge);
-            card.add(content);
+//            VerticalLayout content = cardBuilder.apply(work);
+//            Span badge = badgeUtils.createStatusBadge(work.getStatus());
+//            Card card = new Card(work.getTitle(), badge);
+//            card.add(content);
+            Card card = cardBuilder.apply(work);
             HorizontalLayout btnPanel = new HorizontalLayout();
             Button btnBookThis = new Button("Book this work", e -> {
                 BizUser buser = basicMapper.map(oidcUser);
