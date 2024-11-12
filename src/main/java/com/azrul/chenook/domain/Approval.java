@@ -4,6 +4,7 @@
  */
 package com.azrul.chenook.domain;
 
+import com.azrul.chenook.annotation.DateTimeFormat;
 import com.azrul.chenook.annotation.WorkField;
 import com.azrul.chenook.domain.converter.LocalDateTimeConverter;
 import jakarta.persistence.Entity;
@@ -11,6 +12,8 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import java.time.LocalDateTime;
 import org.hibernate.envers.Audited;
 import org.springframework.data.elasticsearch.annotations.ValueConverter;
@@ -24,33 +27,49 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 public class Approval {
+
     @Id
     @org.springframework.data.annotation.Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @WorkField(displayName = "User name")
+    @WorkField(displayName = "User name", sortable = true)
     private String username;
-    
-    @WorkField(displayName = "First name")
+
+    @WorkField(displayName = "First name", sortable = true)
     private String firstName;
-    
-    @WorkField(displayName = "Last name")
+
+    @WorkField(displayName = "Last name", sortable = true)
     private String lastName;
-    
+
     @WorkField(displayName = "Approval worklist")
     private String worklist;
-    
-    @WorkField(displayName = "Approved")
+
+    @WorkField(displayName = "Approved", sortable = true)
     private Boolean approved;
-    
-     @WorkField(displayName = "Note")
+
+    @WorkField(displayName = "Note")
     private String note;
-    
+
     @ValueConverter(LocalDateTimeConverter.class)
-    @WorkField(displayName = "Approval date")
+    @WorkField(displayName = "Approval date", sortable = true)
+    @DateTimeFormat(format = "${finapp.datetime.format}")
     private LocalDateTime approvalDateTime;
-    
+
+    @PrePersist
+    public void onPrePersist() {
+        if (approved != null) {
+            this.setApprovalDateTime(LocalDateTime.now());
+        }
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        if (approved != null) {
+            this.setApprovalDateTime(LocalDateTime.now());
+        }
+    }
+
 //    @Transient
 //    @ManyToOne
 //    @JoinColumn(name = "work_id", referencedColumnName = "id")
@@ -60,9 +79,6 @@ public class Approval {
 //    @ManyToOne
 //    @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
 //    private WorkItem historicalWorkItem;
-    
-    
-    
     /**
      * @return the id
      */
@@ -140,7 +156,6 @@ public class Approval {
 //        final Approval other = (Approval) obj;
 //        return Objects.equals(this.id, other.id);
 //    }
-
     /**
      * @return the lastName
      */
@@ -210,7 +225,6 @@ public class Approval {
 //    public void setHistoricalWorkItem(WorkItem historicalWorkItem) {
 //        this.historicalWorkItem = historicalWorkItem;
 //    }
-
     /**
      * @return the note
      */
@@ -224,5 +238,5 @@ public class Approval {
     public void setNote(String note) {
         this.note = note;
     }
-    
+
 }

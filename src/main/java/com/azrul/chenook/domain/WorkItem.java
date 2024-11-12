@@ -4,6 +4,7 @@
  */
 package com.azrul.chenook.domain;
 
+import com.azrul.chenook.annotation.NotEmpty;
 import com.azrul.chenook.annotation.WorkField;
 import com.azrul.chenook.domain.converter.LocalDateTimeConverter;
 import jakarta.persistence.CascadeType;
@@ -92,7 +93,7 @@ public abstract class WorkItem {
     @WorkField(displayName = "Worklist update time")
     protected LocalDateTime worklistUpdateTime;
 
-
+    @WorkField(displayName = "Workflow")
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL/*, mappedBy="workItem"*/)
     @JoinColumn(name = "work_id", referencedColumnName = "id")
     protected Set<Approval> approvals = new HashSet<>();

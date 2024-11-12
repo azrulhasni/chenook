@@ -5,20 +5,13 @@
 package com.azrul.chenook.service;
 
 import com.azrul.chenook.domain.Approval;
-import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.repository.ApprovalRepository;
 import com.azrul.chenook.views.common.components.PageNav;
 import com.vaadin.flow.data.provider.AbstractBackEndDataProvider;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
-import com.vaadin.flow.data.provider.QuerySortOrder;
-import com.vaadin.flow.data.provider.SortDirection;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.SetJoin;
-import jakarta.persistence.criteria.Subquery;
 import java.util.stream.Stream;
 import org.hibernate.SessionFactory;
 import org.hibernate.metamodel.MappingMetamodel;
@@ -27,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 /**
@@ -69,7 +61,7 @@ public class ApprovalService {
                 Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
                 String sortedField = pageNav.getSortField();
                 SessionFactory sessionFactory = emFactory.unwrap(SessionFactory.class);
-                AbstractEntityPersister persister = ((AbstractEntityPersister) ((MappingMetamodel) sessionFactory.getMetamodel()).getEntityDescriptor(WorkItem.class));
+                AbstractEntityPersister persister = ((AbstractEntityPersister) ((MappingMetamodel) sessionFactory.getMetamodel()).getEntityDescriptor(Approval.class));
                 String sorted = persister.getPropertyColumnNames(sortedField)[0];
     
                 query.getPage();
@@ -105,7 +97,7 @@ public class ApprovalService {
                 Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
                 String sortedField = pageNav.getSortField();
                 SessionFactory sessionFactory = emFactory.unwrap(SessionFactory.class);
-                AbstractEntityPersister persister = ((AbstractEntityPersister) ((MappingMetamodel) sessionFactory.getMetamodel()).getEntityDescriptor(WorkItem.class));
+                AbstractEntityPersister persister = ((AbstractEntityPersister) ((MappingMetamodel) sessionFactory.getMetamodel()).getEntityDescriptor(Approval.class));
                 String sorted = persister.getPropertyColumnNames(sortedField)[0];
     
                 query.getPage();

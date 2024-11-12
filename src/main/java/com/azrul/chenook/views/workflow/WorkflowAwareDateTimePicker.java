@@ -47,7 +47,7 @@ public class WorkflowAwareDateTimePicker<T> extends DateTimePicker{
         field.setId(fieldName);
 
         List<Validator> validators = new ArrayList<>();
-       Map<Class<? extends Annotation>,Map<String,Object>> annoFieldDisplayMap = WorkflowUtils.getAnnotations(workItem.getClass(), fieldName);
+       var annoFieldDisplayMap = WorkflowUtils.getAnnotations(workItem.getClass(), fieldName);
      
         Map<String,Object> workfieldMap = WorkflowUtils.applyWorkField(annoFieldDisplayMap,field);
         

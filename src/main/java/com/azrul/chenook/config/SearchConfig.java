@@ -48,15 +48,7 @@ public class SearchConfig extends ElasticsearchConfiguration {
                     .usingSsl(sslContext)
                     .withBasicAuth(elasticSearchUsername, elasticSearchPassword)
                     .build();
-        } catch (IOException ex) {
-            Logger.getLogger(SearchConfig.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(SearchConfig.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (KeyStoreException ex) {
-            Logger.getLogger(SearchConfig.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (CertificateException ex) {
-            Logger.getLogger(SearchConfig.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (KeyManagementException ex) {
+        } catch (IOException | NoSuchAlgorithmException | KeyStoreException | CertificateException | KeyManagementException ex) {
             Logger.getLogger(SearchConfig.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
