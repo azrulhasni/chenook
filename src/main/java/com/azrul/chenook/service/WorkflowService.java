@@ -142,6 +142,7 @@ public abstract class WorkflowService<T extends WorkItem> {
 
         Map<String, Activity> activities = getActivities(bizProcess);
         // Pre-run script
+
         String worklist = work.getWorklist();
         Activity currentActivity = activities.get(worklist);
 
@@ -152,7 +153,20 @@ public abstract class WorkflowService<T extends WorkItem> {
                     bizUser,
                     bizProcess);
 
-            // process any straight through processing, might call run() again recursively
+            //if transition does happen, then call the pre run script of the new actiivities and the post rrun script of the current activity
+            //this is to simulate 'front montant' / 'front decendant'
+            if (currentActivity instanceof BaseActivity baseActivity) { //run post current activity script
+                String script = baseActivity.getPreRunScript();
+                getScripting().runScript(work, bizUser, script, bizProcess);
+            }
+            for (Activity nextStep : nextSteps) { //run pre next activities scripts
+                if (nextStep instanceof BaseActivity baseActivity) {
+                    String script = baseActivity.getPreRunScript();
+                    getScripting().runScript(work, bizUser, script, bizProcess);
+                }
+            }
+
+            // process any straight through processing, might call runRecursive() again recursively
             straightThroughNextStepProcessing(
                     nextSteps,
                     work,
@@ -172,24 +186,24 @@ public abstract class WorkflowService<T extends WorkItem> {
             final BizProcess bizProcess,
             final boolean isError) {
         for (Activity activity : nextSteps) {
-                work.setWorklist(activity.getId());
-                work.setWorklistUpdateTime(LocalDateTime.now());
-                if (activity.getClass().equals(End.class)) {
-                    // we reach the end, conclude
-                    //work.setStatus(Status.DONE);
-                    return runRecursive(work, bizUser, bizProcess, isError); // for post run script exec
+            work.setWorklist(activity.getId());
+            work.setWorklistUpdateTime(LocalDateTime.now());
+            if (activity.getClass().equals(End.class)) {
+                // we reach the end, conclude
+                //work.setStatus(Status.DONE);
+                return runRecursive(work, bizUser, bizProcess, isError); // for post run script exec
 
-                } else if (activity.getClass().equals(ServiceActivity.class)) {
-                    String script = ((ServiceActivity) activity).getScript();
-                    getScripting().runScript(work, bizUser, script, bizProcess);
-                    return runRecursive(work, bizUser, bizProcess, isError);
-                } else if (activity.getClass().equals(XorActivity.class)) {
-                    return runRecursive(work, bizUser, bizProcess, isError);
-                } else {
-                    return work; // <-- this is ok since nextStep will not contain more than 1 activity at one
-                                 // time
-                }
-            
+            } else if (activity.getClass().equals(ServiceActivity.class)) {
+                String script = ((ServiceActivity) activity).getScript();
+                getScripting().runScript(work, bizUser, script, bizProcess);
+                return runRecursive(work, bizUser, bizProcess, isError);
+            } else if (activity.getClass().equals(XorActivity.class)) {
+                return runRecursive(work, bizUser, bizProcess, isError);
+            } else {
+                return work; // <-- this is ok since nextStep will not contain more than 1 activity at one
+                // time
+            }
+
         }
         return work;
     }
@@ -209,7 +223,7 @@ public abstract class WorkflowService<T extends WorkItem> {
             StartEvent start = (StartEvent) getActivities(bizProcess).get(work.getStartEventId());
 
             if (start.getSupervisoryApprovalHierarchy().size() != 0) {// if need supervisor, stay in the same activity
-                                                                      // first
+                // first
                 handleSupervisorApproval(work,
                         tenant,
                         (Activity) ((BaseActivity) start).getNext(),
@@ -300,7 +314,7 @@ public abstract class WorkflowService<T extends WorkItem> {
             // state 1 : not enough vote
             // state 2 : at least 1 disapproval
             if (approvedWork.containsKey(Boolean.FALSE)) { // if one person voted to disapproved, then the whole thing
-                                                           // is disapproved
+                // is disapproved
                 state = 2;
             } else {
                 if (approvedWork.get(Boolean.TRUE).size() >= work.getApprovals().size()) { // unanimous approval
@@ -475,9 +489,9 @@ public abstract class WorkflowService<T extends WorkItem> {
         if (isSupervisorNeeded(root)) { // this was sent for approval before
             if (root.getApprovals().isEmpty() == Boolean.FALSE
                     && Boolean.TRUE.equals(root.getApprovals().iterator().next().getApproved())) { // approved. This is
-                                                                                                   // supervisor so it
-                                                                                                   // should only have 1
-                                                                                                   // approval
+                // supervisor so it
+                // should only have 1
+                // approval
                 // see which level is the approval on
                 String currentApprLevel = root.getSupervisorApprovalLevel();
                 int indexOfNextApprLevel = getArrayIndexOfValue(supervisorHierarchy, currentApprLevel) + 1;
@@ -607,7 +621,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                     work);
             nextSteps.add(nextActivity);
         } else if (nextActivity.getClass().equals(HumanActivity.class)) { // nextActivity.getType=="human" OR
-                                                                          // nextActivity.getType=="service"
+            // nextActivity.getType=="service"
             nextSteps.add(nextActivity); // if the next step is just another wait state, make it active
         } else { // service
             nextSteps.add(nextActivity);
@@ -965,7 +979,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         }
     }
 
-    public DataProvider<T,Void> getWorkByCreator(
+    public DataProvider<T, Void> getWorkByCreator(
             Class<T> workItemClass,
             String username,
             SearchTermProvider searchTermProvider,
@@ -1023,10 +1037,10 @@ public abstract class WorkflowService<T extends WorkItem> {
         // return sortField+".keyword";
         // }else if (Priority.class.equals(field.getType())){
         // return sortField+".keyword";
-        if (Number.class.isAssignableFrom(field.getType()) ||
-                LocalDateTime.class.isAssignableFrom(field.getType()) ||
-                LocalDate.class.isAssignableFrom(field.getType()) ||
-                Date.class.isAssignableFrom(field.getType())) {
+        if (Number.class.isAssignableFrom(field.getType())
+                || LocalDateTime.class.isAssignableFrom(field.getType())
+                || LocalDate.class.isAssignableFrom(field.getType())
+                || Date.class.isAssignableFrom(field.getType())) {
             return sortField;
         } else {
 
@@ -1034,7 +1048,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         }
     }
 
-    public DataProvider<T,Void> getWorkByWorklist(Class<T> workItemClass, String worklist, PageNav pageNav) {
+    public DataProvider<T, Void> getWorkByWorklist(Class<T> workItemClass, String worklist, PageNav pageNav) {
         // build data provider
         var dp = new AbstractBackEndDataProvider<T, Void>() {
             @Override
@@ -1087,7 +1101,6 @@ public abstract class WorkflowService<T extends WorkItem> {
     // f.match().field("undecidedApprovals").matching(true)
     // ).toPredicate();
     // }
-
     private Specification<T> whereCreatorEquals(String username) {
         return (workItem, cq, cb) -> {
             return cb.equal(workItem.get("creator"), username);
@@ -1102,13 +1115,11 @@ public abstract class WorkflowService<T extends WorkItem> {
     // f.match().field(" creator").matching(username)
     // ).toPredicate();
     // }
-
     private Specification<T> whereNoOwnerAndWorklistEquals(String worklist) {
         return (workItem, cq, cb) -> {
             SetJoin<T, BizUser> children = workItem.joinSet("owners", JoinType.LEFT);
             return cb.and(
                     cb.equal(workItem.get("worklist"), worklist),
-                    
                     children.isNull());
         };
     }
@@ -1122,7 +1133,6 @@ public abstract class WorkflowService<T extends WorkItem> {
     // f.match().field("ownersIsEmpty").matching(true)
     // ).toPredicate();
     // }
-
     /**
      * @return the workItemRepo
      */

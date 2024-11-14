@@ -22,7 +22,7 @@ public class Card extends Composite<Div> implements HasComponents, HasSize {
         Div div = new Div();
         VerticalLayout content = new VerticalLayout();
         H5 title = new H5();
-        String titleText;
+        String titleText = "";
         Component titleComponent = null;
         int MAX_TITLE_LENGTH = 30;
         
@@ -34,16 +34,16 @@ public class Card extends Composite<Div> implements HasComponents, HasSize {
         
          public Card(String titleText) {
             this.titleText = titleText;
-            //this.titleComponent=titleComponent;
         }
 
         @Override
         public Div initContent() {
-            title.setText(
-                     titleText.length()>MAX_TITLE_LENGTH
-                    ?titleText.substring(0,MAX_TITLE_LENGTH)+"..."
-                    :titleText);
-            
+            if (titleText!=null){
+                title.setText(
+                         titleText.length()>MAX_TITLE_LENGTH
+                        ?titleText.substring(0,MAX_TITLE_LENGTH)+"..."
+                        :titleText);
+            }
             Div status = new Div();
             if (titleComponent!=null){
                 

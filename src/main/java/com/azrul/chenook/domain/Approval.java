@@ -70,15 +70,7 @@ public class Approval {
         }
     }
 
-//    @Transient
-//    @ManyToOne
-//    @JoinColumn(name = "work_id", referencedColumnName = "id")
-//    private WorkItem workItem;
-//    
-//    @Transient
-//    @ManyToOne
-//    @JoinColumn(name = "hist_work_id", referencedColumnName = "id", nullable = true)
-//    private WorkItem historicalWorkItem;
+
     /**
      * @return the id
      */

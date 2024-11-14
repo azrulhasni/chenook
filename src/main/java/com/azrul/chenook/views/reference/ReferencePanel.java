@@ -113,7 +113,7 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
             HorizontalLayout refPanel = new HorizontalLayout();
             refPanel.setWidthFull();
             refPanel.setAlignItems(FlexComponent.Alignment.START);
-            refPanel.add(refList,btnDelete, btnSelectDialog);
+            refPanel.add(refList,btnSelectDialog,btnDelete);
             btnSelectDialog.getStyle().set("margin-left", "auto");
             refList.setWidthFull();
 
