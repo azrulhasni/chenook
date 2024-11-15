@@ -155,24 +155,6 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         Optional<Approval> oapproval = work.getApprovals().stream()
                 .filter(a -> StringUtils.equals(user.getPreferredUsername(), a.getUsername())).findAny();
         oapproval.ifPresent(approval -> {
-//            var fieldDisplayMap = WorkflowUtils.getFieldNameDisplayNameMap(work.getClass());
-//            Select<T> select = new Select<>();
-//            select.setLabel(label);
-//            Select<Status> cbStatus = new Select<>();
-//            createSelect(fieldDisplayMap.get("status"));
-//            cbStatus.setItems(Status.values());
-//            cbStatus.setRenderer(badgeUtils.createStatusBadgeRenderer());
-//            if (work != null) {
-//                cbStatus.setValue(work.getStatus());
-//            } else {
-//                cbStatus.setValue(Status.NEWLY_CREATED);
-//            }
-//            cbStatus.setReadOnly(true);
-//
-//            cbStatus.getStyle().set("width", "100%");
-
-            
-
             workflowField.getStyle().set("width", "100%");
 
             if (WorkflowUtils.isWaitingApproval(work, user)) {
@@ -247,7 +229,9 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         workflowDialog.add(histApprovalPanel);
         VerticalLayout ownerPanel = buildOwnerPanel(work, workflowDialog);
         workflowDialog.add(ownerPanel);
-        workflowDialog.add(new Button("Done", e -> workflowDialog.close()));
+        Button btnDone = new Button("Done", e -> workflowDialog.close());
+        btnDone.setId("btnDone");
+        workflowDialog.getFooter().add(btnDone);
         workflowDialog.open();
     }
 
@@ -264,7 +248,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
             return buildApprovalRow(approval);
         });
         Map<String, String> sortableFields = WorkflowUtils.getSortableFields(Approval.class);
-        grid.setMaxHeight("calc(" + COUNT_PER_PAGE + " * var(--lumo-size-m))");
+        grid.setMaxHeight("calc(" + (COUNT_PER_PAGE + 1.5) + " * var(--lumo-size-m))");
         nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
         H4 approvalTitle = new H4("Approvals");
         approvalPanel.add(approvalTitle);
@@ -286,7 +270,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         grid.addComponentColumn(approval -> {
             return buildApprovalRow(approval);
         });
-        grid.setMaxHeight("calc(" + COUNT_PER_PAGE + " * var(--lumo-size-m))");
+        grid.setMaxHeight("calc(" + (COUNT_PER_PAGE + 1.5) + " * var(--lumo-size-m))");
         nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
         H4 approvalTitle = new H4("Past Approvals");
         approvalPanel.add(approvalTitle);
@@ -304,10 +288,22 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         bizUser.setUsername(approval.getUsername());
         
         Dialog noteDialog = new Dialog();
+        VerticalLayout notePanel = new VerticalLayout();
+        noteDialog.add(notePanel);
+        
+        TextField worklist = new TextField();
+        worklist.setLabel("Worklist");
+        worklist.setValue(approval.getNextWorklist()==null?"":approval.getNextWorklist());
+        worklist.setReadOnly(true);
+        notePanel.add(worklist);
+        
         TextArea note = new TextArea();
+        note.setLabel("Notes");
         note.setValue(approval.getNote()==null?"":approval.getNote());
         note.setReadOnly(true);
-        noteDialog.add(note);
+        notePanel.add(note);
+        
+        
         Button btnClose = new Button("Close", e3 -> {
             noteDialog.close();
         });
@@ -322,6 +318,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         if (approval.getApproved() == null) {
             Span confirmed = new Span("No decision");
             confirmed.addClickListener(e->noteDialog.open());
+            confirmed.setId("spanApproval");
             confirmed.getElement().getThemeList().add("badge contrast pill");
             panel.add(confirmed);
         } else if (approval.getApproved()) {
@@ -329,28 +326,31 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
                 Span confirmed = new Span("Approved ["+dt+"]");
                 confirmed.addClickListener(e->noteDialog.open());
                 confirmed.getElement().getThemeList().add("badge success pill");
+                confirmed.setId("spanApproval");
                 panel.add(confirmed);
             },
-                    ()->{
-                        Span confirmed = new Span("Approved");
-                        confirmed.addClickListener(e->noteDialog.open());
-                        confirmed.getElement().getThemeList().add("badge success pill");
-                        panel.add(confirmed);
-                    });
+            ()->{
+                Span confirmed = new Span("Approved");
+                confirmed.addClickListener(e->noteDialog.open());
+                confirmed.getElement().getThemeList().add("badge success pill");
+                panel.add(confirmed);
+            });
             
         } else {
             WorkflowUtils.formatDateTime(annoFieldDisplayMap, approval.getApprovalDateTime()).ifPresentOrElse(dt->{
                 Span confirmed = new Span("Disapproved ["+dt+"]");
                 confirmed.addClickListener(e->noteDialog.open());
+                confirmed.setId("spanApproval");
                 confirmed.getElement().getThemeList().add("badge  error  pill");
                 panel.add(confirmed);
             },
-                    ()->{
-                        Span confirmed = new Span("Disapproved");
-                        confirmed.addClickListener(e->noteDialog.open());
-                        confirmed.getElement().getThemeList().add("badge  error  pill");
-                        panel.add(confirmed);
-                    });
+            ()->{
+                Span confirmed = new Span("Disapproved");
+                confirmed.addClickListener(e->noteDialog.open());
+                confirmed.setId("spanApproval");
+                confirmed.getElement().getThemeList().add("badge  error  pill");
+                panel.add(confirmed);
+            });
         }
         
         
@@ -367,12 +367,12 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         grid.setItems(dataProvider);
         grid.setMaxHeight("calc(" + COUNT_PER_PAGE + " * var(--lumo-size-m))");
         grid.addComponentColumn(owner -> {
-            BizUser user = new BizUser();
-            user.setFirstName(owner.getFirstName());
-            user.setLastName(owner.getLastName());
-            user.setUsername(owner.getUsername());
+            BizUser ouser = new BizUser();
+            ouser.setFirstName(owner.getFirstName());
+            ouser.setLastName(owner.getLastName());
+            ouser.setUsername(owner.getUsername());
 
-            UserField userField = new UserField(user);
+            UserField userField = new UserField(ouser);
             HorizontalLayout panel = new HorizontalLayout();
             panel.add(userField);
             return panel;
@@ -389,12 +389,6 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         return ownerPanel;
     }
 
-//    private <T> Select<T> createSelect(
-//            final String label) {
-//        Select<T> select = new Select<>();
-//        select.setLabel(label);
-//        return select;
-//    }
 
     @Override
     protected Set<Approval> generateModelValue() {

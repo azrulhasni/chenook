@@ -42,8 +42,11 @@ public class Approval {
     @WorkField(displayName = "Last name", sortable = true)
     private String lastName;
 
-    @WorkField(displayName = "Approval worklist")
-    private String worklist;
+    @WorkField(displayName = "Approval worklist", sortable = true)
+    private String nextWorklist;
+    
+    @WorkField(displayName = "Approval worklist", sortable = true)
+    private String currentWorklist;
 
     @WorkField(displayName = "Approved", sortable = true)
     private Boolean approved;
@@ -179,15 +182,15 @@ public class Approval {
     /**
      * @return the worklist
      */
-    public String getWorklist() {
-        return worklist;
+    public String getNextWorklist() {
+        return nextWorklist;
     }
 
     /**
      * @param worklist the worklist to set
      */
-    public void setWorklist(String worklist) {
-        this.worklist = worklist;
+    public void setNextWorklist(String nextWorklist) {
+        this.nextWorklist = nextWorklist;
     }
 
 //    /**
@@ -229,6 +232,20 @@ public class Approval {
      */
     public void setNote(String note) {
         this.note = note;
+    }
+
+    /**
+     * @return the currentWorklist
+     */
+    public String getCurrentWorklist() {
+        return currentWorklist;
+    }
+
+    /**
+     * @param currentWorklist the currentWorklist to set
+     */
+    public void setCurrentWorklist(String currentWorklist) {
+        this.currentWorklist = currentWorklist;
     }
 
 }

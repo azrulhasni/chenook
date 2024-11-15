@@ -25,16 +25,6 @@ public class Attachment {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-   
-    
-//    @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
-//    @JoinColumn(name = "fk_finApplication")
-//    private FinApplication finApplication;
-//    
-//    @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
-//    @JoinColumn(name = "fk_applicant")
-//    private Applicant applicant;
-    
     private String fileName;
     
     private String fileLocation;
@@ -43,18 +33,10 @@ public class Attachment {
     
     private Long size;
 
-    private Long parentId;
-    
-    private String context;
-
     @Override
     public String toString() {
         return "Attachment{id"+ id  + ", fileName=" + fileName + ", fileLocation=" + fileLocation + ", mimeType=" + mimeType + ", size=" + size + '}';
     }
-
-   
-
-
 
     /**
      * @return the fileLocation
@@ -126,47 +108,6 @@ public class Attachment {
         this.id = id;
     }
 
-//    /**
-//     * @return the finApplication
-//     */
-//    public FinApplication getFinApplication() {
-//        return finApplication;
-//    }
-//
-//    /**
-//     * @param finApplication the finApplication to set
-//     */
-//    public void setFinApplication(FinApplication finApplication) {
-//        this.finApplication = finApplication;
-//    }
-//
-//    /**
-//     * @return the applicant
-//     */
-//    public Applicant getApplicant() {
-//        return applicant;
-//    }
-//
-//    /**
-//     * @param applicant the applicant to set
-//     */
-//    public void setApplicant(Applicant applicant) {
-//        this.applicant = applicant;
-//    }
-
-    /**
-     * @return the parentId
-     */
-    public Long getParentId() {
-        return parentId;
-    }
-
-    /**
-     * @param parentId the parentId to set
-     */
-    public void setParentId(Long parentId) {
-        this.parentId = parentId;
-    }
     
      @Override
     public int hashCode() {
@@ -190,17 +131,5 @@ public class Attachment {
         return Objects.equals(this.id, other.id);
     }
 
-    /**
-     * @return the context
-     */
-    public String getContext() {
-        return context;
-    }
 
-    /**
-     * @param context the context to set
-     */
-    public void setContext(String context) {
-        this.context = context;
-    }
 }

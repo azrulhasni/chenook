@@ -58,14 +58,13 @@ public class SignaturePanel<T> extends CustomField<Signature> {
         var field = ApplicationContextHolder.getBean(SignaturePanel.class);
 
         field.init(fieldName, binder, group);
-        T workItem = binder.getBean();
+        T item = binder.getBean();
 
         List<Validator> validators = new ArrayList<>();
         field.setId(fieldName);
         field.applyGroup();
 
-        var annoFieldDisplayMap = WorkflowUtils.getAnnotations(
-                workItem.getClass(),
+        var annoFieldDisplayMap = WorkflowUtils.getAnnotations(item.getClass(),
                 fieldName
         );
 
@@ -140,7 +139,9 @@ public class SignaturePanel<T> extends CustomField<Signature> {
             try {
                 String fileName = event.getFileName();
                 InputStream inputStream = buffer.getInputStream(fileName);
-                getSignature().setData(IOUtils.toByteArray(inputStream));
+                Signature signature = new Signature();
+                signature.setData(IOUtils.toByteArray(inputStream));
+                setSignature(signature);
                 setSignaturePad();
             } catch (IOException ex) {
                 Logger.getLogger(AttachmentsPanel.class.getName()).log(Level.SEVERE, null, ex);
@@ -151,13 +152,6 @@ public class SignaturePanel<T> extends CustomField<Signature> {
 
     }
 
-//    public void setParentAndContext(Long parentId, String context){
-//       Signature sign = signService.findSignatureByParentAndContext(parentId, context);
-//       if (sign!=null){
-//        signatureImageBinary = sign.getData();
-//        setSignaturePad(signatureImageBinary, signaturePanel);
-//       }
-//    }
     private void setSignaturePad() {
         if (getSignature() != null) {
             byte[] imageBinary = getSignature().getData();
@@ -193,8 +187,8 @@ public class SignaturePanel<T> extends CustomField<Signature> {
 
     public Signature getSignature() {
         try {
-            Class<?> workClass = binder.getBean().getClass();
-            Field signField = WorkflowUtils.getField(workClass, fieldName);
+            Class<?> itemClass = binder.getBean().getClass();
+            Field signField = WorkflowUtils.getField(itemClass, fieldName);
             return (Signature) signField.get(binder.getBean());
         } catch (IllegalArgumentException | IllegalAccessException ex) {
             Logger.getLogger(SignaturePanel.class.getName()).log(Level.SEVERE, null, ex);
@@ -202,20 +196,7 @@ public class SignaturePanel<T> extends CustomField<Signature> {
         return null;
     }
 
-    /* public void save(Long parentId, String context){
-        
-        Signature sign = signService.findSignatureByParentAndContext(parentId, context);
-        if (sign==null){
-            sign = new Signature();
-        }
-        sign.setContext(context);
-        sign.setParentId(parentId);
-        if (signature.getData()!=null){
-            sign.setSize((long)signature.getData().length);
-            sign.setData(signature.getData());
-        }
-        signService.save(sign);
-    }*/
+   
     @Override
     protected void setPresentationValue(Signature newPresentationValue) {
         setValue(newPresentationValue);

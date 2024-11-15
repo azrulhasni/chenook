@@ -17,5 +17,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface AttachmentRepository extends JpaRepository<Attachment, Long>, JpaSpecificationExecutor<Attachment> {
     
   
-    Page<Attachment> findByParentIdAndContext(Long parentId,String context, Pageable pageable);
+    //Page<Attachment> findByParentIdAndContext(Long parentId,String context, Pageable pageable);
 }
