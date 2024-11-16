@@ -5,6 +5,7 @@
 package com.azrul.chenook.views.message;
 
 //import com.azrul.chenook.autocomplete.Autocomplete;
+import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.Message;
 import com.azrul.chenook.domain.MessageStatus;
 import com.azrul.chenook.service.MessageService;
@@ -29,7 +30,7 @@ import com.vaadin.flow.theme.lumo.LumoIcon;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+//import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 /**
  *
@@ -40,7 +41,7 @@ public class MessageButton extends Button {
     public MessageButton(
             Long id,
             String context,
-            OidcUser oidcUser, 
+            BizUser bizUser, 
             MessageService msgService
     ) {
         Long unreadNotifCount = msgService.countMessagesByParentIdStatusAndContext(id, MessageStatus.NEW, context);
@@ -55,7 +56,7 @@ public class MessageButton extends Button {
         this.setText("Messages");
         
         Dialog msgDialog = new Dialog("Messages");
-        msgDialog.add(buildMessagePanel(id, context, oidcUser, msgService));
+        msgDialog.add(buildMessagePanel(id, context,bizUser, msgService));
         msgDialog.addOpenedChangeListener(e->{
             if (e.isOpened()==false){
                 Long unreadNotifCount2 = msgService.countMessagesByParentIdStatusAndContext(id, MessageStatus.NEW, context);
@@ -93,7 +94,7 @@ public class MessageButton extends Button {
         this.addThemeVariants(ButtonVariant.LUMO_SMALL);
     }
     
-    private VerticalLayout buildMessagePanel(Long parentId, String context, OidcUser oidcUser, MessageService msgService) {
+    private VerticalLayout buildMessagePanel(Long parentId, String context, BizUser user, MessageService msgService) {
         VerticalLayout messagesPanel = new VerticalLayout();
         HorizontalLayout editor = new HorizontalLayout();
         TextField tfMsg = new TextField();
@@ -103,17 +104,17 @@ public class MessageButton extends Button {
         // VirtualList<Message> vlMsgs = new VirtualList<Message>();
         Grid<Message> gMsgs = new Grid<>();        
         gMsgs.setItems(msgService.findMessagesByParentAndContext(parentId, context));
-        gMsgs.addComponentColumn(msg -> buildCard(msg, oidcUser, gMsgs, msgService));
+        gMsgs.addComponentColumn(msg -> buildCard(msg, user, gMsgs, msgService));
         messagesPanel.add(editor);
         messagesPanel.add(gMsgs);
         btnAddMsg.addClickListener(e -> {
             Message msg = new Message();
             msg.setContext(context);
             msg.setParentId(parentId);
-            msg.setCreatedBy(oidcUser.getPreferredUsername());
+            msg.setCreatedBy(user.getUsername());
             msg.setCreatedDateTime(LocalDateTime.now());
-            msg.setFullName(oidcUser.getFullName());
-            msg.setWriterUserName(oidcUser.getPreferredUsername());
+            msg.setFullName(user.getUserDispalyName());
+            msg.setWriterUserName(user.getUsername());
             msg.setMessage(tfMsg.getValue());
             msg.setStatus(MessageStatus.NEW);
             msgService.save(msg);
@@ -149,7 +150,7 @@ public class MessageButton extends Button {
         return counter;
     }
     
-    private Component buildCard(Message msg, OidcUser oidcUser, Grid<Message> gMsgs, MessageService msgService) {
+    private Component buildCard(Message msg, BizUser user, Grid<Message> gMsgs, MessageService msgService) {
         HorizontalLayout card = new HorizontalLayout();
         VerticalLayout cardInfo = new VerticalLayout();
         cardInfo.setPadding(false);
@@ -174,7 +175,7 @@ public class MessageButton extends Button {
         txaMsg.setWidth("100%");
         msgPanel.add(txaMsg);
         txaMsg.setReadOnly(true);
-        if (StringUtils.equals(msg.getWriterUserName(), oidcUser.getPreferredUsername())) {
+        if (StringUtils.equals(msg.getWriterUserName(), user.getUsername())) {
             VerticalLayout txaMsgBtnPanel = new VerticalLayout();
 //                Button btnE = new Button();
 //                btnE.setIcon(LumoIcon.EDIT.create());

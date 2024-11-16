@@ -82,7 +82,7 @@ public abstract class WorkItem {
     protected String startEventDescription;
     
   
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL/*, mappedBy="workItem"*/)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true/*, mappedBy="workItem"*/)
     @JoinColumn(name = "work_id", referencedColumnName = "id")
     protected Set<BizUser> owners;
 

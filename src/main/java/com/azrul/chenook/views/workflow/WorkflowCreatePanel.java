@@ -6,6 +6,7 @@ package com.azrul.chenook.views.workflow;
 
 import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.config.WorkflowConfig;
+import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.workflow.model.BizProcess;
@@ -16,7 +17,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import java.util.List;
 import java.util.function.BiConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+//import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 /**
  *
@@ -37,15 +38,15 @@ public class WorkflowCreatePanel<T extends WorkItem> extends VerticalLayout{
     
     public static <T extends WorkItem> WorkflowCreatePanel<T> create(
             final Class<T> workItemClass,  
-            final OidcUser oidcUser,
+            final BizUser bizUser,
             final BiConsumer<StartEvent,WorkflowCreatePanel<T>> showCreationDialog){
         WorkflowCreatePanel<T> panel = ApplicationContextHolder.getBean(WorkflowCreatePanel.class);
-        panel.init( oidcUser, showCreationDialog);
+        panel.init( bizUser, showCreationDialog);
         return panel;
     }
     
     private void init(
-            final OidcUser oidcUser,
+            final BizUser bizUser,
             final BiConsumer<StartEvent, WorkflowCreatePanel<T>> showCreationDialog
     ) {
 
@@ -56,7 +57,7 @@ public class WorkflowCreatePanel<T extends WorkItem> extends VerticalLayout{
         
         this.setWidth("-webkit-fill-available");
 
-        List<StartEvent> startEvents = workflowService.whatUserCanStart(oidcUser, bizProcess);
+        List<StartEvent> startEvents = workflowService.whatUserCanStart(bizUser.getClientRoles(), bizProcess);
         if (!startEvents.isEmpty()) {
             MenuBar menu = new MenuBar();
 

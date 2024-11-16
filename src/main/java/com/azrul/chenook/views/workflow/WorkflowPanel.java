@@ -13,7 +13,6 @@ import com.azrul.chenook.service.BizUserService;
 import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.components.PageNav;
-import com.azrul.chenook.views.common.validator.ApprovalValidator;
 import com.azrul.chenook.views.users.UserField;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -26,16 +25,12 @@ import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.Validator;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.spring.annotation.SpringComponent;
-import java.lang.annotation.Annotation;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -46,7 +41,7 @@ import java.util.Set;
 import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+//import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 /**
  *
@@ -62,13 +57,13 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
     private Binder<T> binder;
     private String fieldName;
     private WorkflowAwareGroup<T> group;
-    private OidcUser user;
+    private BizUser user;
     // private T work;
 
     public static <T extends WorkItem> WorkflowPanel<T> create(
             final String fieldName,
             final Binder<T> binder,
-            final OidcUser user,
+            final BizUser user,
             final WorkflowAwareGroup<T> group,
             final Function<T,Component> workflowDisplay) {
 
@@ -137,7 +132,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
     private void init(
             final String fieldName,
             final Binder<T> binder,
-            final OidcUser user,
+            final BizUser user,
             final WorkflowAwareGroup<T> group,
             final Function<T,Component> workflowDisplay) {
         T work = binder.getBean();
@@ -153,7 +148,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
             workflowField.add(cWorkflowDisplay);
         
         Optional<Approval> oapproval = work.getApprovals().stream()
-                .filter(a -> StringUtils.equals(user.getPreferredUsername(), a.getUsername())).findAny();
+                .filter(a -> StringUtils.equals(user.getUsername(), a.getUsername())).findAny();
         oapproval.ifPresent(approval -> {
             workflowField.getStyle().set("width", "100%");
 
@@ -213,7 +208,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
 
     }
 
-    public void createWorkflowInfoDialog(T work, OidcUser oidcUser) {
+    public void createWorkflowInfoDialog(T work, BizUser user) {
         Dialog workflowDialog = new Dialog();
         workflowDialog.setWidth("40em");
         TextField tf = new TextField();

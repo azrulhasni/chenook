@@ -4,13 +4,14 @@
  */
 package com.azrul.chenook.views.workflow;
 
+import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.vaadin.flow.component.html.Div;
 import java.util.Set;
 import java.util.function.Predicate;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+//import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 /**
  *
@@ -70,7 +71,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
 
     public static <T extends WorkItem> WorkflowAwareGroup createSaveAndSubmitBtnGroup(
             final T item,
-            final OidcUser user) {
+            final BizUser user) {
         Predicate<T> visiblePred = w -> {
             return true;
         };
@@ -79,7 +80,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
                 if (item.getOwners()
                         .stream()
                         .map(bu -> bu.getUsername())
-                        .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
+                        .anyMatch(u -> StringUtils.equals(u, user.getUsername()))) {
                     //always allow save/submit 
                     return true;
                 //... or my approval is needed
@@ -90,7 +91,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
                     if (w.getApprovals().isEmpty()) {
                         return false;
                     }
-                    if (w.getApprovals().stream().map(a -> a.getUsername()).anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
+                    if (w.getApprovals().stream().map(a -> a.getUsername()).anyMatch(u -> StringUtils.equals(u, user.getUsername()))) {
                         return true;
                     } else {
                         return false;
@@ -103,7 +104,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
 
     public static <T extends WorkItem> WorkflowAwareGroup createCancelBtnGroup(
             final T item,
-            final OidcUser user) {
+            final BizUser user) {
         Predicate<T> visiblePred = w -> {
             return true;
         };
@@ -116,7 +117,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
 
     public static <T extends WorkItem> WorkflowAwareGroup createRemoveBtnGroup(
             final T item,
-            final OidcUser user,
+            final BizUser user,
             final BizProcess bizProcess) {
         Predicate<T> visiblePred = w -> {
             return true;
@@ -125,13 +126,13 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
             //if user is the creator
             if (StringUtils.equals(
                     item.getCreator(),
-                    user.getPreferredUsername()
+                    user.getUsername()
             )) {
                 //if the user is the owner
                 if (item.getOwners()
                         .stream()
                         .map(bu -> bu.getUsername())
-                        .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
+                        .anyMatch(u -> StringUtils.equals(u, user.getUsername()))) {
                     //...and the workflow is at start (either just started or being routed there after escalation approval 
                     if (bizProcess.getStartEvents()
                             .stream()
@@ -154,7 +155,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
 
     public static <T extends WorkItem> WorkflowAwareGroup createForApprovalPanel(
             final T workItem,
-            final OidcUser user
+            final BizUser user
     ) {
 
         Predicate<T> visiblePred = w -> {
@@ -162,7 +163,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
         };
 
         Predicate<T> enabledPred = w -> {
-            if (w.getApprovals().stream().map(a -> a.getUsername()).anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
+            if (w.getApprovals().stream().map(a -> a.getUsername()).anyMatch(u -> StringUtils.equals(u, user.getUsername()))) {
                 return true;
             } else {
                 return false;
@@ -174,7 +175,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
 
     public static <T extends WorkItem> WorkflowAwareGroup createForApproverrButtons(
             final T workItem,
-            final OidcUser user,
+            final BizUser user,
              final BizProcess bizProcess
     ) {
         
@@ -187,7 +188,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
             Boolean  approvalNeeded = w.getApprovals()!=null && !w.getApprovals().isEmpty();
             Boolean isApprover = w.getApprovals()==null?false:w.getApprovals().stream()
                                 .map(a -> a.getUsername())
-                                .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()));
+                                .anyMatch(u -> StringUtils.equals(u, user.getUsername()));
                              
             return (approvalNeeded && isApprover);
         };
@@ -197,7 +198,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
 
     public static <T extends WorkItem> WorkflowAwareGroup createDefaultForForm(
             final T item,
-            final OidcUser user,
+            final BizUser user,
             final BizProcess bizProcess,
             //final Boolean filterByWorklist,
             final Set<String> worklistsWhereItemIsVisible,
@@ -212,10 +213,10 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
         Predicate<T> enabledPred = w -> {
              Boolean isOwner = w.getOwners()==null?false:w.getOwners().stream()
                                 .map(a -> a.getUsername())
-                                .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()));
+                                .anyMatch(u -> StringUtils.equals(u, user.getUsername()));
              Boolean isApprover = w.getApprovals()==null?false:w.getApprovals().stream()
                                 .map(a -> a.getUsername())
-                                .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()));
+                                .anyMatch(u -> StringUtils.equals(u, user.getUsername()));
              Boolean a = worklistsWhereItemIsEnabled.contains("ANY_WORKLIST");
              Boolean b = worklistsWhereItemIsEnabled.contains(w.getWorklist());
              
@@ -229,7 +230,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
 
     public static <T extends WorkItem> WorkflowAwareGroup createDefaultForSubmissionButtons(
             final T item,
-            final OidcUser user,
+            final BizUser user,
             final BizProcess bizProcess,
             final Set<String> worklistsWhereItemIsVisible,
             final Set<String> worklistsWhereItemIsEnabled
@@ -243,13 +244,13 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
             if (item.getOwners()
                     .stream()
                     .map(bu -> bu.getUsername())
-                    .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))) {
+                    .anyMatch(u -> StringUtils.equals(u, user.getUsername()))) {
                 return true;
             } else {
                 //...if you need to approve something
                 if (w.getApprovals().stream()
                         .map(a -> a.getUsername())
-                        .anyMatch(u -> StringUtils.equals(u, user.getPreferredUsername()))){
+                        .anyMatch(u -> StringUtils.equals(u, user.getUsername()))){
                     return true;
                 }else{
                     return false;

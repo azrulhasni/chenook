@@ -51,3 +51,13 @@ spring.security.oauth2.resourceserver.jwt.jwk-set-uri
 chenook.lgWorkflowAbsLocation
 chenook.lgWorkflowFile
 chenook.lgWorkflowXsdUrl
+
+
+
+ Set<String> roles = oidcUser
+                .getAuthorities()
+                .stream()
+                .map(a -> a.getAuthority())
+                .map(String::toLowerCase)
+                .map(a -> a.replace("role_", ""))
+                .collect(Collectors.toSet());

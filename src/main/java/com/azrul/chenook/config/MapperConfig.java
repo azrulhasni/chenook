@@ -5,7 +5,6 @@
 package com.azrul.chenook.config;
 
 import com.azrul.chenook.domain.BizUser;
-import org.keycloak.representations.idm.UserRepresentation;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -6,6 +6,7 @@ package com.azrul.chenook.views.workflow;
 
 import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.config.WorkflowConfig;
+import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.utils.WorkflowUtils;
@@ -31,7 +32,7 @@ import java.util.function.Function;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+//import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 /**
  *
@@ -42,7 +43,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
 
     private Triple<SearchTermProvider, PageNav, Grid<T>> myCreatedWork;
-    private OidcUser oidcUser;
+    private BizUser user;
     private BiFunction<String, SearchTermProvider, Integer> counter;
     private TriFunction<String, SearchTermProvider, PageNav, DataProvider<T,Void>> dataProviderCreator;
 
@@ -52,13 +53,13 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
     private final WorkflowConfig workflowConfig;
 
     public static <T extends WorkItem> MyCreatedWorkPanel<T> create(final Class<T> workItemClass,
-            final OidcUser oidcUser,
+            final BizUser user,
             final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder) {
         MyCreatedWorkPanel<T> myCreatedWorkPanel = ApplicationContextHolder.getBean(MyCreatedWorkPanel.class);
         myCreatedWorkPanel.init(
                 workItemClass,
-                oidcUser,
+                user,
                 showUpdateDialog,
                 cardBuilder);
         return myCreatedWorkPanel;
@@ -76,12 +77,12 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
 
     public void init(
             final Class<T> workItemClass,
-            final OidcUser oidcUser,
+            final BizUser user,
             final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder
     ) {
 
-        this.oidcUser = oidcUser;
+        this.user = user;
         this.counter = (username, searchTermProvider) -> workflowService.countWorkByCreator(workItemClass, username, searchTermProvider);
         this.dataProviderCreator = (username, searchTermProvider, nav) -> workflowService.getWorkByCreator(workItemClass, username, searchTermProvider, nav);
 
@@ -93,7 +94,7 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
                 "My work items",
                 "btnMyWork",
                 "workItems",
-                oidcUser,
+                user,
                 workflowConfig.rootBizProcess(),
                 showUpdateDialog,
                 cardBuilder,
@@ -118,7 +119,7 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
             final String title,
             final String btnIdDiscriminator,
             final String panelIdDiscriminator,
-            final OidcUser oidcUser,
+            final BizUser user,
             final BizProcess bizProcess,
             final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder,
@@ -127,11 +128,11 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
         SearchPanel searchPanel = new SearchPanel(panelIdDiscriminator);
         searchPanel.searchRunner(s->refresh());
         
-        Integer count = counter.apply(oidcUser.getPreferredUsername(), searchPanel);//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
+        Integer count = counter.apply(user.getUsername(), searchPanel);//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
         PageNav nav = new PageNav();
-        DataProvider<T,Void> dataProvider = dataProviderCreator.apply(oidcUser.getPreferredUsername(), searchPanel, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
+        DataProvider<T,Void> dataProvider = dataProviderCreator.apply(user.getUsername(), searchPanel, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
         
-        Grid<T> grid = createGrid(title, btnIdDiscriminator, oidcUser, bizProcess, dataProvider, showUpdateDialog, cardBuilder);
+        Grid<T> grid = createGrid(title, btnIdDiscriminator, user, bizProcess, dataProvider, showUpdateDialog, cardBuilder);
         nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
        
 
@@ -142,7 +143,7 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
     public void refresh() {
 
         if (myCreatedWork != null) {
-            Integer countMyCreatedWork = counter.apply(oidcUser.getPreferredUsername(), myCreatedWork.getLeft());
+            Integer countMyCreatedWork = counter.apply(user.getUsername(), myCreatedWork.getLeft());
             myCreatedWork.getMiddle().refresh(countMyCreatedWork);
             myCreatedWork.getRight().getDataProvider().refreshAll();
             
@@ -152,7 +153,7 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
     private Grid<T> createGrid(
             final String panelTitle,
             final String btnIdDiscriminator,
-            final OidcUser oidcUser,
+            final BizUser user,
             final BizProcess bizProcess,
             final DataProvider<T,Void> dataProvider,
             final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,

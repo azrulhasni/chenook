@@ -28,7 +28,6 @@ import com.azrul.chenook.workflow.model.HumanActivity;
 import com.azrul.chenook.workflow.model.ServiceActivity;
 import com.azrul.chenook.workflow.model.StartEvent;
 import com.azrul.chenook.workflow.model.XorActivity;
-import com.azrul.chenook.workflow.model.XorApprovalActivity;
 import com.azrul.chenook.workflow.model.XorAtleastOneApprovalActivity;
 import com.azrul.chenook.workflow.model.XorMajorityApprovalActivity;
 import com.azrul.chenook.workflow.model.XorUnanimousApprovalActivity;
@@ -54,7 +53,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import static java.util.List.of;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
@@ -62,7 +60,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+//import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -85,8 +83,7 @@ public abstract class WorkflowService<T extends WorkItem> {
     // Setter injection
     private ApprovalService approvalService;
 
-    // Setter injection
-    private MapperService basicMapper;
+
 
     private Expression<Boolean, T> expr;
 
@@ -558,7 +555,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                 }
             } else {// not approved. Reassign back to original user
                 root.clearOwners();
-                BizUser supervisorApprovalSeeker = bizUserService.getUser(root.getSupervisorApprovalSeeker());
+                BizUser supervisorApprovalSeeker = getBizUserService().getUser(root.getSupervisorApprovalSeeker());
                 // root.getOwners().add(supervisorApprovalSeeker);
                 root.addOwner(supervisorApprovalSeeker);
 
@@ -759,14 +756,8 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     }
 
-    public List<StartEvent> whatUserCanStart(OidcUser oidcUser, BizProcess bizProcess) {
-        Set<String> roles = oidcUser
-                .getAuthorities()
-                .stream()
-                .map(a -> a.getAuthority())
-                .map(String::toLowerCase)
-                .map(a -> a.replace("role_", ""))
-                .collect(Collectors.toSet());
+    public List<StartEvent> whatUserCanStart(List<String> roles, BizProcess bizProcess) {
+       
 
         List<StartEvent> startEvents = bizProcess
                 .getStartEvents()
@@ -798,7 +789,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                 .stream()
                 .filter(a -> a.getClass().equals(HumanActivity.class))
                 .map(HumanActivity.class::cast)
-                .filter(ha -> roles.contains(ha.getHandledBy()))
+                .filter(ha -> roles.contains(StringUtils.lowerCase(ha.getHandledBy())))
                 .collect(Collectors.toMap(HumanActivity::getId, HumanActivity::getDescription));
         return worklists;
     }
@@ -889,18 +880,18 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     public T initializeAndSave(
             final T newwork,
-            final OidcUser oidcUser,
+            final BizUser bizUser,
             final String context,
             final StartEvent startEvent,
             final BizProcess bizProcess) {
 
         newwork.setContext(context);
-        newwork.setCreator(oidcUser.getPreferredUsername());
+        newwork.setCreator(bizUser.getUsername());
         newwork.setPriority(Priority.NONE);
         //newwork.setStatus(Status.NEWLY_CREATED);
 
         Set<BizUser> owners = new HashSet<>();
-        owners.add(basicMapper.map(oidcUser));
+        owners.add(bizUser);
         newwork.setOwners(owners);
         newwork.setStartEventId(startEvent.getId());
         newwork.setStartEventDescription(bizProcess.getStartEvents().iterator().next().getDescription());
@@ -1061,12 +1052,6 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     private String modifySortFieldForSearch(String sortField, Class<T> workItemClass) {
         Field field = WorkflowUtils.getField(workItemClass, sortField);
-        // if (String.class.equals(field.getType())){
-        // return sortField+".keyword";
-        // }else if (Status.class.equals(field.getType())){
-        // return sortField+".keyword";
-        // }else if (Priority.class.equals(field.getType())){
-        // return sortField+".keyword";
         if (Number.class.isAssignableFrom(field.getType())
                 || LocalDateTime.class.isAssignableFrom(field.getType())
                 || LocalDate.class.isAssignableFrom(field.getType())
@@ -1122,29 +1107,13 @@ public abstract class WorkflowService<T extends WorkItem> {
         };
     }
 
-    // private SearchPredicate whereOwnersOrUndecidedApprovalsContains(
-    // SearchPredicateFactory f,
-    // String username
-    // ) {
-    // return f.and(
-    // f.match().field("owners.username").matching(username),
-    // f.match().field("undecidedApprovals").matching(true)
-    // ).toPredicate();
-    // }
+
     private Specification<T> whereCreatorEquals(String username) {
         return (workItem, cq, cb) -> {
             return cb.equal(workItem.get("creator"), username);
         };
     }
 
-    // private SearchPredicate whereCreatorEquals(
-    // SearchPredicateFactory f,
-    // String username
-    // ) {
-    // return f.and(
-    // f.match().field(" creator").matching(username)
-    // ).toPredicate();
-    // }
     private Specification<T> whereNoOwnerAndWorklistEquals(String worklist) {
         return (workItem, cq, cb) -> {
             SetJoin<T, BizUser> children = workItem.joinSet("owners", JoinType.LEFT);
@@ -1154,15 +1123,6 @@ public abstract class WorkflowService<T extends WorkItem> {
         };
     }
 
-    // protected SearchPredicate whereNoOwnerAndWorklistEquals(
-    // SearchPredicateFactory f,
-    // String worklist
-    // ) {
-    // return f.and(
-    // f.match().field("worklist").matching(worklist),
-    // f.match().field("ownersIsEmpty").matching(true)
-    // ).toPredicate();
-    // }
     /**
      * @return the workItemRepo
      */
@@ -1262,20 +1222,4 @@ public abstract class WorkflowService<T extends WorkItem> {
     public void setEmFactory(EntityManagerFactory emFactory) {
         this.emFactory = emFactory;
     }
-
-    /**
-     * @return the basicMapper
-     */
-    public MapperService getBasicMapper() {
-        return basicMapper;
-    }
-
-    /**
-     * @param basicMapper the basicMapper to set
-     */
-    @Autowired
-    public void setBasicMapper(MapperService basicMapper) {
-        this.basicMapper = basicMapper;
-    }
-
 }

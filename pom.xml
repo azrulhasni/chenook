@@ -251,11 +251,11 @@
             <version>2.8.0</version>
         </dependency-->
         <!-- https://mvnrepository.com/artifact/org.keycloak/keycloak-admin-client -->
-        <dependency>
+        <!--dependency>
             <groupId>org.keycloak</groupId>
             <artifactId>keycloak-admin-client</artifactId>
             <version>24.0.4</version>
-        </dependency>
+        </dependency-->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-envers</artifactId>

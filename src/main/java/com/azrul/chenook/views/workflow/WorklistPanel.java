@@ -8,20 +8,15 @@ import com.azrul.chenook.config.ApplicationContextHolder;
 import com.azrul.chenook.config.WorkflowConfig;
 import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.WorkItem;
-//import com.azrul.smefinancing.service.BadgeUtils;
-import com.azrul.chenook.service.BizUserService;
-import com.azrul.chenook.service.MapperService;
 import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.components.Card;
 import com.azrul.chenook.views.common.components.PageNav;
-import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.chenook.workflow.model.StartEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.H4;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
@@ -36,7 +31,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 /**
  *
@@ -48,40 +42,30 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
     private final int COUNT_PER_PAGE = 3;
     private final List<Triple<Grid<T>, PageNav,String>> myWorklists = new ArrayList<>();
     private final WorkflowService<T> workflowService;
-    private final BizUserService<T> bizUserService;
     private final WorkflowConfig workflowConfig;
-    //private final BadgeUtils badgeUtils;
-    private final MapperService basicMapper;
     private       Function<String, Integer> counter;
-   // private       OidcUser user;
     private       BiFunction<String, PageNav, DataProvider<T,Void>> dataProviderCreator;
     
     public static <T extends WorkItem> WorklistPanel create( 
             final Class<T> workItemClass,
-            final OidcUser oidcUser,
+            final BizUser user,
             final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder){
        WorklistPanel<T> worklistPanel = ApplicationContextHolder.getBean(WorklistPanel.class);
-        worklistPanel.init(workItemClass, oidcUser, showUpdateDialog, cardBuilder);
+        worklistPanel.init(workItemClass, user, showUpdateDialog, cardBuilder);
         return worklistPanel;
     }
 
     public WorklistPanel(
             @Autowired WorkflowService<T> workflowService,
-            @Autowired  BizUserService bizUserService,
-            //@Autowired  BadgeUtils badgeUtils,
-            @Autowired  MapperService basicMapper,
             @Autowired  WorkflowConfig workflowConfig){
         this.workflowService=workflowService;
-        this.bizUserService=bizUserService;
-        //this.badgeUtils=badgeUtils;
-        this.basicMapper=basicMapper;
         this.workflowConfig=workflowConfig;
     }
         
     public void init(
             final Class<T> workItemClass,
-            final OidcUser oidcUser,
+            final BizUser user,
             final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder
     ) {
@@ -94,13 +78,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             
         this.setWidth("-webkit-fill-available");
 
-        Set<String> roles = oidcUser
-                .getAuthorities()
-                .stream()
-                .map(o -> o.getAuthority())
-                .filter(a->a.startsWith("ROLE"))
-                .map(a -> a.replace("ROLE_", ""))
-                .collect(Collectors.toSet());
+        Set<String> roles = user.getClientRoles().stream().collect(Collectors.toSet());
         
         Map<String,String> worklists = workflowService.findWorklistsByRoles(roles, workflowConfig.rootBizProcess());
 
@@ -108,9 +86,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             Triple<Grid<T>, PageNav, String> panel = buildDataPanel(
                     "Worklist:" + worklist.getValue(),
                     worklist.getKey(),
-                    oidcUser,
-                    workflowConfig.rootBizProcess(),
-                    bizUserService,
+                    user,
                     showUpdateDialog,
                     cardBuilder,
                     sortableFields
@@ -135,16 +111,14 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
     private Triple<Grid<T>, PageNav, String> buildDataPanel(
             final String title,
             final String w,
-            final OidcUser oidcUser1,
-            final BizProcess bizProcess,
-            final BizUserService<T> bizUserService,
+            final BizUser user,
             final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder,
             final Map<String, String> sortableFields1) {
         PageNav nav = new PageNav();
-        Integer count = counter.apply(w);//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
+        Integer count = counter.apply(w);
         DataProvider dataProvider = dataProviderCreator.apply(w, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
-        Grid<T> grid = createGrid(title, oidcUser1, bizProcess, bizUserService, dataProvider, showUpdateDialog, cardBuilder);
+        Grid<T> grid = createGrid(title, user, dataProvider, showUpdateDialog, cardBuilder);
         nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields1, false);
         Triple<Grid<T>, PageNav, String> triple = Triple.of(grid, nav,w);
         return triple;
@@ -160,9 +134,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
 
     private Grid<T> createGrid(
             final String panelTitle,
-            final OidcUser oidcUser,
-            final BizProcess bizProcess,
-            final BizUserService<T> bizUserService,
+            final BizUser user,
             final DataProvider<T,Void> dataProvider,
             final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder) {
@@ -173,15 +145,10 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
 
         this.add(grid);
         grid.addComponentColumn(work -> {
-//            VerticalLayout content = cardBuilder.apply(work);
-//            Span badge = badgeUtils.createStatusBadge(work.getStatus());
-//            Card card = new Card(work.getTitle(), badge);
-//            card.add(content);
             Card card = cardBuilder.apply(work);
             HorizontalLayout btnPanel = new HorizontalLayout();
             Button btnBookThis = new Button("Book this work", e -> {
-                BizUser buser = basicMapper.map(oidcUser);
-                work.addOwner(buser);
+                work.addOwner(user);
                 T w = workflowService.save(work);
                 showUpdateDialog.accept(this, null, w);
             });

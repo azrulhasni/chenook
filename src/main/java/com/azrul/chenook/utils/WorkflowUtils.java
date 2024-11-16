@@ -8,6 +8,7 @@ import com.azrul.chenook.annotation.NotEmpty;
 import com.azrul.chenook.annotation.NotNullValue;
 import com.azrul.chenook.annotation.NumberRange;
 import com.azrul.chenook.annotation.WorkField;
+import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.views.common.validator.ApprovalValidator;
 import com.azrul.chenook.views.common.validator.MatcherValidator;
@@ -51,7 +52,7 @@ import org.apache.commons.lang3.StringUtils;
 //import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
 //import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
 //import org.hibernate.search.mapper.pojo.mapping.definition.annotation.KeywordField;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+//import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -368,21 +369,21 @@ public class WorkflowUtils {
 
     public static <T extends WorkItem> Boolean isWaitingApproval(
             final T work,
-            final OidcUser user) {
+            final BizUser user) {
         if (work.getApprovals() == null) {
             return false;
         }
         return work.getApprovals().stream().filter(
                 a -> StringUtils.equals(
                         a.getUsername(),
-                        user.getPreferredUsername()))
+                        user.getUsername()))
                 .count() > 0;
     }
     
     public static <T> List<Validator> applyApprovalValidator(
             Component field,
             Binder<T> binder,
-            OidcUser user,
+            BizUser user,
             String message
     ) {
         List<Validator> validators = new ArrayList<>();
