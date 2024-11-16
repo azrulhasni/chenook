@@ -223,9 +223,9 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         Div content = new Div();
         content.add(tf);
         workflowDialog.add(content);
-        VerticalLayout approvalPanel = buildApprovalPanel(work, workflowDialog);
+        VerticalLayout approvalPanel = buildApprovalPanel(work);
         workflowDialog.add(approvalPanel);
-        VerticalLayout histApprovalPanel = buildHistoricalApprovalPanel(work, workflowDialog);
+        VerticalLayout histApprovalPanel = buildHistoricalApprovalPanel(work);
         workflowDialog.add(histApprovalPanel);
         VerticalLayout ownerPanel = buildOwnerPanel(work, workflowDialog);
         workflowDialog.add(ownerPanel);
@@ -235,7 +235,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         workflowDialog.open();
     }
 
-    private VerticalLayout buildApprovalPanel(T work, Dialog approvalDialog) {
+    private VerticalLayout buildApprovalPanel(T work) {
         VerticalLayout approvalPanel = new VerticalLayout();
         PageNav nav = new PageNav();
         WorkflowUtils.getSortableFields(Approval.class);
@@ -257,7 +257,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         return approvalPanel;
     }
 
-    private VerticalLayout buildHistoricalApprovalPanel(T work, Dialog approvalDialog) {
+    private VerticalLayout buildHistoricalApprovalPanel(T work) {
         
         VerticalLayout approvalPanel = new VerticalLayout();
         PageNav nav = new PageNav();
@@ -293,7 +293,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         
         TextField worklist = new TextField();
         worklist.setLabel("Worklist");
-        worklist.setValue(approval.getNextWorklist()==null?"":approval.getNextWorklist());
+        worklist.setValue(approval.getCurrentWorklist()==null?"":approval.getCurrentWorklist());
         worklist.setReadOnly(true);
         notePanel.add(worklist);
         

@@ -41,9 +41,6 @@ public class Approval {
 
     @WorkField(displayName = "Last name", sortable = true)
     private String lastName;
-
-    @WorkField(displayName = "Approval worklist", sortable = true)
-    private String nextWorklist;
     
     @WorkField(displayName = "Approval worklist", sortable = true)
     private String currentWorklist;
@@ -179,47 +176,7 @@ public class Approval {
         this.firstName = firstName;
     }
 
-    /**
-     * @return the worklist
-     */
-    public String getNextWorklist() {
-        return nextWorklist;
-    }
-
-    /**
-     * @param worklist the worklist to set
-     */
-    public void setNextWorklist(String nextWorklist) {
-        this.nextWorklist = nextWorklist;
-    }
-
-//    /**
-//     * @return the workItem
-//     */
-//    public WorkItem getWorkItem() {
-//        return workItem;
-//    }
-//
-//    /**
-//     * @param workItem the workItem to set
-//     */
-//    public void setWorkItem(WorkItem workItem) {
-//        this.workItem = workItem;
-//    }
-//
-//    /**
-//     * @return the historicalWorkItem
-//     */
-//    public WorkItem getHistoricalWorkItem() {
-//        return historicalWorkItem;
-//    }
-//
-//    /**
-//     * @param historicalWorkItem the historicalWorkItem to set
-//     */
-//    public void setHistoricalWorkItem(WorkItem historicalWorkItem) {
-//        this.historicalWorkItem = historicalWorkItem;
-//    }
+  
     /**
      * @return the note
      */

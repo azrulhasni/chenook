@@ -664,7 +664,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         approval.setUsername(loginName);
         approval.setFirstName(firstName);
         approval.setLastName(lastName);
-        approval.setNextWorklist(nextActivity.getId());
+        //approval.setNextWorklist(nextActivity.getId());
         approval.setCurrentWorklist(currentActivity.getId());
         work.addApproval(approval);
     }
