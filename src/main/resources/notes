@@ -23,6 +23,51 @@ curl -k -u elastic:eqwabeWorxxjO+WXCsWO -X GET "https://localhost:9200/_cat/indi
 -----------------
 curl -k -u elastic:eqwabeWorxxjO+WXCsWO -X GET "https://localhost:9200/reference/_search?pretty" -H 'Content-Type: application/json'
 
+curl -k -u elastic:eqwabeWorxxjO+WXCsWO -X GET "https://localhost:9200/workitem/_search?pretty" -H 'Content-Type: application/json'
+
+* Delete index
+--------------
+curl -k -u elastic:eqwabeWorxxjO+WXCsWO -X DELETE "https://localhost:9200/reference/?pretty" -H 'Content-Type: application/json'
+
+
+
+* Search index
+--------------
+curl -k -u elastic:eqwabeWorxxjO+WXCsWO -X GET "https://localhost:9200/reference/_search?pretty" -H 'Content-Type: application/json' -d'
+    {
+        "query": {
+               "bool": {
+                    "must": [
+                        {
+                             "simple_query_string": {
+                               "query": "Maran*"
+                             }
+                        },
+                        {"bool": {
+                            "filter": {
+                              "terms": {
+                                "status": ["DEPRECATED", "CONFIRMED"]
+                              }
+                            }
+                        }}
+                    ]
+                 }
+            }
+    }
+'
+
+* Update 
+--------
+
+
+curl -k -u elastic:eqwabeWorxxjO+WXCsWO -X PUT "https://localhost:9200/reference/_doc/48?pretty" -H 'Content-Type: application/json' -d'
+{
+  "status": "RETIRED"
+}
+'
+
+
+
 Parameters
 ==========
 executor.thread-count

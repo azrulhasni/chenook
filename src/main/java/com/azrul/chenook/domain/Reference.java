@@ -17,19 +17,25 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import java.io.Serializable;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 
 @Entity
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @Document(indexName = "reference")
 @Audited
 @EntityListeners(AuditingEntityListener.class)
-public abstract class Reference {
+public abstract class Reference  implements Serializable {
     @org.springframework.data.annotation.Id
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @WorkField(displayName = "Id", sortable = true)
     protected Long id;
 
+    
+    @Field(type = FieldType.Keyword)
+    private ReferenceStatus status;
 
 
     public Long getId() {
@@ -66,6 +72,22 @@ public abstract class Reference {
             return false;
         return true;
     }
+
+    /**
+     * @return the status
+     */
+    public ReferenceStatus getStatus() {
+        return status;
+    }
+
+    /**
+     * @param status the status to set
+     */
+    public void setStatus(ReferenceStatus status) {
+        this.status = status;
+    }
+
+   
 
     
 }

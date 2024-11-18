@@ -6,33 +6,103 @@ import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
 import com.azrul.chenook.domain.Reference;
+import com.azrul.chenook.domain.ReferenceStatus;
 
 public interface ReferenceSearchRepository<R extends Reference> extends ElasticsearchRepository<R, Long> { 
     @Query(value = """
             {
                 "bool": {
-                   "must": [
-                       {
-                            "simple_query_string": {
-                              "query": "?0"
+                    "must": [
+                        {
+                             "simple_query_string": {
+                               "query": "?0"
+                             }
+                        },
+                        {
+                            "bool": {
+                                "filter" : {
+                                    "terms" : {
+                                      "status" : ["DEPRECATED", "CONFIRMED"]
+                                    }
+                                }
                             }
-                       }]
-                }
+                        }
+                    ]
+                 }
             }       
     """)
-    public Page<R> find(String searchTerm, Pageable page);
+    public Page<R> findActive(String searchTerm,  Pageable page);
 
     @CountQuery(value = """
-        {
-            "bool": {
-               "must": [
-                   {
-                        "simple_query_string": {
-                          "query": "?0"
+            {
+                "bool": {
+                    "must": [
+                        {
+                             "simple_query_string": {
+                               "query": "?0"
+                             }
+                        },
+                        {
+                            "bool": {
+                                "filter" : {
+                                    "terms" : {
+                                      "status" : ["DEPRECATED", "CONFIRMED"]
+                                    }
+                                }
+                            }
                         }
-                   }]
-            }
-        }                
+                    ]
+                 }
+            }       
     """)
-    public Long count(String searchTerm);
+    public Long countActive(String searchTerm);
 }
+
+/*
+ @Query(value = """
+            {
+                "bool": {
+                    "must": [
+                        {
+                             "simple_query_string": {
+                               "query": "?0"
+                             }
+                        },
+                        "bool": {
+                              "filter" : {
+                                "terms" : {
+                                  "status" : ["DEPRECATED", "CONFIRRMED"]
+                                }
+                              }
+                            }
+                    ]
+                 }
+            }       
+    """)
+    public Page<R> findActive(String searchTerm, Pageable page);
+
+    @CountQuery(value = """
+            {
+                "bool": {
+                    "must": [
+                        {
+                             "simple_query_string": {
+                               "query": "?0"
+                             }
+                        },
+                        {
+                            "bool": {
+                                "filter" : {
+                                    "terms" : {
+                                      "status" : ["DEPRECATED", "CONFIRRMED"]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                 }
+            }       
+    """)
+    public Long countActive(String searchTerm);
+
+*/

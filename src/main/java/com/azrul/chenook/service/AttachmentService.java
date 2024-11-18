@@ -55,37 +55,6 @@ public class AttachmentService<T extends WorkItem> {
         this.attachmentRepo=attachmentRepo;
     }
 
-//    @Transactional
-//    private Attachment save(Attachment attc){
-//        return this.attachmentRepo.save(attc);
-//    }
-//    
-//    @Transactional
-//    public void remove(Attachment attc){
-//        this.attachmentRepo.delete(attc); 
-//    }
-//    
-//    public CallbackDataProvider.FetchCallback<Attachment, Void> findAttachmentsByParentAndContext(Long parentId, String context) {
-//        return query -> {
-//            var vaadinSortOrders = query.getSortOrders();
-//            var springSortOrders = new ArrayList<Sort.Order>();
-//            for (QuerySortOrder so : vaadinSortOrders) {
-//                String colKey = so.getSorted();
-//                if (so.getDirection() == SortDirection.ASCENDING) {
-//                    springSortOrders.add(Sort.Order.asc(colKey));
-//                }
-//            }
-//            return this.attachmentRepo.findByParentIdAndContext(
-//                    parentId,
-//                    context,
-//                    PageRequest.of(
-//                            query.getPage(),
-//                            query.getPageSize(),
-//                            Sort.by(springSortOrders)
-//                    )).stream();
-//        };
-//    }
-//    
 
  
     @Transactional

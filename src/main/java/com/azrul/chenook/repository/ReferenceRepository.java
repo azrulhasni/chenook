@@ -12,7 +12,7 @@ import org.springframework.data.repository.query.Param;
 @NoRepositoryBean
 public interface ReferenceRepository<R>  extends JpaRepository<R, Long>, JpaSpecificationExecutor<R> { 
   
-
+    
     /*@Query("SELECT r FROM Reference r WHERE :dependencyId NOT MEMBER OF r.dependencies")
     public Page<R> findAllReferencesExcludeSelected(Long dependencyId,  Pageable pageable);
 

@@ -4,13 +4,17 @@
  */
 package com.azrul.chenook.batch;
 
+import com.azrul.chenook.domain.Reference;
 import com.azrul.chenook.domain.WorkItem;
+import com.azrul.chenook.search.repository.ReferenceSearchRepository;
 import com.azrul.chenook.search.repository.WorkItemSearchRepository;
 //import com.azrul.smefinancing.search.repository.FinApplicationSearchRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,29 +27,30 @@ public class SearchIndexer {
 
     @PersistenceContext
     private EntityManager entityManager;
-    
-//    @Autowired
-//    WorkItemSearchRepository wiSearchRepo;
-    
-     @Transactional
-     //@EventListener(ApplicationReadyEvent.class)
-     public void startIndexing(){
-         List<WorkItem> items  =entityManager
-                      .createQuery("Select w from WorkItem w", WorkItem.class)
-                      .getResultList();
-         for (WorkItem item:items){
-           //wiSearchRepo.save(item);
-         }
-//         List<WorkItem> res = wiSearchRepo.findByStatus("IN_PROGRESS");
-//         for (WorkItem r:res){
-//             System.out.println("id:"+r.getId());
-//         }
-//         
-//         List<WorkItem> res2 = wiSearchRepo.findByOwnersIsEmpty();
-//         for (WorkItem r:res2){
-//             System.out.println("id:"+r.getId());
-//         }
-     }
+
+    @Autowired
+    WorkItemSearchRepository wiSearchRepo;
+
+    @Autowired
+    ReferenceSearchRepository refSearchRepo;
+
+    @Transactional
+    @EventListener(ApplicationReadyEvent.class)
+    public void startIndexing() {
+        List<WorkItem> items = entityManager
+                .createQuery("Select w from WorkItem w", WorkItem.class)
+                .getResultList();
+        for (WorkItem item : items) {
+            wiSearchRepo.save(item);
+        }
+
+        List<Reference> refs = entityManager
+                .createQuery("Select r from Reference r", Reference.class)
+                .getResultList();
+        for (Reference ref : refs) {
+            refSearchRepo.save(ref);
+        }
+    }
 
 //    @Transactional
 //    @EventListener(ApplicationReadyEvent.class)

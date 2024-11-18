@@ -4,9 +4,7 @@
  */
 package com.azrul.chenook.views.common.components;
 
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.grid.Grid;
@@ -16,12 +14,10 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.theme.lumo.LumoIcon;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  *
@@ -235,6 +231,8 @@ public class PageNav extends HorizontalLayout {
         this.currentPage.setText(Integer.toString(page) + "/" + Integer.toString(totalPageCount));
         if (totalDataCount == 0) {
             this.setVisible(false);
+        }else{
+            this.setVisible(true);
         }
     }
 

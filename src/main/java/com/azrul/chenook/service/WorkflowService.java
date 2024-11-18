@@ -642,7 +642,8 @@ public abstract class WorkflowService<T extends WorkItem> {
                     tenant,
                     work);
             nextSteps.add(nextActivity);
-        } else if (nextActivity.getClass().equals(HumanActivity.class)) { // nextActivity.getType=="human" OR
+        } else if (nextActivity.getClass().equals(HumanActivity.class)) { 
+            // nextActivity.getType=="human" OR
             // nextActivity.getType=="service"
             nextSteps.add(nextActivity); // if the next step is just another wait state, make it active
         } else { // service

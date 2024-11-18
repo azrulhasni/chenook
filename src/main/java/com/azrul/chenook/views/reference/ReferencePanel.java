@@ -146,9 +146,9 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
             Consumer<Set<R>> postSelection) {
         Dialog dialog = new Dialog();
         SearchPanel searchPanel = new SearchPanel(fieldName);
-        Integer count = refService.countAllReferenceData(referenceClass, searchPanel);
+        Integer count = refService.countActiveReferenceData(referenceClass, searchPanel);
         PageNav nav = new PageNav();
-        DataProvider<R, Void> dataProvider = refService.getAllReferenceData(referenceClass, searchPanel, nav);
+        DataProvider<R, Void> dataProvider = refService.getActiveReferenceData(referenceClass, searchPanel, false, nav);
         Grid<R> grid = new Grid<>(referenceClass, false);
         nav.init(grid, count, COUNT_PER_PAGE);
         grid.setItems(dataProvider);
@@ -179,7 +179,7 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
 
 
         searchPanel.searchRunner(s -> {
-            Integer count2 = refService.countAllReferenceData(referenceClass, searchPanel);
+            Integer count2 = refService.countActiveReferenceData(referenceClass, searchPanel);
             nav.refresh(count2);
             dataProvider.refreshAll();
         });
