@@ -4,7 +4,7 @@
  */
 package com.azrul.chenook.service;
 
-//import com.azrul.smefinancing.domain.Applicant;
+//import com.azrul.chenook.admin.domain.Applicant;
 import com.azrul.chenook.domain.Attachment;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.repository.AttachmentRepository;

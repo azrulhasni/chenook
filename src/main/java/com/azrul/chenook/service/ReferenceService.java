@@ -37,76 +37,14 @@ public abstract class ReferenceService<R extends Reference> {
 
     protected abstract ReferenceSearchRepository<R> getRefSearchRepo();
 
-    //protected ReferenceMapRepository<R> refMapRepo;
 
     public void save(R entity) {
         getRefRepo().save(entity);
         getRefSearchRepo().save(entity);
     }
 
-    /*@Transactional
-    public void saveMap(Long parentId, Class<R> referenceClass, Set<R> references, String context) {
-        ReferenceMap<R> refMap = refMapRepo.findReferencesByParent(parentId, referenceClass.getCanonicalName());
-        if (refMap == null) {
-            refMap = new ReferenceMap<>(parentId, referenceClass.getCanonicalName(), context);
-            refMap.setReferences(references);
-            refMapRepo.save(refMap);
-        } else {
-            refMap.getReferences().clear();
-            refMap.getReferences().addAll(references);
-            refMapRepo.save(refMap);
-        }
-    }
-
-    @Transactional
-    public ReferenceMap<R> getMap(Long parentId, Class<R> referenceClass) {
-        return refMapRepo.findReferencesByParent(parentId, referenceClass.getCanonicalName());
-    }*/
-
-    /*public Integer countReferenceData(
-            Class<R> referenceClass, 
-            Long parentId
-    ) {
-        Long count = refMapRepo.countReferencesByParent(parentId, referenceClass.getCanonicalName());                    
-        return count.intValue();
-    }
-
-    public DataProvider<R, Void> getReferenceData(Class<R> referenceClass, PageNav pageNav, Long parentId) {
-        // build data provider
-        var dp = new AbstractBackEndDataProvider<R, Void>() {
-            @Override
-            protected Stream<R> fetchFromBackEnd(Query<R, Void> query) {
-                // Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC :
-                // Sort.Direction.DESC;
-                // String sorted = pageNav.getSortField();
-                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
-                Sort.Direction sort = so == null ? Sort.Direction.DESC
-                        : (so.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC);
-                String sorted = so == null ? "id" : so.getSorted();
-                query.getPage();
-                Page<R> finapps = refMapRepo.findReferencesByParent(parentId, referenceClass.getCanonicalName(),
-                        PageRequest.of(
-                                pageNav.getPage() - 1,
-                                pageNav.getMaxCountPerPage(),
-                                Sort.by(sort, sorted)));
-                return finapps.stream();
-
-            }
-
-            @Override
-            protected int sizeInBackEnd(Query<R, Void> query) {
-                return pageNav.getDataCountPerPage();
-            }
-
-            @Override
-            public String getId(R item) {
-                return item.getId().toString();
-            }
-
-        };
-        return dp;
-    }*/
-
+    
+    
     public Integer countActiveReferenceData(
             Class<R> referenceClass,
             SearchTermProvider searchTermProvider
@@ -126,10 +64,79 @@ public abstract class ReferenceService<R extends Reference> {
         }
     }
 
+    public DataProvider<R, Void> getAllReferenceData(
+            Class<R> referenceClass,
+            SearchTermProvider searchTermProvider,
+            PageNav pageNav) {
+        // build data provider
+        var dp = new AbstractBackEndDataProvider<R, Void>() {
+            @Override
+            protected Stream<R> fetchFromBackEnd(Query<R, Void> query) {
+                // Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC :
+                // Sort.Direction.DESC;
+                // String sorted = pageNav.getSortField();
+                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
+                Sort.Direction sort = so == null ? Sort.Direction.DESC
+                        : (so.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC);
+                String sorted = so == null ? "id" : so.getSorted();
+
+                query.getPage();
+                if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+                    Page<R> finapps = getRefRepo().findAll(
+                            PageRequest.of(
+                                    pageNav.getPage() - 1,
+                                    pageNav.getMaxCountPerPage(),
+                                    Sort.by(sort, sorted)));
+
+                    return finapps.stream();
+                } else {
+                    Page<R> finapps = getRefSearchRepo().findAll(
+                            searchTermProvider.getSearchTerm(),
+                            PageRequest.of(
+                                    pageNav.getPage() - 1,
+                                    pageNav.getMaxCountPerPage(),
+                                    Sort.by(sort, modifySortFieldForSearch(sorted, referenceClass))));
+                    return finapps.stream();
+                }
+            }
+
+            @Override
+            protected int sizeInBackEnd(Query<R, Void> query) {
+
+                return pageNav.getDataCountPerPage();
+            }
+
+            @Override
+            public String getId(R item) {
+                return item.getId().toString();
+            }
+
+        };
+        return dp;
+    }
+
+    public Integer countAllReferenceData(
+            Class<R> referenceClass,
+            SearchTermProvider searchTermProvider
+
+    ) {
+
+        if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+            Long count = getRefRepo()
+                    .count();
+            return count.intValue();
+        } else {
+            Long count = getRefSearchRepo()
+                    .countActive(
+                            searchTermProvider.getSearchTerm()
+                    );
+            return count.intValue();
+        }
+    }
+
     public DataProvider<R, Void> getActiveReferenceData(
             Class<R> referenceClass,
             SearchTermProvider searchTermProvider,
-            Boolean includeRetired,
             PageNav pageNav) {
         // build data provider
         var dp = new AbstractBackEndDataProvider<R, Void>() {

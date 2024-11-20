@@ -8,7 +8,7 @@ package com.azrul.chenook.service;
 import com.azrul.chenook.domain.Approval;
 import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.Priority;
-//import com.azrul.smefinancing.domain.Status;
+//import com.azrul.chenook.admin.domain.Status;
 
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.repository.WorkItemRepository;

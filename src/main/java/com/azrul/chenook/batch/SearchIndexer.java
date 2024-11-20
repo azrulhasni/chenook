@@ -8,7 +8,7 @@ import com.azrul.chenook.domain.Reference;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.search.repository.ReferenceSearchRepository;
 import com.azrul.chenook.search.repository.WorkItemSearchRepository;
-//import com.azrul.smefinancing.search.repository.FinApplicationSearchRepository;
+//import com.azrul.chenook.admin.search.repository.FinApplicationSearchRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.util.List;

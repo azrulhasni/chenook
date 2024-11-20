@@ -32,6 +32,22 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
             }       
     """)
     public Page<R> findActive(String searchTerm,  Pageable page);
+    
+    
+    @Query(value = """
+            {
+                "bool": {
+                    "must": 
+                        {
+                             "simple_query_string": {
+                               "query": "?0"
+                             }
+                        }
+                    
+                 }
+            }       
+    """)
+    public Page<R> findAll(String searchTerm,  Pageable page);
 
     @CountQuery(value = """
             {
@@ -56,6 +72,23 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
             }       
     """)
     public Long countActive(String searchTerm);
+    
+    @CountQuery(value = """
+            {
+                "bool": {
+                    "must": 
+                        {
+                             "simple_query_string": {
+                               "query": "?0"
+                             }
+                        }
+                    
+                 }
+            }       
+    """)
+    public Long countAll(String searchTerm);
+    
+    
 }
 
 /*

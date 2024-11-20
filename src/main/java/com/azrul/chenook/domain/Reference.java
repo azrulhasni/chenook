@@ -1,6 +1,5 @@
 package com.azrul.chenook.domain;
 
-import java.util.Set;
 
 import org.hibernate.envers.Audited;
 import org.springframework.data.elasticsearch.annotations.Document;
@@ -8,10 +7,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.azrul.chenook.annotation.WorkField;
 
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;

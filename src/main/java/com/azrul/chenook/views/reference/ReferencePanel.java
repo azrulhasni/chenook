@@ -148,7 +148,7 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
         SearchPanel searchPanel = new SearchPanel(fieldName);
         Integer count = refService.countActiveReferenceData(referenceClass, searchPanel);
         PageNav nav = new PageNav();
-        DataProvider<R, Void> dataProvider = refService.getActiveReferenceData(referenceClass, searchPanel, false, nav);
+        DataProvider<R, Void> dataProvider = refService.getActiveReferenceData(referenceClass, searchPanel,  nav);
         Grid<R> grid = new Grid<>(referenceClass, false);
         nav.init(grid, count, COUNT_PER_PAGE);
         grid.setItems(dataProvider);
