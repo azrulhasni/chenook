@@ -33,6 +33,8 @@ public abstract class Reference  implements Serializable {
     
     @Field(type = FieldType.Keyword)
     private ReferenceStatus status;
+    
+    private Long refWorkId;
 
 
     public Long getId() {
@@ -82,6 +84,20 @@ public abstract class Reference  implements Serializable {
      */
     public void setStatus(ReferenceStatus status) {
         this.status = status;
+    }
+
+    /**
+     * @return the refWorkId
+     */
+    public Long getRefWorkId() {
+        return refWorkId;
+    }
+
+    /**
+     * @param refWorkId the refWorkId to set
+     */
+    public void setRefWorkId(Long refWorkId) {
+        this.refWorkId = refWorkId;
     }
 
    

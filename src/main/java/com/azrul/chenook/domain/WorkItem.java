@@ -81,6 +81,12 @@ public abstract class WorkItem {
     @WorkField(displayName = "Start Event")
     protected String startEventDescription;
     
+    @WorkField(displayName = "Start date")
+    private LocalDateTime startDate;
+    
+    @WorkField(displayName = "End date")
+    private LocalDateTime endDate;
+    
   
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true/*, mappedBy="workItem"*/)
     @JoinColumn(name = "work_id", referencedColumnName = "id")
@@ -366,6 +372,34 @@ public abstract class WorkItem {
 //            approval.setWorkItem(null);
 //        }
         this.getApprovals().clear();
+    }
+
+    /**
+     * @return the startDate
+     */
+    public LocalDateTime getStartDate() {
+        return startDate;
+    }
+
+    /**
+     * @param startDate the startDate to set
+     */
+    public void setStartDate(LocalDateTime startDate) {
+        this.startDate = startDate;
+    }
+
+    /**
+     * @return the endDate
+     */
+    public LocalDateTime getEndDate() {
+        return endDate;
+    }
+
+    /**
+     * @param endDate the endDate to set
+     */
+    public void setEndDate(LocalDateTime endDate) {
+        this.endDate = endDate;
     }
 
 

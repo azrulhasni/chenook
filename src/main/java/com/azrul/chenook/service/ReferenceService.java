@@ -72,9 +72,6 @@ public abstract class ReferenceService<R extends Reference> {
         var dp = new AbstractBackEndDataProvider<R, Void>() {
             @Override
             protected Stream<R> fetchFromBackEnd(Query<R, Void> query) {
-                // Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC :
-                // Sort.Direction.DESC;
-                // String sorted = pageNav.getSortField();
                 QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
                 Sort.Direction sort = so == null ? Sort.Direction.DESC
                         : (so.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC);
@@ -185,6 +182,148 @@ public abstract class ReferenceService<R extends Reference> {
         };
         return dp;
     }
+    
+    public DataProvider<R, Void> getDraftReferenceData(
+            Class<R> referenceClass,
+            Long refWorkId,
+            SearchTermProvider searchTermProvider,
+            PageNav pageNav) {
+        // build data provider
+        var dp = new AbstractBackEndDataProvider<R, Void>() {
+            @Override
+            protected Stream<R> fetchFromBackEnd(Query<R, Void> query) {
+                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
+                Sort.Direction sort = so == null ? Sort.Direction.DESC
+                        : (so.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC);
+                String sorted = so == null ? "id" : so.getSorted();
+
+                query.getPage();
+                if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+                    Page<R> finapps = getRefRepo().findAll(
+                            whereRefWorkEqualsAndReferenceStatusIs(refWorkId,ReferenceStatus.DRAFT),
+                            PageRequest.of(
+                                    pageNav.getPage() - 1,
+                                    pageNav.getMaxCountPerPage(),
+                                    Sort.by(sort, sorted)));
+
+                    return finapps.stream();
+                } else {
+                    Page<R> finapps = getRefSearchRepo().findDraft(
+                            searchTermProvider.getSearchTerm(),
+                            refWorkId,
+                            PageRequest.of(
+                                    pageNav.getPage() - 1,
+                                    pageNav.getMaxCountPerPage(),
+                                    Sort.by(sort, modifySortFieldForSearch(sorted, referenceClass))));
+                    return finapps.stream();
+                }
+            }
+
+            @Override
+            protected int sizeInBackEnd(Query<R, Void> query) {
+                return pageNav.getDataCountPerPage();
+            }
+
+            @Override
+            public String getId(R item) {
+                return item.getId().toString();
+            }
+
+        };
+        return dp;
+    }
+    
+     public Integer countDraftReferenceData(
+            Class<R> referenceClass,
+            Long refWorkId,
+            SearchTermProvider searchTermProvider
+
+    ) {
+
+        if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+            Long count = getRefRepo()
+                    .count(whereRefWorkEqualsAndReferenceStatusIs(refWorkId,ReferenceStatus.DRAFT));
+            return count.intValue();
+        } else {
+            Long count = getRefSearchRepo()
+                    .countDraft(
+                            searchTermProvider.getSearchTerm(),
+                            refWorkId
+                    );
+            return count.intValue();
+        }
+    }
+     
+     public DataProvider<R, Void> getDeprecatedReferenceData(
+            Class<R> referenceClass,
+            Long refWorkId,
+            SearchTermProvider searchTermProvider,
+            PageNav pageNav) {
+        // build data provider
+        var dp = new AbstractBackEndDataProvider<R, Void>() {
+            @Override
+            protected Stream<R> fetchFromBackEnd(Query<R, Void> query) {
+                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
+                Sort.Direction sort = so == null ? Sort.Direction.DESC
+                        : (so.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC);
+                String sorted = so == null ? "id" : so.getSorted();
+
+                query.getPage();
+                if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+                    Page<R> finapps = getRefRepo().findAll(
+                            whereRefWorkEqualsAndReferenceStatusIs(refWorkId,ReferenceStatus.DEPRECATED),
+                            PageRequest.of(
+                                    pageNav.getPage() - 1,
+                                    pageNav.getMaxCountPerPage(),
+                                    Sort.by(sort, sorted)));
+
+                    return finapps.stream();
+                } else {
+                    Page<R> finapps = getRefSearchRepo().findDeprecated(
+                            searchTermProvider.getSearchTerm(),
+                            refWorkId,
+                            PageRequest.of(
+                                    pageNav.getPage() - 1,
+                                    pageNav.getMaxCountPerPage(),
+                                    Sort.by(sort, modifySortFieldForSearch(sorted, referenceClass))));
+                    return finapps.stream();
+                }
+            }
+
+            @Override
+            protected int sizeInBackEnd(Query<R, Void> query) {
+                return pageNav.getDataCountPerPage();
+            }
+
+            @Override
+            public String getId(R item) {
+                return item.getId().toString();
+            }
+
+        };
+        return dp;
+    }
+    
+     public Integer countDeprecatedReferenceData(
+            Class<R> referenceClass,
+            Long refWorkId,
+            SearchTermProvider searchTermProvider
+
+    ) {
+
+        if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+            Long count = getRefRepo()
+                    .count(whereRefWorkEqualsAndReferenceStatusIs(refWorkId, ReferenceStatus.DEPRECATED));
+            return count.intValue();
+        } else {
+            Long count = getRefSearchRepo()
+                    .countDeprecated(
+                            searchTermProvider.getSearchTerm(),
+                            refWorkId
+                    );
+            return count.intValue();
+        }
+    }
 
     private String modifySortFieldForSearch(String sortField, Class<R> workItemClass) {
         Field field = WorkflowUtils.getField(workItemClass, sortField);
@@ -205,6 +344,15 @@ public abstract class ReferenceService<R extends Reference> {
                     cb.equal(ref.get("status"), ReferenceStatus.CONFIRMED),
                     cb.equal(ref.get("status"), ReferenceStatus.DEPRECATED)
                     );
+        };
+    }
+    
+    private Specification<R> whereRefWorkEqualsAndReferenceStatusIs(Long refWork, ReferenceStatus refStatus){
+        return (ref, cq, cb) -> {
+            return cb.and(
+                    cb.equal(ref.get("status"), refStatus),
+                    cb.equal(ref.get("refWork"), refWork)
+            );
         };
     }
 

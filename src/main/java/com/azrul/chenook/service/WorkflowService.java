@@ -151,7 +151,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                     bizUser,
                     bizProcess);
 
-            //if transition does happen, then call the pre run script of the new actiivities and the post rrun script of the current activity
+            //if transition does happen, then call the pre run script of the new actiivities and the post run script of the current activity
             //this is to simulate 'front montant' / 'front decendant'
             if (currentActivity instanceof BaseActivity baseActivity) { //run post current activity script
                 String script = baseActivity.getPreRunScript();
@@ -188,9 +188,9 @@ public abstract class WorkflowService<T extends WorkItem> {
             work.setWorklistUpdateTime(LocalDateTime.now());
             if (activity.getClass().equals(End.class)) {
                 // we reach the end, conclude
-                //work.setStatus(Status.DONE);
-                return runRecursive(work, bizUser, bizProcess, isError); // for post run script exec
-
+                T endWork = runRecursive(work, bizUser, bizProcess, isError); // for post run script exec
+                endWork.setEndDate(LocalDateTime.now()); //record completed time
+                return endWork;
             } else if (activity.getClass().equals(ServiceActivity.class)) {
                 String script = ((ServiceActivity) activity).getScript();
                 getScripting().runScript(work, bizUser, script, bizProcess);
@@ -219,7 +219,7 @@ public abstract class WorkflowService<T extends WorkItem> {
 
         if (isStartEvent(worklist, bizProcess)) {// just being created
             StartEvent start = (StartEvent) getActivities(bizProcess).get(work.getStartEventId());
-
+            work.setStartDate(LocalDateTime.now()); //record start time
             if (start.getSupervisoryApprovalHierarchy().size() != 0) {// if need supervisor, stay in the same activity
                 // first
                 handleSupervisorApproval(work,

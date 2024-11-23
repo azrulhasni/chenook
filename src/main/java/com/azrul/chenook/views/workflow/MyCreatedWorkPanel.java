@@ -54,12 +54,14 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
 
     public static <T extends WorkItem> MyCreatedWorkPanel<T> create(final Class<T> workItemClass,
             final BizUser user,
+            final BizProcess bizProcess,
             final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder) {
         MyCreatedWorkPanel<T> myCreatedWorkPanel = ApplicationContextHolder.getBean(MyCreatedWorkPanel.class);
         myCreatedWorkPanel.init(
                 workItemClass,
                 user,
+                bizProcess,
                 showUpdateDialog,
                 cardBuilder);
         return myCreatedWorkPanel;
@@ -78,6 +80,7 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
     public void init(
             final Class<T> workItemClass,
             final BizUser user,
+            final BizProcess bizProcess,
             final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder
     ) {
@@ -95,7 +98,7 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
                 "btnMyWork",
                 "workItems",
                 user,
-                workflowConfig.rootBizProcess(),
+                bizProcess,//workflowConfig.rootBizProcess(),
                 showUpdateDialog,
                 cardBuilder,
                 sortableFields

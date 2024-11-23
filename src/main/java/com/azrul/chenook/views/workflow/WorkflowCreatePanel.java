@@ -39,22 +39,18 @@ public class WorkflowCreatePanel<T extends WorkItem> extends VerticalLayout{
     public static <T extends WorkItem> WorkflowCreatePanel<T> create(
             final Class<T> workItemClass,  
             final BizUser bizUser,
+            final BizProcess bizProcess,
             final BiConsumer<StartEvent,WorkflowCreatePanel<T>> showCreationDialog){
         WorkflowCreatePanel<T> panel = ApplicationContextHolder.getBean(WorkflowCreatePanel.class);
-        panel.init( bizUser, showCreationDialog);
+        panel.init( bizUser,bizProcess, showCreationDialog);
         return panel;
     }
     
     private void init(
             final BizUser bizUser,
+            final BizProcess bizProcess,
             final BiConsumer<StartEvent, WorkflowCreatePanel<T>> showCreationDialog
     ) {
-
-        //this.oidcUser = oidcUser;
-        BizProcess bizProcess = workflowConfig.rootBizProcess();
-       
-        //Map<String,String> sortableFields = WorkflowUtils.getSortableFields(workItemClass);
-        
         this.setWidth("-webkit-fill-available");
 
         List<StartEvent> startEvents = workflowService.whatUserCanStart(bizUser.getClientRoles(), bizProcess);

@@ -10,6 +10,7 @@ import com.azrul.chenook.workflow.model.BizProcess;
 import com.vaadin.flow.component.html.Div;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 //import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
@@ -195,12 +196,31 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
         WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enabledPred, workItem);
         return group;
     }
-
+    
+    
+    //in the default settings components are visible everywhere and is editable only at the start of the workflow when the WorkItem is created 
     public static <T extends WorkItem> WorkflowAwareGroup createDefaultForForm(
             final T item,
             final BizUser user,
+            final BizProcess bizProcess
+    ){
+        return createForForm(
+                item,
+                user,
+                bizProcess, 
+                Set.of("ANY_WORKLIST"),
+                bizProcess
+                        .getStartEvents()
+                        .stream()
+                        .map(se->se.getId())
+                        .collect(Collectors.toSet())
+                );
+    }
+
+    public static <T extends WorkItem> WorkflowAwareGroup createForForm(
+            final T item,
+            final BizUser user,
             final BizProcess bizProcess,
-            //final Boolean filterByWorklist,
             final Set<String> worklistsWhereItemIsVisible,
             final Set<String> worklistsWhereItemIsEnabled
     ) {
@@ -228,7 +248,7 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
         return group;
     }
 
-    public static <T extends WorkItem> WorkflowAwareGroup createDefaultForSubmissionButtons(
+    public static <T extends WorkItem> WorkflowAwareGroup createForSubmissionButtons(
             final T item,
             final BizUser user,
             final BizProcess bizProcess,

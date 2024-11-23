@@ -12,6 +12,7 @@ import com.azrul.chenook.service.WorkflowService;
 import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.components.Card;
 import com.azrul.chenook.views.common.components.PageNav;
+import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.chenook.workflow.model.StartEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
@@ -49,10 +50,11 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
     public static <T extends WorkItem> WorklistPanel create( 
             final Class<T> workItemClass,
             final BizUser user,
+            final BizProcess bizProcess,
             final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder){
        WorklistPanel<T> worklistPanel = ApplicationContextHolder.getBean(WorklistPanel.class);
-        worklistPanel.init(workItemClass, user, showUpdateDialog, cardBuilder);
+        worklistPanel.init(workItemClass, user, bizProcess, showUpdateDialog, cardBuilder);
         return worklistPanel;
     }
 
@@ -66,6 +68,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
     public void init(
             final Class<T> workItemClass,
             final BizUser user,
+            final BizProcess bizProcess,
             final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder
     ) {
@@ -80,7 +83,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
 
         Set<String> roles = user.getClientRoles().stream().collect(Collectors.toSet());
         
-        Map<String,String> worklists = workflowService.findWorklistsByRoles(roles, workflowConfig.rootBizProcess());
+        Map<String,String> worklists = workflowService.findWorklistsByRoles(roles, bizProcess);
 
         for (Map.Entry<String,String> worklist : worklists.entrySet()) {
             Triple<Grid<T>, PageNav, String> panel = buildDataPanel(

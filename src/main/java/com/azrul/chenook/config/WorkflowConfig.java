@@ -41,17 +41,18 @@ public class WorkflowConfig {
     @Value("${chenook.lgWorkflowFile}")
     String workflowFile;
     
+    @Value("${chenook.lgAdminWorkflowAbsLocation}")
+    String adminWorkflowLocation;
+
+    @Value("${chenook.lgAdminWorkflowFile}")
+    String adminWorkflowFile;
+    
     @Value("${chenook.lgWorkflowXsdUrl}")
     String workflowXsdUrl;
 
-//    @Value("${application.lgRefMgmtWorkflowAbsLocation}")
-//    String refWorkflowLocation;
-//
-//    @Value("${application.lgRefMgmtWorkflowFile}")
-//    String refWorkflowFile;
-    @Bean
-    @Primary
-    @Qualifier("RootActivities")
+//    @Bean
+//    @Primary
+//    @Qualifier("RootActivities")
     public Map<String, Activity> activities(BizProcess rootBizProcess) {
         return getActivities(rootBizProcess);
     }
@@ -65,27 +66,26 @@ public class WorkflowConfig {
         return activities;
     }
 
-//    @Bean
-//    @Primary
-//    @Qualifier("RootWorkflow")
-//    public Workflow workflow(BizProcess rootBizProcess) {
-//        return new WorkflowImpl(rootBizProcess);
-//    }
 
 //    @Bean
-//    @Qualifier("RefWorkflow")
-//    public Workflow refWorkflow( BizProcess refBizProcess){
-//        return new WorkflowImpl(refBizProcess);
-//    }
-    @Bean
-    @Qualifier("RootBizProcess")
+//    @Qualifier("RootBizProcess")
     public BizProcess rootBizProcess() {
+        String wfLocation = workflowLocation;
+        String wfFile = workflowFile;
+        return getBizProcess(wfLocation, wfFile);
+    }
+    
+     public BizProcess adminBizProcess() {
+        String wfLocation = adminWorkflowLocation;
+        String wfFile = adminWorkflowFile;
+        return getBizProcess(wfLocation, wfFile);
+    }
+
+    private BizProcess getBizProcess(String wfLocation, String wfFile) {
         try {
-            File file = loadFile(workflowLocation, workflowFile);
+            File file = loadFile(wfLocation, wfFile);
             File xsdfile = loadFile("", "workflow.xsd");
 
-//            ObjectMapper objectMapper = new ObjectMapper();
-//            BizProcess bizprocess = objectMapper.readValue(file, BizProcess.class);
             JAXBContext context = JAXBContext.newInstance(BizProcess.class);
             //Create Unmarshaller using JAXB context
             Unmarshaller unmarshaller = context.createUnmarshaller();

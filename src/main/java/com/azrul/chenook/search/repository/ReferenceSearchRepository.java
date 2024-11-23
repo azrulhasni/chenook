@@ -88,7 +88,121 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
     """)
     public Long countAll(String searchTerm);
     
+    @Query(value = """
+            {
+                "bool": {
+                    "must": [
+                        {
+                             "simple_query_string": {
+                               "query": "?0"
+                             }
+                        },
+                        { 
+                            "match": { 
+                              "refWorkId": ?1 
+                            }
+                        },
+                        {
+                            "bool": {
+                                "filter" : {
+                                    "terms" : {
+                                      "status" : ["DRAFT"]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                 }
+            }       
+    """)
+    public Page<R> findDraft(String searchTerm, Long refWorkId, Pageable page);
     
+    @CountQuery(value = """
+            {
+                "bool": {
+                    "must": [
+                        {
+                             "simple_query_string": {
+                               "query": "?0"
+                             }
+                        },
+                        { 
+                            "match": { 
+                              "refWorkId": ?1 
+                            }
+                        },
+                        {
+                            "bool": {
+                                "filter" : {
+                                    "terms" : {
+                                      "status" : ["DRAFT"]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                 }
+            }       
+    """)
+    public Long countDraft(String searchTerm, Long refWorkId);
+    
+    @Query(value = """
+            {
+                "bool": {
+                    "must": [
+                        {
+                             "simple_query_string": {
+                               "query": "?0"
+                             }
+                        },
+                        { 
+                            "match": { 
+                              "refWorkId": ?1 
+                            }
+                       },
+                        {
+                            "bool": {
+                                "filter" : {
+                                    "terms" : {
+                                      "status" : ["DEPRRECATED"]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                 }
+            }       
+    """)
+    public Page<R> findDeprecated(String searchTerm, Long refWorkId, Pageable page);
+    
+    @CountQuery(value = """
+            {
+                "bool": {
+                    "must": [
+                        {
+                             "simple_query_string": {
+                               "query": "?0"
+                             }
+                        },
+                        { 
+                             "match": { 
+                               "refWorkId": ?1 
+                             }
+                        },
+                        {
+                            "bool": {
+                                "filter" : {
+                                    "terms" : {
+                                      "status" : ["DEPRECATED"]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                 }
+            }       
+    """)
+    public Long countDeprecated(String searchTerm, Long refWorkId);
 }
 
 /*

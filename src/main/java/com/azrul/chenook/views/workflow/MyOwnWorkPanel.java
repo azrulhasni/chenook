@@ -50,14 +50,17 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
     private final int COUNT_PER_PAGE = 3;
     private final WorkflowConfig workflowConfig;
 
-    public static <T extends WorkItem> MyOwnWorkPanel<T> create(final Class<T> workItemClass,
+    public static <T extends WorkItem> MyOwnWorkPanel<T> create(
+            final Class<T> workItemClass,
             final BizUser user,
+            final BizProcess bizProcess,
             final TriConsumer<MyOwnWorkPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder) {
         var myWorkPanel = ApplicationContextHolder.getBean(MyOwnWorkPanel.class);
         myWorkPanel.init(
                 workItemClass,
                 user,
+                bizProcess,
                 showUpdateDialog,
                 cardBuilder);
         return myWorkPanel;
@@ -75,6 +78,7 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
     public void init(
             final Class<T> workItemClass,
             final BizUser user,
+            final BizProcess bizProcess,
             final TriConsumer<MyOwnWorkPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder
     ) {
@@ -92,7 +96,8 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
                 "btnMyWork",
                 "mywork",
                 user,
-                workflowConfig.rootBizProcess(),
+                bizProcess,
+                //workflowConfig.rootBizProcess(),
                 showUpdateDialog,
                 cardBuilder,
                 sortableFields
