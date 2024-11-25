@@ -41,6 +41,7 @@ import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -189,7 +190,7 @@ public abstract class WorkflowService<T extends WorkItem> {
             if (activity.getClass().equals(End.class)) {
                 // we reach the end, conclude
                 T endWork = runRecursive(work, bizUser, bizProcess, isError); // for post run script exec
-                endWork.setEndDate(LocalDateTime.now()); //record completed time
+                endWork.setEndDate(ZonedDateTime.now()); //record completed time
                 return endWork;
             } else if (activity.getClass().equals(ServiceActivity.class)) {
                 String script = ((ServiceActivity) activity).getScript();
@@ -219,7 +220,7 @@ public abstract class WorkflowService<T extends WorkItem> {
 
         if (isStartEvent(worklist, bizProcess)) {// just being created
             StartEvent start = (StartEvent) getActivities(bizProcess).get(work.getStartEventId());
-            work.setStartDate(LocalDateTime.now()); //record start time
+            work.setStartDate(ZonedDateTime.now()); //record start time
             if (start.getSupervisoryApprovalHierarchy().size() != 0) {// if need supervisor, stay in the same activity
                 // first
                 handleSupervisorApproval(work,

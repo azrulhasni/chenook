@@ -27,13 +27,17 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
+import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.ValueConverter;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -81,11 +85,13 @@ public abstract class WorkItem {
     @WorkField(displayName = "Start Event")
     protected String startEventDescription;
     
+    @Field(type = FieldType.Date, format = DateFormat.basic_date_time_no_millis)
     @WorkField(displayName = "Start date")
-    private LocalDateTime startDate;
+    private ZonedDateTime startDate;
     
+    @Field(type = FieldType.Date, format = DateFormat.basic_date_time_no_millis)
     @WorkField(displayName = "End date")
-    private LocalDateTime endDate;
+    private ZonedDateTime endDate;
     
   
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true/*, mappedBy="workItem"*/)
@@ -377,28 +383,28 @@ public abstract class WorkItem {
     /**
      * @return the startDate
      */
-    public LocalDateTime getStartDate() {
+    public ZonedDateTime getStartDate() {
         return startDate;
     }
 
     /**
      * @param startDate the startDate to set
      */
-    public void setStartDate(LocalDateTime startDate) {
+    public void setStartDate(ZonedDateTime startDate) {
         this.startDate = startDate;
     }
 
     /**
      * @return the endDate
      */
-    public LocalDateTime getEndDate() {
+    public ZonedDateTime getEndDate() {
         return endDate;
     }
 
     /**
      * @param endDate the endDate to set
      */
-    public void setEndDate(LocalDateTime endDate) {
+    public void setEndDate(ZonedDateTime endDate) {
         this.endDate = endDate;
     }
 

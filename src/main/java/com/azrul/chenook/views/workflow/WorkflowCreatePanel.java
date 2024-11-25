@@ -58,7 +58,7 @@ public class WorkflowCreatePanel<T extends WorkItem> extends VerticalLayout{
             MenuBar menu = new MenuBar();
 
             for (var startEvent : startEvents) {
-                MenuItem miAddNew = menu.addItem("Add new " + startEvent.getDescription(), e -> {
+                MenuItem miAddNew = menu.addItem(startEvent.getDescription(), e -> {
                     showCreationDialog.accept(startEvent,this);
 
                 });

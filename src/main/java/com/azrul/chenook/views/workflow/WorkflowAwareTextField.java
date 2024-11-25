@@ -32,7 +32,7 @@ public class WorkflowAwareTextField<T> extends TextField {
     }
     
   
-    public static <T> WorkflowAwareTextField create(String fieldName, Boolean editable, Binder<T> binder, Converter converter, WorkflowAwareGroup group) {
+    public static <T> WorkflowAwareTextField create(String fieldName, Boolean readOnly, Binder<T> binder, Converter converter, WorkflowAwareGroup group) {
         T workItem = binder.getBean();
         var field = new WorkflowAwareTextField(group);
         List<Validator> validators = new ArrayList<>();
@@ -70,7 +70,7 @@ public class WorkflowAwareTextField<T> extends TextField {
             bindingBuilder.withValidator(validator);
         }
         
-        if (!editable) {
+        if (readOnly) {
             if (converter != null) {
                 bindingBuilder.withConverter(converter).bindReadOnly(fieldName);
             } else {

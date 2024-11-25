@@ -351,7 +351,7 @@ public abstract class ReferenceService<R extends Reference> {
         return (ref, cq, cb) -> {
             return cb.and(
                     cb.equal(ref.get("status"), refStatus),
-                    cb.equal(ref.get("refWork"), refWork)
+                    cb.equal(ref.get("refWorkId"), refWork)
             );
         };
     }
