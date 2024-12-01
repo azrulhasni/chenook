@@ -42,30 +42,30 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
 
     private final int COUNT_PER_PAGE = 3;
     private final List<Triple<Grid<T>, PageNav,String>> myWorklists = new ArrayList<>();
-    private final WorkflowService<T> workflowService;
+    private       WorkflowService<T> workflowService;
     private final WorkflowConfig workflowConfig;
     private       Function<String, Integer> counter;
     private       BiFunction<String, PageNav, DataProvider<T,Void>> dataProviderCreator;
     
-    public static <T extends WorkItem> WorklistPanel create( 
+    public static <T extends WorkItem> WorklistPanel create(
+            final WorkflowService<T> workflowService,
             final Class<T> workItemClass,
             final BizUser user,
             final BizProcess bizProcess,
             final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder){
        WorklistPanel<T> worklistPanel = ApplicationContextHolder.getBean(WorklistPanel.class);
-        worklistPanel.init(workItemClass, user, bizProcess, showUpdateDialog, cardBuilder);
+        worklistPanel.init(workflowService,workItemClass, user, bizProcess, showUpdateDialog, cardBuilder);
         return worklistPanel;
     }
 
     public WorklistPanel(
-            @Autowired WorkflowService<T> workflowService,
             @Autowired  WorkflowConfig workflowConfig){
-        this.workflowService=workflowService;
         this.workflowConfig=workflowConfig;
     }
         
     public void init(
+            final WorkflowService<T> workflowService,
             final Class<T> workItemClass,
             final BizUser user,
             final BizProcess bizProcess,
@@ -74,6 +74,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
     ) {
 
         //this.user = oidcUser;
+        this.workflowService = workflowService;
         this.counter = (w) -> workflowService.countWorkByWorklist(w);
         this.dataProviderCreator = (w, nav) -> workflowService.getWorkByWorklist(workItemClass,w, nav);
         

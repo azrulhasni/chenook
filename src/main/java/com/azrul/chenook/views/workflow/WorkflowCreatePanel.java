@@ -26,32 +26,34 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class WorkflowCreatePanel<T extends WorkItem> extends VerticalLayout{
     private final WorkflowConfig workflowConfig;
-    private final WorkflowService<T> workflowService;
+    private       WorkflowService<T> workflowService;
     
     private WorkflowCreatePanel(
-            @Autowired WorkflowConfig workflowConfig,
-            @Autowired WorkflowService<T> workflowService
+            @Autowired WorkflowConfig workflowConfig
     ){
         this.workflowConfig=workflowConfig;
-        this.workflowService=workflowService;
     }
     
     public static <T extends WorkItem> WorkflowCreatePanel<T> create(
+            final WorkflowService<T> workflowService,
             final Class<T> workItemClass,  
             final BizUser bizUser,
             final BizProcess bizProcess,
             final BiConsumer<StartEvent,WorkflowCreatePanel<T>> showCreationDialog){
         WorkflowCreatePanel<T> panel = ApplicationContextHolder.getBean(WorkflowCreatePanel.class);
-        panel.init( bizUser,bizProcess, showCreationDialog);
+        panel.init(workflowService, bizUser,bizProcess, showCreationDialog);
         return panel;
     }
     
     private void init(
+            final WorkflowService<T> workflowService,
             final BizUser bizUser,
             final BizProcess bizProcess,
             final BiConsumer<StartEvent, WorkflowCreatePanel<T>> showCreationDialog
     ) {
+        this.workflowService = workflowService;
         this.setWidth("-webkit-fill-available");
+        
 
         List<StartEvent> startEvents = workflowService.whatUserCanStart(bizUser.getClientRoles(), bizProcess);
         if (!startEvents.isEmpty()) {

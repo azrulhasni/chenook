@@ -52,7 +52,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
 
     private final ApprovalService approvalService;
     private final BizUserService<T> bizUserService;
-    private final WorkflowService<T> workflowService;
+    private       WorkflowService<T> workflowService;
     private final Integer COUNT_PER_PAGE = 3;
     private Binder<T> binder;
     private String fieldName;
@@ -61,6 +61,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
     // private T work;
 
     public static <T extends WorkItem> WorkflowPanel<T> create(
+            final WorkflowService<T> workflowService,
             final String fieldName,
             final Binder<T> binder,
             final BizUser user,
@@ -68,8 +69,9 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
             final Function<T,Component> workflowDisplay) {
 
         T workItem = binder.getBean();
+        
         var field = ApplicationContextHolder.getBean(WorkflowPanel.class);
-        field.init(fieldName, binder, user, group,workflowDisplay);
+        field.init(workflowService,fieldName, binder, user, group,workflowDisplay);
         field.setId(fieldName);
 
          List<Validator> validators = new ArrayList<>();
@@ -114,12 +116,10 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
 
     private WorkflowPanel(
             @Autowired ApprovalService approvalService,
-            @Autowired BizUserService<T> bizUserService,
-            @Autowired WorkflowService<T> workflowService
+            @Autowired BizUserService<T> bizUserService
             ) {
         this.approvalService = approvalService;
         this.bizUserService = bizUserService;
-        this.workflowService = workflowService;
     }
 
     public void applyGroup() {
@@ -130,6 +130,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
     }
 
     private void init(
+            final WorkflowService<T> workflowService,
             final String fieldName,
             final Binder<T> binder,
             final BizUser user,
@@ -139,6 +140,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         this.user = user;
         this.binder = binder;
         this.fieldName = fieldName;
+        this.workflowService=workflowService;
         if (work.getApprovals() == null) {
             return;
         }

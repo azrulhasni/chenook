@@ -84,8 +84,6 @@ public abstract class WorkflowService<T extends WorkItem> {
     // Setter injection
     private ApprovalService approvalService;
 
-
-
     private Expression<Boolean, T> expr;
 
     private Map<String, List<HumanActivity>> getRoleActivityMap(BizProcess bizProcess) {
@@ -172,6 +170,13 @@ public abstract class WorkflowService<T extends WorkItem> {
                     bizUser,
                     bizProcess,
                     isError);
+        } else {
+            End endActivity = (End) currentActivity;//run pre & post current activity script
+            String preRunScript = endActivity.getPreRunScript();
+            getScripting().runScript(work, bizUser, preRunScript, bizProcess);
+            String postRunScript = endActivity.getPostRunScript();
+            getScripting().runScript(work, bizUser, postRunScript, bizProcess);
+
         }
 
         return work;
@@ -510,7 +515,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                     root.setSupervisorApprovalSeeker(null);
                     root.setSupervisorApprovalLevel(null);
                     archiveApprovals(root);
-                    dealWithNextStep(root, tenant, next,activity, nextSteps);
+                    dealWithNextStep(root, tenant, next, activity, nextSteps);
                 } else {// if we are still not at the end
                     // find next role
                     String nextRole = supervisorHierarchy.get(indexOfNextApprLevel);
@@ -620,30 +625,29 @@ public abstract class WorkflowService<T extends WorkItem> {
         if (nextActivity == null) { // nextActivity==END
             nextSteps.add(nextActivity);
         } else if (nextActivity.getClass().equals(XorUnanimousApprovalActivity.class)) {
-            loadUsersIntoApprovalList((
-                    (XorUnanimousApprovalActivity) nextActivity).getHandledBy(), 
-                    nextActivity,
-                    nextActivity,
-                    tenant, 
-                    work);
-            nextSteps.add(nextActivity);
-        } else if (nextActivity.getClass().equals(XorAtleastOneApprovalActivity.class)) {
-            loadUsersIntoApprovalList(
-                    ((XorAtleastOneApprovalActivity) nextActivity).getHandledBy(), 
-                    nextActivity,
-                    nextActivity,
-                    tenant, 
-                    work);
-            nextSteps.add(nextActivity);
-        } else if (nextActivity.getClass().equals(XorMajorityApprovalActivity.class)) {
-            loadUsersIntoApprovalList(
-                    ((XorMajorityApprovalActivity) nextActivity).getHandledBy(), 
+            loadUsersIntoApprovalList(((XorUnanimousApprovalActivity) nextActivity).getHandledBy(),
                     nextActivity,
                     nextActivity,
                     tenant,
                     work);
             nextSteps.add(nextActivity);
-        } else if (nextActivity.getClass().equals(HumanActivity.class)) { 
+        } else if (nextActivity.getClass().equals(XorAtleastOneApprovalActivity.class)) {
+            loadUsersIntoApprovalList(
+                    ((XorAtleastOneApprovalActivity) nextActivity).getHandledBy(),
+                    nextActivity,
+                    nextActivity,
+                    tenant,
+                    work);
+            nextSteps.add(nextActivity);
+        } else if (nextActivity.getClass().equals(XorMajorityApprovalActivity.class)) {
+            loadUsersIntoApprovalList(
+                    ((XorMajorityApprovalActivity) nextActivity).getHandledBy(),
+                    nextActivity,
+                    nextActivity,
+                    tenant,
+                    work);
+            nextSteps.add(nextActivity);
+        } else if (nextActivity.getClass().equals(HumanActivity.class)) {
             // nextActivity.getType=="human" OR
             // nextActivity.getType=="service"
             nextSteps.add(nextActivity); // if the next step is just another wait state, make it active
@@ -759,7 +763,6 @@ public abstract class WorkflowService<T extends WorkItem> {
     }
 
     public List<StartEvent> whatUserCanStart(List<String> roles, BizProcess bizProcess) {
-       
 
         List<StartEvent> startEvents = bizProcess
                 .getStartEvents()
@@ -1108,7 +1111,6 @@ public abstract class WorkflowService<T extends WorkItem> {
                             cb.isNull(approvals.get("approved"))));
         };
     }
-
 
     private Specification<T> whereCreatorEquals(String username) {
         return (workItem, cq, cb) -> {

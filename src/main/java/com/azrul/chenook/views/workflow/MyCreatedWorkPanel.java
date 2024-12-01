@@ -47,18 +47,21 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
     private BiFunction<String, SearchTermProvider, Integer> counter;
     private TriFunction<String, SearchTermProvider, PageNav, DataProvider<T,Void>> dataProviderCreator;
 
-    private final WorkflowService<T> workflowService;
+    private       WorkflowService<T> workflowService;
     private final int COUNT_PER_PAGE = 3;
     //private final BadgeUtils badgeUtils;
     private final WorkflowConfig workflowConfig;
 
-    public static <T extends WorkItem> MyCreatedWorkPanel<T> create(final Class<T> workItemClass,
+    public static <T extends WorkItem> MyCreatedWorkPanel<T> create(
+            final WorkflowService<T> workflowService,
+            final Class<T> workItemClass,
             final BizUser user,
             final BizProcess bizProcess,
             final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,
             final Function<T, Card> cardBuilder) {
         MyCreatedWorkPanel<T> myCreatedWorkPanel = ApplicationContextHolder.getBean(MyCreatedWorkPanel.class);
         myCreatedWorkPanel.init(
+                workflowService,
                 workItemClass,
                 user,
                 bizProcess,
@@ -68,16 +71,15 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
     }
 
     private MyCreatedWorkPanel(
-            @Autowired WorkflowConfig workflowConfig,
-            @Autowired WorkflowService<T> finappService
+            @Autowired WorkflowConfig workflowConfig
     ) {
-        this.workflowService = finappService;
         this.workflowConfig = workflowConfig;
 
     }
 
 
     public void init(
+            final WorkflowService<T> workflowService,
             final Class<T> workItemClass,
             final BizUser user,
             final BizProcess bizProcess,
@@ -86,6 +88,7 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
     ) {
 
         this.user = user;
+        this.workflowService = workflowService;
         this.counter = (username, searchTermProvider) -> workflowService.countWorkByCreator(workItemClass, username, searchTermProvider);
         this.dataProviderCreator = (username, searchTermProvider, nav) -> workflowService.getWorkByCreator(workItemClass, username, searchTermProvider, nav);
 
@@ -133,8 +136,8 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
         
         Integer count = counter.apply(user.getUsername(), searchPanel);//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
         PageNav nav = new PageNav();
-        DataProvider<T,Void> dataProvider = dataProviderCreator.apply(user.getUsername(), searchPanel, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
         
+        DataProvider<T,Void> dataProvider = dataProviderCreator.apply(user.getUsername(), searchPanel, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav); 
         Grid<T> grid = createGrid(title, btnIdDiscriminator, user, bizProcess, dataProvider, showUpdateDialog, cardBuilder);
         nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
        

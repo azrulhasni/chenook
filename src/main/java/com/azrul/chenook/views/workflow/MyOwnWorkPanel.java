@@ -46,11 +46,12 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
     private BiFunction<String, SearchTermProvider, Integer> counter;
     private TriFunction<String, SearchTermProvider, PageNav, DataProvider<T, Void>> dataProviderCreator;
 
-    private final WorkflowService<T> workflowService;
+    private       WorkflowService<T> workflowService;
     private final int COUNT_PER_PAGE = 3;
     private final WorkflowConfig workflowConfig;
 
     public static <T extends WorkItem> MyOwnWorkPanel<T> create(
+            final WorkflowService<T> workflowService,
             final Class<T> workItemClass,
             final BizUser user,
             final BizProcess bizProcess,
@@ -58,6 +59,7 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
             final Function<T, Card> cardBuilder) {
         var myWorkPanel = ApplicationContextHolder.getBean(MyOwnWorkPanel.class);
         myWorkPanel.init(
+                workflowService,
                 workItemClass,
                 user,
                 bizProcess,
@@ -67,15 +69,14 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
     }
 
     private MyOwnWorkPanel(
-            @Autowired WorkflowConfig workflowConfig,
-            @Autowired WorkflowService<T> finappService
+            @Autowired WorkflowConfig workflowConfig
     ) {
-        this.workflowService = finappService;
         this.workflowConfig = workflowConfig;
 
     }
 
     public void init(
+            final WorkflowService<T> workflowService,
             final Class<T> workItemClass,
             final BizUser user,
             final BizProcess bizProcess,
@@ -84,6 +85,7 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
     ) {
 
         this.user = user;
+        this.workflowService=workflowService;
         this.counter = (username, searchTermProvider) -> workflowService.countWorkByOwner(workItemClass, username, searchTermProvider);
         this.dataProviderCreator = (username, searchTermProvider, nav) -> workflowService.getWorkByOwner(workItemClass, username, searchTermProvider, nav);
 

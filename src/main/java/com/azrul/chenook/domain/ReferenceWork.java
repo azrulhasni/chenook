@@ -5,8 +5,6 @@
 package com.azrul.chenook.domain;
 
 import com.azrul.chenook.annotation.WorkField;
-import com.azrul.chenook.domain.Reference;
-import com.azrul.chenook.domain.WorkItem;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -15,7 +13,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToOne;
+import java.util.HashSet;
 import java.util.Set;
 import org.hibernate.envers.Audited;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -35,15 +33,18 @@ public class ReferenceWork<R extends Reference> extends WorkItem {
     private ReferenceWorkType referenceWorkType;
 
     @WorkField(displayName = "Existing References")
-    @ManyToMany( fetch = FetchType.LAZY , targetEntity = Reference.class)
+    @ManyToMany( fetch = FetchType.LAZY , targetEntity = Reference.class, cascade = CascadeType.ALL)
     @JoinTable(name="refwork_refs", joinColumns=@JoinColumn(name="refwork_id"), inverseJoinColumns=@JoinColumn(name="ref_id"))
     private Set<R> existingReferences;
     
     @WorkField(displayName = "New References")
-    @ManyToMany( fetch = FetchType.LAZY, targetEntity = Reference.class)
+    @ManyToMany( fetch = FetchType.LAZY, targetEntity = Reference.class, cascade = CascadeType.ALL)
     @JoinTable(name="refwork_refs", joinColumns=@JoinColumn(name="refwork_id"), inverseJoinColumns=@JoinColumn(name="ref_id"))
     private Set<R> newReferences;
     
+    public static <R> Class<R> getClazz(){
+        return (Class<R>)ReferenceWork.class;
+    }
     
     @Override
     public String getTitle() {
@@ -55,6 +56,7 @@ public class ReferenceWork<R extends Reference> extends WorkItem {
      * @return the className
      */
     public String getClassName() {
+        
         return className;
     }
 
@@ -63,6 +65,20 @@ public class ReferenceWork<R extends Reference> extends WorkItem {
      */
     public void setClassName(String className) {
         this.className = className;
+    }
+    
+    public void addNewReference(R r){
+        if (this.newReferences==null){
+            this.newReferences=new HashSet<>();
+        }
+        this.newReferences.add(r);
+    }
+    
+    public void addExistingReference(R r){
+        if (this.existingReferences==null){
+            this.existingReferences=new HashSet<>();
+        }
+        this.existingReferences.add(r);
     }
 
     /**
