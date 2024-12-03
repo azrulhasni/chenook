@@ -66,19 +66,17 @@ public abstract class WorkItem {
     @WorkField(displayName = "Creator")
     protected String creator;
 
- 
-
-
     @WorkField(displayName = "Tenant")
     protected String tenant;
-
-
+    
     @WorkField(displayName = "Priority")
     protected Priority priority;
 
-
     @WorkField(displayName = "Context")
     protected String context;
+    
+    @WorkField(displayName = "Status")
+    protected Status status;
 
     protected String startEventId;
 
@@ -408,5 +406,14 @@ public abstract class WorkItem {
         this.endDate = endDate;
     }
 
+    public Status getStatus() {
+        return status;
+    }
+    
+     public void setStatus(Status status) {
+        this.status=status;
+    }
+     
+   
 
 }

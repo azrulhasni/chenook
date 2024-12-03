@@ -10,19 +10,21 @@ package com.azrul.chenook.workflow.model;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
 
 
 /**
- * <p>Java class for TieBreakerBranch complex type.
+ * <p>Java class for HumanApprovalActivity complex type.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType name="TieBreakerBranch">
+ * &lt;complexType name="HumanApprovalActivity">
  *   &lt;complexContent>
- *     &lt;extension base="{}DefaultBranch">
- *     &lt;/extension>
+ *     &lt;restriction base="{}HumanActivity">
+ *       &lt;attribute name="handledBy" use="required" type="{http://www.w3.org/2001/XMLSchema}string" />
+ *     &lt;/restriction>
  *   &lt;/complexContent>
  * &lt;/complexType>
  * </pre>
@@ -30,9 +32,12 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "TieBreakerBranch")
-public class TieBreakerBranch
-    extends DefaultBranch
+@XmlType(name = "HumanApprovalActivity")
+@XmlSeeAlso({
+    XorApprovalActivity.class
+})
+public abstract class HumanApprovalActivity
+    extends HumanActivity
 {
 
 

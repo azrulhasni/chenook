@@ -32,6 +32,7 @@ public abstract class Reference  implements Serializable {
 
     
     @Field(type = FieldType.Keyword)
+    @WorkField(displayName = "Status", sortable = true)
     private ReferenceStatus status;
     
     private Long refWorkId;

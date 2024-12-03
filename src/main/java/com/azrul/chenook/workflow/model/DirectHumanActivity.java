@@ -14,15 +14,16 @@ import javax.xml.bind.annotation.XmlType;
 
 
 /**
- * <p>Java class for TieBreakerBranch complex type.
+ * <p>Java class for DirectHumanActivity complex type.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType name="TieBreakerBranch">
+ * &lt;complexType name="DirectHumanActivity">
  *   &lt;complexContent>
- *     &lt;extension base="{}DefaultBranch">
- *     &lt;/extension>
+ *     &lt;restriction base="{}AbstractHumanActivity">
+ *       &lt;attribute name="directlySentTo" use="required" type="{http://www.w3.org/2001/XMLSchema}string" />
+ *     &lt;/restriction>
  *   &lt;/complexContent>
  * &lt;/complexType>
  * </pre>
@@ -30,9 +31,9 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "TieBreakerBranch")
-public class TieBreakerBranch
-    extends DefaultBranch
+@XmlType(name = "DirectHumanActivity")
+public class DirectHumanActivity
+    extends AbstractHumanActivity
 {
 
 
