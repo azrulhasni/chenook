@@ -46,7 +46,7 @@
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
-     <xs:complexType name="DirectHumanActivity">
+    <xs:complexType name="DirectHumanActivity">
         <xs:complexContent>
             <xs:extension base="HumanActivity">
                 <xs:attribute type="xs:string" name="directlySentTo" use="required"/>
@@ -152,14 +152,14 @@
                 <xs:element type="xs:string" name="name"/>
                 <xs:element type="xs:string" name="version"/>
                 <xs:element type="xs:string" name="description"/>
-                <xs:sequence minOccurs="0" maxOccurs="unbounded">
+                <xs:sequence minOccurs="1" maxOccurs="1">
                     <xs:element name="workflow">
                         <xs:complexType>
                             <xs:choice maxOccurs="unbounded" minOccurs="0">
                                 <xs:element name="startEvent" type="StartEvent" maxOccurs="unbounded" minOccurs="1"/>
                                 <xs:element name="service" type="ServiceActivity" maxOccurs="unbounded" minOccurs="0"/>
-                                <xs:element name="human" type="HumanActivity" maxOccurs="unbounded" minOccurs="0"/>
                                 <xs:element name="direct" type="DirectHumanActivity" maxOccurs="unbounded" minOccurs="0"/>
+                                <xs:element name="human" type="HumanActivity" maxOccurs="unbounded" minOccurs="0"/>
                                 <xs:element name="xor" type="XorActivity" maxOccurs="unbounded" minOccurs="0"/>
                                 <xs:element name="xor-atleast-one-approval" type="XorAtleastOneApprovalActivity" maxOccurs="unbounded" minOccurs="0"/>
                                 <xs:element name="xor-unanimous-approval" type="XorUnanimousApprovalActivity" maxOccurs="unbounded" minOccurs="0"/>

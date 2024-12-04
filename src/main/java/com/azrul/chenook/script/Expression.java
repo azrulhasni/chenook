@@ -40,7 +40,7 @@ import org.springframework.stereotype.Component;
  *
  * @author azrul
  */
-@Component("expr")
+
 public class Expression<R, T> {
 
 //    @Lazy

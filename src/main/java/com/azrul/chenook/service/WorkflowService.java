@@ -14,6 +14,8 @@ import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.repository.WorkItemRepository;
 import com.azrul.chenook.search.repository.WorkItemSearchRepository;
 import com.azrul.chenook.script.Expression;
+import com.azrul.chenook.script.FunctionExpression;
+import com.azrul.chenook.script.PredicateExpression;
 import com.azrul.chenook.script.Scripting;
 import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.components.PageNav;
@@ -84,7 +86,11 @@ public abstract class WorkflowService<T extends WorkItem> {
     // Setter injection
     private ApprovalService approvalService;
 
-    private Expression<Boolean, T> expr;
+     // Setter injection
+    private PredicateExpression<T> predicateExpression;
+    
+     // Setter injection
+    private FunctionExpression<T> functionExpression;
 
     private Map<String, List<HumanActivity>> getRoleActivityMap(BizProcess bizProcess) {
         return getActivities(bizProcess)
@@ -239,7 +245,6 @@ public abstract class WorkflowService<T extends WorkItem> {
                 dealWithNextStep(work,
                         tenant,
                         (Activity) start.getNext(),
-                        start,
                         nextSteps);
             }
         } else {
@@ -273,7 +278,7 @@ public abstract class WorkflowService<T extends WorkItem> {
             if (!humanActivity.getSupervisoryApprovalHierarchy().isEmpty()) {
                 handleSupervisorApproval(work,
                         tenant,
-                        (Activity) ((BaseActivity) activity).getNext(),
+                        (Activity) humanActivity.getNext(),
                         activity,
                         nextSteps,
                         user,
@@ -282,24 +287,33 @@ public abstract class WorkflowService<T extends WorkItem> {
                 dealWithNextStep(work,
                         tenant,
                         (Activity) ((BaseActivity) activity).getNext(),
-                        activity,
                         nextSteps);
             }
         }else if (activity instanceof DirectHumanActivity directHumanActivity) {
             String expr = directHumanActivity.getDirectlySentTo();
-            
+            String targetWorklist = directHumanActivity.getHandledBy();
+            String targetUser = (String) getFunctionExpression().evaluate(expr, work, user, bizProcess);
+            Activity nextActivity = (Activity) directHumanActivity.getNext();
+            BizUser bizUser = bizUserService.getUser(targetUser);
+            if (bizUser.getClientRoles().contains(targetWorklist)){
+                work.clearOwners();
+                
+                dealWithNextStep(work,
+                        tenant,
+                        nextActivity,
+                        nextSteps);
+            }
         } 
         else if (activity instanceof ServiceActivity serviceActivity) {
             dealWithNextStep(work,
                     tenant, 
                     (Activity) serviceActivity.getNext(),
-                    activity,
                     nextSteps);
         } else if (activity instanceof XorActivity xorActivity) {
             // see which condition triggers and follow that branch
             boolean conditionTriggered = false;
             for (var branch : xorActivity.getBranch()) {
-                Boolean result = getExpr().evaluate(branch.getCondition(), work, user, bizProcess);
+                Boolean result = getPredicateExpression().evaluate(branch.getCondition(), work, user, bizProcess);
                 if (result) {
                     conditionTriggered = true;
                     nextSteps.add((Activity) branch.getNext());
@@ -343,7 +357,6 @@ public abstract class WorkflowService<T extends WorkItem> {
                                 work,
                                 user,
                                 bizProcess),
-                        activity,
                         nextSteps);
             } else if (state == 2) {// at least one disapproval
                 archiveApprovals(work);
@@ -356,7 +369,6 @@ public abstract class WorkflowService<T extends WorkItem> {
                                 work,
                                 user,
                                 bizProcess),
-                        activity,
                         nextSteps);
 
             } else {
@@ -401,7 +413,6 @@ public abstract class WorkflowService<T extends WorkItem> {
                                 work,
                                 user,
                                 bizProcess),
-                        activity,
                         nextSteps);
             } else if (state == 2) {// at least one approval
                 archiveApprovals(work);
@@ -414,7 +425,6 @@ public abstract class WorkflowService<T extends WorkItem> {
                                 work,
                                 user,
                                 bizProcess),
-                        activity,
                         nextSteps);
             } else {
                 // don't move to next step but takeout the current owner so that he doesn't see
@@ -448,7 +458,6 @@ public abstract class WorkflowService<T extends WorkItem> {
                                 work,
                                 user,
                                 bizProcess),
-                        activity,
                         nextSteps);
             } else if (countDisapprove > majorityVote) {
                 archiveApprovals(work);
@@ -461,7 +470,6 @@ public abstract class WorkflowService<T extends WorkItem> {
                                 work,
                                 user,
                                 bizProcess),
-                        activity,
                         nextSteps);
             } else if (countDisapprove == countApprove
                     && countDisapprove + countApprove == work.getApprovals().size()) { // everyone voted and its a tie
@@ -470,7 +478,6 @@ public abstract class WorkflowService<T extends WorkItem> {
                 dealWithNextStep(work,
                         tenant,
                         (Activity) xorMajorityApprovalActivity.getOnTieBreaker().getNext(),
-                        activity,
                         nextSteps);
             } else {
                 // don't move to next step but takeout the current owner so that he doesn't see
@@ -502,7 +509,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                     root.setSupervisorApprovalSeeker(null);
                     root.setSupervisorApprovalLevel(null);
                     archiveApprovals(root);
-                    dealWithNextStep(root, tenant, next, activity, nextSteps);
+                    dealWithNextStep(root, tenant, next, nextSteps);
                 } else {// if we are still not at the end
                     // find next role
                     String nextRole = supervisorHierarchy.get(indexOfNextApprLevel);
@@ -536,7 +543,6 @@ public abstract class WorkflowService<T extends WorkItem> {
                                                 approver.getFirstName(),
                                                 approver.getLastName(),
                                                 root,
-                                                activity,
                                                 activity);
                                         nextSteps.add(activity); // if need supervisor, stay in the same activity first
 
@@ -589,7 +595,6 @@ public abstract class WorkflowService<T extends WorkItem> {
                                 approver.getFirstName(),
                                 approver.getLastName(),
                                 root,
-                                activity,
                                 activity);
 
                         nextSteps.add(activity); // if need supervisor, stay in the same activity first
@@ -602,7 +607,12 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     }
 
-    private void dealWithNextStep(T work, String tenant, Activity nextActivity, Activity currentActivity, List<Activity> nextSteps) {
+    private void dealWithNextStep(
+            T work, 
+            String tenant, 
+            Activity nextActivity, 
+            List<Activity> nextSteps
+    ) {
 
         work.clearOwners(); // so that the next folks can pick it up
 
@@ -614,7 +624,6 @@ public abstract class WorkflowService<T extends WorkItem> {
         } else if (nextActivity instanceof XorUnanimousApprovalActivity xorUnanimousApprovalActivity) {
             loadUsersIntoApprovalList(xorUnanimousApprovalActivity.getHandledBy(),
                     nextActivity,
-                    nextActivity,
                     tenant,
                     work);
             nextSteps.add(nextActivity);
@@ -622,14 +631,12 @@ public abstract class WorkflowService<T extends WorkItem> {
             loadUsersIntoApprovalList(
                     xorAtleastOneApprovalActivity.getHandledBy(),
                     nextActivity,
-                    nextActivity,
                     tenant,
                     work);
             nextSteps.add(nextActivity);
         } else if (nextActivity instanceof XorMajorityApprovalActivity xorMajorityApprovalActivity) {
             loadUsersIntoApprovalList(
                     xorMajorityApprovalActivity.getHandledBy(),
-                    nextActivity,
                     nextActivity,
                     tenant,
                     work);
@@ -639,7 +646,6 @@ public abstract class WorkflowService<T extends WorkItem> {
             nextSteps.add(humanActivity); // if the next step is just another wait state, make it active
         } else if (nextActivity instanceof DirectHumanActivity directHumanActivity) {
             // nextActivity.getType=="direct human" 
-
             nextSteps.add(directHumanActivity); // if the next step is just another wait state, make it active
         } else { // service
             nextSteps.add(nextActivity);
@@ -651,13 +657,12 @@ public abstract class WorkflowService<T extends WorkItem> {
             String firstName,
             String lastName,
             T work,
-            Activity nextActivity,
-            Activity currentActivity) {
+            Activity nextActivity) {
         Approval approval = new Approval();
         approval.setUsername(loginName);
         approval.setFirstName(firstName);
         approval.setLastName(lastName);
-        approval.setCurrentWorklist(currentActivity.getId());
+        approval.setCurrentWorklist(nextActivity.getId());
         work.addApproval(approval);
     }
 
@@ -668,7 +673,6 @@ public abstract class WorkflowService<T extends WorkItem> {
     private void loadUsersIntoApprovalList(
             String role,
             Activity nextActivity,
-            Activity currentActivity,
             final String tenant,
             T work) {
         List<BizUser> users = getBizUserService().getUsersByRole(role);
@@ -680,8 +684,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                     user.getFirstName(),
                     user.getLastName(),
                     work,
-                    nextActivity,
-                    currentActivity);
+                    nextActivity);
         }
 
     }
@@ -835,7 +838,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         // guarantee which branch is executed)
         Activity nextStep = null;
         for (var branch : getBranches.get()) {
-            Boolean result = getExpr().evaluate(branch.getCondition(), work, user, bizProces);
+            Boolean result = getPredicateExpression().evaluate(branch.getCondition(), work, user, bizProces);
             if (result == true) {
                 nextStep = (Activity) branch.getNext(); // deal with state=1
                 break; // deal with state=2
@@ -1162,16 +1165,31 @@ public abstract class WorkflowService<T extends WorkItem> {
     /**
      * @return the expr
      */
-    public final Expression<Boolean, T> getExpr() {
-        return expr;
+    public final PredicateExpression<T> getPredicateExpression() {
+        return predicateExpression;
     }
 
     /**
      * @param expr the expr to set
      */
     @Autowired
-    public final void setExpr(Expression<Boolean, T> expr) {
-        this.expr = expr;
+    public final void setPredicateExpression(PredicateExpression<T> expr) {
+        this.predicateExpression = expr;
+    }
+    
+    /**
+     * @return the expr
+     */
+    public final FunctionExpression<T> getFunctionExpression() {
+        return functionExpression;
+    }
+
+    /**
+     * @param expr the expr to set
+     */
+    @Autowired
+    public final void setFunctionExpression(FunctionExpression<T> expr) {
+        this.functionExpression = expr;
     }
 
     /**
