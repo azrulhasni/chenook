@@ -53,6 +53,7 @@
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
+    
     <xs:complexType name="ServiceActivity">
         <xs:complexContent>
             <xs:extension base="BaseActivity">
@@ -152,7 +153,7 @@
                 <xs:element type="xs:string" name="name"/>
                 <xs:element type="xs:string" name="version"/>
                 <xs:element type="xs:string" name="description"/>
-                <xs:sequence minOccurs="1" maxOccurs="1">
+                <xs:sequence minOccurs="0" maxOccurs="unbounded">
                     <xs:element name="workflow">
                         <xs:complexType>
                             <xs:choice maxOccurs="unbounded" minOccurs="0">

@@ -68,15 +68,12 @@ public abstract class WorkItem {
 
     @WorkField(displayName = "Tenant")
     protected String tenant;
-    
+
     @WorkField(displayName = "Priority")
     protected Priority priority;
 
     @WorkField(displayName = "Context")
     protected String context;
-    
-    @WorkField(displayName = "Status")
-    protected Status status;
 
     protected String startEventId;
 
@@ -124,6 +121,11 @@ public abstract class WorkItem {
     @MapKeyColumn(name="key")
     @Column(name="value")
     private Map<String,Serializable> properties = new HashMap<>();
+    
+     @WorkField(displayName = "Status")
+    protected Status status;
+    
+   
 
     /**
      * @return the id
@@ -405,15 +407,14 @@ public abstract class WorkItem {
     public void setEndDate(ZonedDateTime endDate) {
         this.endDate = endDate;
     }
-
-    public Status getStatus() {
+    
+      public Status getStatus() {
         return status;
     }
     
      public void setStatus(Status status) {
         this.status=status;
     }
-     
-   
+
 
 }

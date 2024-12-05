@@ -43,75 +43,9 @@ public abstract class ReferenceService<R extends Reference> {
         getRefSearchRepo().save(entity);
     }
     
-      public Integer countReferenceData(
-            Class<R> referenceClass,
-            Long refWorkId,
-            SearchTermProvider searchTermProvider
-
-    ) {
-
-        if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
-            Long count = getRefRepo()
-                    .count(whereRefWorkEquals(refWorkId));
-            return count.intValue();
-        } else {
-            Long count = getRefSearchRepo()
-                    .count(
-                            searchTermProvider.getSearchTerm(),
-                            refWorkId
-                    );
-            return count.intValue();
-        }
-    }
-      
-     public DataProvider<R, Void> getReferenceData(
-            Class<R> referenceClass,
-            Long refWorkId,
-            SearchTermProvider searchTermProvider,
-            PageNav pageNav) {
-        // build data provider
-        var dp = new AbstractBackEndDataProvider<R, Void>() {
-            @Override
-            protected Stream<R> fetchFromBackEnd(Query<R, Void> query) {
-                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
-                Sort.Direction sort = so == null ? Sort.Direction.DESC
-                        : (so.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC);
-                String sorted = so == null ? "id" : so.getSorted();
-
-                query.getPage();
-                if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
-                    Page<R> finapps = getRefRepo().findAll(
-                            whereRefWorkEquals(refWorkId),
-                            PageRequest.of(
-                                    pageNav.getPage() - 1,
-                                    pageNav.getMaxCountPerPage(),
-                                    Sort.by(sort, sorted)));
-
-                    return finapps.stream();
-                } else {
-                    Page<R> finapps = getRefSearchRepo().find(
-                            searchTermProvider.getSearchTerm(),
-                            refWorkId,
-                            PageRequest.of(
-                                    pageNav.getPage() - 1,
-                                    pageNav.getMaxCountPerPage(),
-                                    Sort.by(sort, modifySortFieldForSearch(sorted, referenceClass))));
-                    return finapps.stream();
-                }
-            }
-
-            @Override
-            protected int sizeInBackEnd(Query<R, Void> query) {
-                return pageNav.getDataCountPerPage();
-            }
-
-            @Override
-            public String getId(R item) {
-                return item.getId().toString();
-            }
-
-        };
-        return dp;
+    public void remove(R entity){
+        getRefRepo().delete(entity);
+        getRefSearchRepo().delete(entity);
     }
 
     
@@ -422,14 +356,6 @@ public abstract class ReferenceService<R extends Reference> {
         return (ref, cq, cb) -> {
             return cb.and(
                     cb.equal(ref.get("status"), refStatus),
-                    cb.equal(ref.get("refWorkId"), refWork)
-            );
-        };
-    }
-    
-    private Specification<R> whereRefWorkEquals(Long refWork){
-        return (ref, cq, cb) -> {
-            return cb.and(
                     cb.equal(ref.get("refWorkId"), refWork)
             );
         };

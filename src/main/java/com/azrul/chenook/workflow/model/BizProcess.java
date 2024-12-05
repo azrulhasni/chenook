@@ -210,6 +210,7 @@ public class BizProcess {
             @XmlElement(name = "startEvent", type = StartEvent.class),
             @XmlElement(name = "service", type = ServiceActivity.class),
             @XmlElement(name = "human", type = HumanActivity.class),
+            @XmlElement(name = "direct", type = DirectHumanActivity.class),
             @XmlElement(name = "xor", type = XorActivity.class),
             @XmlElement(name = "xor-atleast-one-approval", type = XorAtleastOneApprovalActivity.class),
             @XmlElement(name = "xor-unanimous-approval", type = XorUnanimousApprovalActivity.class),
