@@ -55,7 +55,7 @@ public class ConditionalBranch
      */
     public String getCondition() {
         if (condition == null) {
-            return "true";
+            return "#{true}";
         } else {
             return condition;
         }

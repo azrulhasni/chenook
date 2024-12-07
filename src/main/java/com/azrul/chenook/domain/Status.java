@@ -14,9 +14,10 @@ public enum Status {
     IN_PROGRESS("#000000", "#FFFF00", "In Progress"),   
     IN_REVIEW("#000000", "#FFA500", "In Review"),       
     NEED_MORE_INFO("#FFFFFF", "#FF4500", "Need More Info"),
-    DONE("#FFFFFF", "#008000", "Disbursed"),      
+    DONE("#FFFFFF", "#008000", "Done"),      
     DENIED("#FFFFFF", "#FF0000", "Denied"),             
-    CANCELLED("#FFFFFF", "#A52A2A", "Cancelled");       
+    CANCELLED("#FFFFFF", "#A52A2A", "Cancelled"),
+    CORRECTION("#FFFFFF", "#BF6B21", "Need Correction"); 
 
     private final String color;
     private final String backgroundColor;

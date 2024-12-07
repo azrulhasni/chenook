@@ -48,7 +48,7 @@ public class ReferenceWork<R extends Reference> extends WorkItem {
     
     @Override
     public String getTitle() {
-        return "Reference CUD"; 
+        return "Reference Operation"; 
     }
 
     

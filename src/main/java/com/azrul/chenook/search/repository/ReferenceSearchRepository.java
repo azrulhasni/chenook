@@ -203,6 +203,47 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
             }       
     """)
     public Long countDeprecated(String searchTerm, Long refWorkId);
+    
+    
+    @Query(value = """
+            {
+                "bool": {
+                    "must": [
+                        {
+                             "simple_query_string": {
+                               "query": "?0"
+                             }
+                        },
+                        { 
+                            "match": { 
+                              "refWorkId": ?1 
+                            }
+                        }
+                    ]
+                 }
+            }       
+    """)
+    public Page<R> find(String searchTerm, Long refWorkId, Pageable page);
+    
+    @CountQuery(value = """
+            {
+                "bool": {
+                    "must": [
+                        {
+                             "simple_query_string": {
+                               "query": "?0"
+                             }
+                        },
+                        { 
+                            "match": { 
+                              "refWorkId": ?1 
+                            }
+                        }
+                    ]
+                 }
+            }       
+    """)
+    public Long count(String searchTerm, Long refWorkId);
 }
 
 /*

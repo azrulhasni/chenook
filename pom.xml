@@ -11,7 +11,7 @@
 
     <properties>
         <java.version>17</java.version>
-        <vaadin.version>24.5.4</vaadin.version>
+        <vaadin.version>24.4.6</vaadin.version>
     </properties>
 
     <parent>
@@ -210,11 +210,14 @@
             <artifactId>canvas-java</artifactId>
             <version>2.0.0</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.groovy/groovy-all -->
         <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-jsr223</artifactId>
-            <version>3.0.21</version>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <type>pom</type>
+            <version>4.0.24</version>
         </dependency>
+
         <dependency>
             <groupId>org.vaadin.addons.e-movimento</groupId>
             <artifactId>moneyfield</artifactId>
@@ -317,13 +320,13 @@
             <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
             <version>4.0.2</version>
-            
         </dependency>
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
             <version>4.0.2</version>
         </dependency>
+        
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>transport</artifactId>

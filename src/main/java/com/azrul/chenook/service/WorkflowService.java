@@ -91,6 +91,10 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     // Setter injection
     private FunctionExpression<T> functionExpression;
+    
+    private static final String EXPR_OPEN = "#{";
+    
+    private static final String EXPR_CLOSE = "}";
 
     private Map<String, List<HumanActivity>> getRoleActivityMap(BizProcess bizProcess) {
         return getActivities(bizProcess)
@@ -321,7 +325,7 @@ public abstract class WorkflowService<T extends WorkItem> {
             // see which condition triggers and follow that branch
             boolean conditionTriggered = false;
             for (var branch : xorActivity.getBranch()) {
-                Boolean result = getPredicateExpression().evaluate(branch.getCondition(), work, user, bizProcess);
+                Boolean result = getPredicateExpression().evaluate(getCondition(branch), work, user, bizProcess);
                 if (result) {
                     conditionTriggered = true;
                     nextSteps.add((Activity) branch.getNext());
@@ -677,11 +681,9 @@ public abstract class WorkflowService<T extends WorkItem> {
             nextSteps.add(humanActivity);
         } else if (nextActivity.getClass().equals(DirectHumanActivity.class)) {
             DirectHumanActivity directHumanActivity = (DirectHumanActivity) nextActivity;
-            String expr = directHumanActivity.getDirectlySentTo();
             String targetWorklist = directHumanActivity.getHandledBy();
-            String targetUser = (String) getFunctionExpression().evaluate(expr, work, user, bizProcess);
-           
-            BizUser bizUser = bizUserService.getUser(targetUser);
+            
+            BizUser bizUser = getTargetDirectlySentTo(directHumanActivity, work, user, bizProcess);
             if (bizUser.getClientRoles().contains(targetWorklist)) {
                 work.setOwners(Set.of(bizUser));
             }
@@ -691,6 +693,27 @@ public abstract class WorkflowService<T extends WorkItem> {
             nextSteps.add(nextActivity);
         }
     }
+
+    private BizUser getTargetDirectlySentTo(
+            DirectHumanActivity directHumanActivity, 
+            T work, 
+            BizUser currentUser, 
+            BizProcess bizProcess) {
+        
+        String expr = directHumanActivity.getDirectlySentTo();
+        if (StringUtils.startsWith(expr, EXPR_OPEN) && StringUtils.endsWith(expr, EXPR_CLOSE)){
+            String targetUserName = StringUtils.substringBetween(expr, EXPR_OPEN,EXPR_CLOSE);
+            String targetUser = (String) getFunctionExpression().evaluate(targetUserName, work, currentUser, bizProcess);
+            BizUser targetBizUser = bizUserService.getUser(targetUser);
+            return targetBizUser;
+        }else{
+            BizUser targetBizUser = bizUserService.getUser(expr);
+            return targetBizUser;
+        }
+        
+        
+    }
+ 
 
     private void loadUserIntoApprovalList(
             String loginName,
@@ -864,6 +887,18 @@ public abstract class WorkflowService<T extends WorkItem> {
             return Boolean.FALSE;
         }
     }
+    
+    private String getCondition(ConditionalBranch branch){
+        if (branch==null){
+            return "";
+        }
+        if (branch.getCondition()==null){
+            return "";
+        }
+        return StringUtils.substringBetween(branch.getCondition(),EXPR_OPEN, EXPR_CLOSE);
+    }
+    
+   
 
     private Activity evaluateBranchesForNextActivty(
             final Supplier<List<? extends ConditionalBranch>> getBranches,
@@ -878,7 +913,7 @@ public abstract class WorkflowService<T extends WorkItem> {
         // guarantee which branch is executed)
         Activity nextStep = null;
         for (var branch : getBranches.get()) {
-            Boolean result = getPredicateExpression().evaluate(branch.getCondition(), work, user, bizProces);
+            Boolean result = getPredicateExpression().evaluate(getCondition(branch), work, user, bizProces);
             if (result == true) {
                 nextStep = (Activity) branch.getNext(); // deal with state=1
                 break; // deal with state=2
