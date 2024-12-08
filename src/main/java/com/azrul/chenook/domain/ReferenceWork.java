@@ -15,6 +15,8 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import java.util.HashSet;
 import java.util.Set;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.envers.Audited;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -24,7 +26,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  */
 @Entity
 @DiscriminatorValue("REFERENCES")
-@Audited
 @EntityListeners(AuditingEntityListener.class)
 public class ReferenceWork<R extends Reference> extends WorkItem {
     
@@ -33,11 +34,13 @@ public class ReferenceWork<R extends Reference> extends WorkItem {
     private ReferenceWorkType referenceWorkType;
 
     @WorkField(displayName = "Existing References")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @ManyToMany( fetch = FetchType.LAZY , targetEntity = Reference.class, cascade = CascadeType.ALL)
     @JoinTable(name="refwork_refs", joinColumns=@JoinColumn(name="refwork_id"), inverseJoinColumns=@JoinColumn(name="ref_id"))
     private Set<R> existingReferences;
     
     @WorkField(displayName = "New References")
+     @OnDelete(action = OnDeleteAction.CASCADE)
     @ManyToMany( fetch = FetchType.LAZY, targetEntity = Reference.class, cascade = CascadeType.ALL)
     @JoinTable(name="refwork_refs", joinColumns=@JoinColumn(name="refwork_id"), inverseJoinColumns=@JoinColumn(name="ref_id"))
     private Set<R> newReferences;

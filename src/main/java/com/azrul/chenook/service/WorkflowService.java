@@ -938,6 +938,7 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     public abstract T save(T work);
 
+    @Transactional
     public T initializeAndSave(
             final T newwork,
             final BizUser bizUser,
@@ -949,9 +950,11 @@ public abstract class WorkflowService<T extends WorkItem> {
         newwork.setCreator(bizUser.getUsername());
         newwork.setPriority(Priority.NONE);
         newwork.setStatus(Status.NEWLY_CREATED);
+        BizUser bu = bizUserService.save(bizUser);
+                
 
         Set<BizUser> owners = new HashSet<>();
-        owners.add(bizUser);
+        owners.add(bu);
         newwork.setOwners(owners);
         newwork.setStartEventId(startEvent.getId());
         newwork.setStartEventDescription(bizProcess.getStartEvents().iterator().next().getDescription());
