@@ -83,6 +83,13 @@ public class ReferenceWork<R extends Reference> extends WorkItem {
         }
         this.existingReferences.add(r);
     }
+    
+    public void addExistingReference(Set<R> rs){
+        if (this.existingReferences==null){
+            this.existingReferences=new HashSet<>();
+        }
+        this.existingReferences.addAll(rs);
+    }
 
     /**
      * @return the referenceWorkType

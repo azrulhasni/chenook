@@ -13,10 +13,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import com.azrul.chenook.annotation.SingleValue;
-import com.azrul.chenook.config.SearchConfig;
 import com.azrul.chenook.domain.Reference;
-//import com.azrul.chenook.domain.ReferenceMap;
 import com.azrul.chenook.domain.WorkItem;
+import com.azrul.chenook.service.BadgeUtils;
 import com.azrul.chenook.service.ReferenceService;
 import com.azrul.chenook.utils.WorkflowUtils;
 import com.azrul.chenook.views.common.components.PageNav;
@@ -27,13 +26,14 @@ import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.virtuallist.VirtualList;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.Validator;
 import com.vaadin.flow.data.provider.DataProvider;
+import org.apache.commons.lang3.StringUtils;
 
 public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends ReferenceService<R>>
         extends CustomField<Set<R>> {
@@ -41,6 +41,7 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
     private int maxSelection = 0;
 
     private ReferenceService<R> refService;
+    private BadgeUtils badgeUtils;
     private WorkflowAwareGroup<T> group;
     private Button btnSelectDialog;
     private Button btnDelete;
@@ -51,10 +52,11 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
             final String fieldName,
             final Binder<T> binder,
             final WorkflowAwareGroup<T> group,
-            final RS refService) {
+            final RS refService,
+            final BadgeUtils badgeUtils) {
         this.refService = refService;
         this.group = group;
-        
+        this.badgeUtils = badgeUtils;
        
         refList.setHeight("auto");
         refList.setMinHeight("var(--lumo-size-s)");
@@ -148,20 +150,30 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
         SearchPanel searchPanel = new SearchPanel(fieldName);
         Integer count = refService.countActiveReferenceData(referenceClass, searchPanel);
         PageNav nav = new PageNav();
-        DataProvider<R, Void> dataProvider = refService.getActiveReferenceData(referenceClass, searchPanel,  nav);
-        Grid<R> grid = new Grid<>(referenceClass, false);
-        nav.init(grid, count, COUNT_PER_PAGE);
-        grid.setItems(dataProvider);
+       Grid<R> grid = new Grid<>(referenceClass, false);
         Map<String, String> sortableFields = WorkflowUtils.getSortableFields(referenceClass);
+        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
+        DataProvider<R, Void> dataProvider = refService.getActiveReferenceData(referenceClass, searchPanel,  nav);
+        
+        grid.setItems(dataProvider);
+       
 
         var fieldMap = WorkflowUtils.getFieldNameDisplayNameMap(referenceClass);
         for (var fieldEntry : fieldMap.entrySet()) {
-            grid.addColumn(fieldEntry.getKey())
-                    .setSortable(sortableFields.containsKey(fieldEntry.getKey()))
-                    .setHeader(fieldEntry.getValue());
-            grid.setAllRowsVisible(true);
+            if (!StringUtils.equals(fieldEntry.getKey(),"status")){
+                grid.addColumn(fieldEntry.getKey())
+                        //.setSortable(sortableFields.containsKey(fieldEntry.getKey()))
+                        .setHeader(fieldEntry.getValue());
+                grid.setAllRowsVisible(true);
+            }
         }
 
+        grid.addComponentColumn(r->{
+            Span badge = badgeUtils.createRefStatusBadge(r.getStatus());
+            return badge;
+        })
+        //.setSortable(sortableFields.containsKey("status"))
+        .setHeader("Status");
 
         grid.setDataProvider(dataProvider);
         if (maxSelection == 1) {
@@ -200,10 +212,11 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
             final String fieldName,
             final Binder<T> binder,
             final WorkflowAwareGroup<T> group,
-            final RS refService) {
+            final RS refService,
+            final BadgeUtils badgeUtils) {
 
         T workItem = binder.getBean();
-        var field = new ReferencePanel<T, R, RS>(fieldName, binder, group, refService);
+        var field = new ReferencePanel<T, R, RS>(fieldName, binder, group, refService, badgeUtils);
         List<Validator> validators = new ArrayList<>();
         field.setId(fieldName);
         field.applyGroup();

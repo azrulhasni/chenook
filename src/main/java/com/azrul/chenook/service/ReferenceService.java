@@ -28,6 +28,7 @@ import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 import com.vaadin.flow.data.provider.SortDirection;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.transaction.annotation.Transactional;
 
 //import jakarta.transaction.Transactional;
 
@@ -37,15 +38,34 @@ public abstract class ReferenceService<R extends Reference> {
 
     protected abstract ReferenceSearchRepository<R> getRefSearchRepo();
 
-
+    @Transactional
     public void save(R entity) {
         getRefRepo().save(entity);
         getRefSearchRepo().save(entity);
     }
     
+    @Transactional
     public void remove(R entity) {
         getRefRepo().delete(entity);
         getRefSearchRepo().delete(entity);
+    }
+    
+    @Transactional
+     public void retire(Set<R> entities) {
+        for (R r:entities){
+            r.setStatus(ReferenceStatus.RETIRED);
+        }
+        getRefRepo().saveAll(entities);
+        getRefSearchRepo().saveAll(entities);
+    }
+     
+    @Transactional
+     public void deprecate(Set<R> entities) {
+        for (R r:entities){
+            r.setStatus(ReferenceStatus.DEPRECATED);
+        }
+        getRefRepo().saveAll(entities);
+        getRefSearchRepo().saveAll(entities);
     }
     
       public Integer countReferenceData(
@@ -218,10 +238,8 @@ public abstract class ReferenceService<R extends Reference> {
                 // Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC :
                 // Sort.Direction.DESC;
                 // String sorted = pageNav.getSortField();
-                QuerySortOrder so = query.getSortOrders().isEmpty() ? null : query.getSortOrders().get(0);
-                Sort.Direction sort = so == null ? Sort.Direction.DESC
-                        : (so.getDirection() == SortDirection.ASCENDING ? Sort.Direction.ASC : Sort.Direction.DESC);
-                String sorted = so == null ? "id" : so.getSorted();
+               Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
+                String sorted = pageNav.getSortField();
 
                 query.getPage();
                 if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {

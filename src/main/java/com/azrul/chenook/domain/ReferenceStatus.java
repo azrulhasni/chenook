@@ -9,10 +9,32 @@ package com.azrul.chenook.domain;
  * @author azrul
  */
 public enum ReferenceStatus {
-    CONFIRMED,
-    DEPRECATED,
-    RETIRED,
-    DRAFT,
+    CONFIRMED("#FFFFFF", "#008000", "Confirmed"),
+    DEPRECATED("#FFFFFF", "#A52A2A", "Deprecated"),
+    RETIRED("#FFFFFF", "#FF0000", "Retired"),
+    DRAFT("#FFFFFF", "#808080", "Draft");
+    
+    private final String color;
+    private final String backgroundColor;
+    private final String humanReadableText;
+    
+    ReferenceStatus(String color, String backgroundColor, String humanReadableText) {
+        this.color = color;
+        this.backgroundColor = backgroundColor;
+        this.humanReadableText = humanReadableText;
+    }
+    
+    public String getColor() {
+        return color;
+    }
+
+    public String getBackgroundColor() {
+        return backgroundColor;
+    }
+
+    public String getHumanReadableText() {
+        return humanReadableText;
+    }
     
 }
 /*

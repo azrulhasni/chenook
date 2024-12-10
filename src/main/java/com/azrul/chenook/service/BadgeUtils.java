@@ -4,6 +4,7 @@
  */
 package com.azrul.chenook.service;
 
+import com.azrul.chenook.domain.ReferenceStatus;
 import com.azrul.chenook.domain.Status;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -19,6 +20,19 @@ import org.vaadin.addons.badge.Badge;
 public class BadgeUtils {
 
     public Span createStatusBadge(Status status) {
+        if (status != null) {
+            Span badge = new Span(status.getHumanReadableText());
+            badge.getElement().getThemeList().add("badge pill primary");
+            badge.getStyle().set("background-color", status.getBackgroundColor());
+            badge.getStyle().set("border", "1px solid grey");
+            badge.getStyle().set("color", status.getColor());
+            return badge;
+        } else {
+            return new Span();
+        }
+    }
+    
+     public Span createRefStatusBadge(ReferenceStatus status) {
         if (status != null) {
             Span badge = new Span(status.getHumanReadableText());
             badge.getElement().getThemeList().add("badge pill primary");
