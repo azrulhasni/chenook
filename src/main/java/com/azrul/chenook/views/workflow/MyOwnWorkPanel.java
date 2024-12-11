@@ -29,6 +29,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import com.azrul.chenook.views.common.function.TriFunction;
 import com.vaadin.flow.component.Component;
+import java.util.function.BiConsumer;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +56,7 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
             final Class<T> workItemClass,
             final BizUser user,
             final BizProcess bizProcess,
-            final TriConsumer<MyOwnWorkPanel<T>, StartEvent, T> showUpdateDialog,
+            final BiConsumer<MyOwnWorkPanel<T>, T> showUpdateDialog,
             final Function<T, Card> cardBuilder) {
         var myWorkPanel = ApplicationContextHolder.getBean(MyOwnWorkPanel.class);
         myWorkPanel.init(
@@ -80,7 +81,7 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
             final Class<T> workItemClass,
             final BizUser user,
             final BizProcess bizProcess,
-            final TriConsumer<MyOwnWorkPanel<T>, StartEvent, T> showUpdateDialog,
+            final BiConsumer<MyOwnWorkPanel<T>, T> showUpdateDialog,
             final Function<T, Card> cardBuilder
     ) {
 
@@ -125,7 +126,7 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
             final String panelIdDiscriminator,
             final BizUser user,
             final BizProcess bizProcess,
-            final TriConsumer<MyOwnWorkPanel<T>, StartEvent, T> showUpdateDialog,
+            final BiConsumer<MyOwnWorkPanel<T>, T> showUpdateDialog,
             final Function<T, Card> cardBuilder,
             final Map<String, String> sortableFields
     ) {
@@ -157,7 +158,7 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
             final BizUser user,
             final BizProcess bizProcess,
             final DataProvider<T, Void> dataProvider,
-            final TriConsumer<MyOwnWorkPanel<T>, StartEvent, T> showUpdateDialog,
+            final BiConsumer<MyOwnWorkPanel<T>,  T> showUpdateDialog,
             final Function<T, Card> cardBuilder) {
         Grid<T> grid = new Grid<>();
         H4 title = new H4(panelTitle);
@@ -169,7 +170,7 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
             Card card =  cardBuilder.apply(work);
             HorizontalLayout btnPanel = new HorizontalLayout();
             Button btnUpdate = new Button("See more", e -> {
-                showUpdateDialog.accept(this, null, work);
+                showUpdateDialog.accept(this, work);
             });
             btnUpdate.setId(btnIdDiscriminator + work.getId());
             btnPanel.add(btnUpdate);

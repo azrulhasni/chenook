@@ -27,6 +27,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.apache.commons.lang3.function.TriConsumer;
@@ -57,7 +58,7 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
             final Class<T> workItemClass,
             final BizUser user,
             final BizProcess bizProcess,
-            final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,
+            final BiConsumer<MyCreatedWorkPanel<T>,  T> showUpdateDialog,
             final Function<T, Card> cardBuilder) {
         MyCreatedWorkPanel<T> myCreatedWorkPanel = ApplicationContextHolder.getBean(MyCreatedWorkPanel.class);
         myCreatedWorkPanel.init(
@@ -83,7 +84,7 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
             final Class<T> workItemClass,
             final BizUser user,
             final BizProcess bizProcess,
-            final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,
+            final BiConsumer<MyCreatedWorkPanel<T>,  T> showUpdateDialog,
             final Function<T, Card> cardBuilder
     ) {
 
@@ -127,7 +128,7 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
             final String panelIdDiscriminator,
             final BizUser user,
             final BizProcess bizProcess,
-            final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,
+            final BiConsumer<MyCreatedWorkPanel<T>,  T> showUpdateDialog,
             final Function<T, Card> cardBuilder,
             final Map<String, String> sortableFields
     ) {
@@ -162,7 +163,7 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
             final BizUser user,
             final BizProcess bizProcess,
             final DataProvider<T,Void> dataProvider,
-            final TriConsumer<MyCreatedWorkPanel<T>, StartEvent, T> showUpdateDialog,
+            final BiConsumer<MyCreatedWorkPanel<T>, T> showUpdateDialog,
             final Function<T, Card> cardBuilder) {
         Grid<T> grid = new Grid<>();
         H4 title = new H4(panelTitle);
@@ -180,7 +181,7 @@ public class MyCreatedWorkPanel<T extends WorkItem> extends VerticalLayout {
             Card card = cardBuilder.apply(work);   
             HorizontalLayout btnPanel = new HorizontalLayout();
             Button btnUpdate = new Button("See more", e -> {
-                showUpdateDialog.accept(this, null, work);
+                showUpdateDialog.accept(this,  work);
             });
             btnUpdate.setId(btnIdDiscriminator + work.getId());
             btnPanel.add(btnUpdate);

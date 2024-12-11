@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -52,7 +53,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             final Class<T> workItemClass,
             final BizUser user,
             final BizProcess bizProcess,
-            final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
+            final BiConsumer<WorklistPanel<T>,  T> showUpdateDialog,
             final Function<T, Card> cardBuilder){
        WorklistPanel<T> worklistPanel = ApplicationContextHolder.getBean(WorklistPanel.class);
         worklistPanel.init(workflowService,workItemClass, user, bizProcess, showUpdateDialog, cardBuilder);
@@ -69,7 +70,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             final Class<T> workItemClass,
             final BizUser user,
             final BizProcess bizProcess,
-            final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
+            final BiConsumer<WorklistPanel<T>,  T> showUpdateDialog,
             final Function<T, Card> cardBuilder
     ) {
 
@@ -116,7 +117,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             final String title,
             final String w,
             final BizUser user,
-            final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
+            final BiConsumer<WorklistPanel<T>, T> showUpdateDialog,
             final Function<T, Card> cardBuilder,
             final Map<String, String> sortableFields1) {
         PageNav nav = new PageNav();
@@ -140,7 +141,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             final String panelTitle,
             final BizUser user,
             final DataProvider<T,Void> dataProvider,
-            final TriConsumer<WorklistPanel<T>, StartEvent, T> showUpdateDialog,
+            final BiConsumer<WorklistPanel<T>,  T> showUpdateDialog,
             final Function<T, Card> cardBuilder) {
         Grid<T> grid = new Grid<>();
         H4 title = new H4(panelTitle);
@@ -154,7 +155,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
             Button btnBookThis = new Button("Book this work", e -> {
                 work.addOwner(user);
                 T w = workflowService.save(work);
-                showUpdateDialog.accept(this, null, w);
+                showUpdateDialog.accept(this,  w);
             });
             btnBookThis.setId("btnBook"+work.getId());
             btnPanel.add(btnBookThis);

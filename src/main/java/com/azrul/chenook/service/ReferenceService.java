@@ -45,6 +45,12 @@ public abstract class ReferenceService<R extends Reference> {
     }
     
     @Transactional
+    public void saveAll(Set<R> entities) {
+        getRefRepo().saveAll(entities);
+        getRefSearchRepo().saveAll(entities);
+    }
+    
+    @Transactional
     public void remove(R entity) {
         getRefRepo().delete(entity);
         getRefSearchRepo().delete(entity);
@@ -239,7 +245,7 @@ public abstract class ReferenceService<R extends Reference> {
                 // Sort.Direction.DESC;
                 // String sorted = pageNav.getSortField();
                Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
-                String sorted = pageNav.getSortField();
+                String sorted = StringUtils.isEmpty(pageNav.getSortField())? "id" : pageNav.getSortField();
 
                 query.getPage();
                 if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
@@ -347,6 +353,27 @@ public abstract class ReferenceService<R extends Reference> {
             return count.intValue();
         }
     }
+     
+//     public Integer countDeprecatedReferenceData(
+//            Class<R> referenceClass,
+//            Long refWorkId,
+//            SearchTermProvider searchTermProvider
+//
+//    ) {
+//
+//        if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+//            Long count = getRefRepo()
+//                    .count(whereRefWorkEqualsAndReferenceStatusIs(refWorkId,ReferenceStatus.DEPRECATED));
+//            return count.intValue();
+//        } else {
+//            Long count = getRefSearchRepo()
+//                    .countDeprecated(
+//                            searchTermProvider.getSearchTerm(),
+//                            refWorkId
+//                    );
+//            return count.intValue();
+//        }
+//    }
      
      public DataProvider<R, Void> getDeprecatedReferenceData(
             Class<R> referenceClass,
