@@ -29,7 +29,8 @@ public class Scripting /*implements Scripting*/ {
             T workItem,
             BizUser user, 
             String script, 
-            BizProcess bizProcess) {
+            BizProcess bizProcess
+            ) {
         if (script==null){
             return;
         }

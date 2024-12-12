@@ -35,7 +35,7 @@ public class SearchIndexer {
     ReferenceSearchRepository refSearchRepo;
 
     @Transactional
-    //@EventListener(ApplicationReadyEvent.class)
+    @EventListener(ApplicationReadyEvent.class)
     public void startIndexing() {
         List<WorkItem> items = entityManager
                 .createQuery("Select w from WorkItem w", WorkItem.class)

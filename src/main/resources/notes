@@ -56,6 +56,20 @@ curl -k -u elastic:eqwabeWorxxjO+WXCsWO -X GET "https://localhost:9200/reference
     }
 '
 
+* Query by refWorkId
+--------------------
+curl -k -u elastic:eqwabeWorxxjO+WXCsWO -X GET "https://localhost:9200/reference/_search?pretty" -H 'Content-Type: application/json' -d'
+    {
+        "query": {
+               "bool": {
+                    "must": [
+                        {"term" : { "refWorkId": 1552}}
+                    ]
+                 }
+            }
+    }
+'
+{"term" : { "status": "CONFIRMED"}}
 * Update 
 --------
 

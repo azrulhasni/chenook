@@ -244,53 +244,31 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
             }       
     """)
     public Long count(String searchTerm, Long refWorkId);
+    
+   @Query(value = """
+]               {
+                   "bool": {
+                        "must": [
+                            {"term" : { "refWorkId": ?1}}
+                        ]
+                     }
+                }
+    '
+    """)
+    public Page<R> find(Long refWorkId, Pageable page);
+     
+     
+     @CountQuery(value = """
+]               {
+                   "bool": {
+                        "must": [
+                            {"term" : { "refWorkId": ?1}}
+                        ]
+                     }
+                }
+    '
+    """)
+    public Long count(Long refWorkId);
+    
+    
 }
-
-/*
- @Query(value = """
-            {
-                "bool": {
-                    "must": [
-                        {
-                             "simple_query_string": {
-                               "query": "?0"
-                             }
-                        },
-                        "bool": {
-                              "filter" : {
-                                "terms" : {
-                                  "status" : ["DEPRECATED", "CONFIRRMED"]
-                                }
-                              }
-                            }
-                    ]
-                 }
-            }       
-    """)
-    public Page<R> findActive(String searchTerm, Pageable page);
-
-    @CountQuery(value = """
-            {
-                "bool": {
-                    "must": [
-                        {
-                             "simple_query_string": {
-                               "query": "?0"
-                             }
-                        },
-                        {
-                            "bool": {
-                                "filter" : {
-                                    "terms" : {
-                                      "status" : ["DEPRECATED", "CONFIRRMED"]
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                 }
-            }       
-    """)
-    public Long countActive(String searchTerm);
-
-*/

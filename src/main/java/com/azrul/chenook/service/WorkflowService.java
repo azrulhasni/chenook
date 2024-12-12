@@ -754,17 +754,6 @@ public abstract class WorkflowService<T extends WorkItem> {
 
     private void archiveApprovals(T work) {
         archiveApprovalsAndSave(work);
-        // System.out.println("=======Element id:"+work.getId()+"==============");
-        // System.out.println(" Approvals:");
-        // for (Approval a:work.getApprovals()){
-        // System.out.println(" approval id:"+a.toString());
-        // }
-        // Set hset = dao.saveAndAssociate(work.getApprovals(),
-        // work, "historicalApprovals",
-        // w -> ((WorkElement) w).getApprovals().clear());
-        // for (var h:hset){
-        // System.out.println(" hist approval id:"+((Dual)h).getSecond().toString());
-        // }
     }
 
     private void createApprovalAndAssociateToWork(

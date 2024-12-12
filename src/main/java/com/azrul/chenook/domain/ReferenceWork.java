@@ -28,38 +28,37 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @DiscriminatorValue("REFERENCES")
 @EntityListeners(AuditingEntityListener.class)
 public class ReferenceWork<R extends Reference> extends WorkItem {
-    
+
     private String className;
-    
+
     private ReferenceWorkType referenceWorkType;
 
     @WorkField(displayName = "Existing References")
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @ManyToMany( fetch = FetchType.LAZY , targetEntity = Reference.class, cascade = CascadeType.ALL)
-    @JoinTable(name="refwork_refs", joinColumns=@JoinColumn(name="refwork_id"), inverseJoinColumns=@JoinColumn(name="ref_id"))
+    @ManyToMany(fetch = FetchType.LAZY, targetEntity = Reference.class, cascade = CascadeType.ALL)
+    @JoinTable(name = "refwork_refs", joinColumns = @JoinColumn(name = "refwork_id"), inverseJoinColumns = @JoinColumn(name = "ref_id"))
     private Set<R> existingReferences;
-    
+
     @WorkField(displayName = "New References")
-     @OnDelete(action = OnDeleteAction.CASCADE)
-    @ManyToMany( fetch = FetchType.LAZY, targetEntity = Reference.class, cascade = CascadeType.ALL)
-    @JoinTable(name="refwork_refs", joinColumns=@JoinColumn(name="refwork_id"), inverseJoinColumns=@JoinColumn(name="ref_id"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @ManyToMany(fetch = FetchType.LAZY, targetEntity = Reference.class, cascade = CascadeType.ALL)
+    @JoinTable(name = "refwork_refs", joinColumns = @JoinColumn(name = "refwork_id"), inverseJoinColumns = @JoinColumn(name = "ref_id"))
     private Set<R> newReferences;
-    
-    public static <R> Class<R> getClazz(){
-        return (Class<R>)ReferenceWork.class;
-    }
-    
-    @Override
-    public String getTitle() {
-        return "Reference Operation"; 
+
+    public static <R> Class<R> getClazz() {
+        return (Class<R>) ReferenceWork.class;
     }
 
-    
+    @Override
+    public String getTitle() {
+        return "Reference Operation";
+    }
+
     /**
      * @return the className
      */
     public String getClassName() {
-        
+
         return className;
     }
 
@@ -69,24 +68,24 @@ public class ReferenceWork<R extends Reference> extends WorkItem {
     public void setClassName(String className) {
         this.className = className;
     }
-    
-    public void addNewReference(R r){
-        if (this.newReferences==null){
-            this.newReferences=new HashSet<>();
+
+    public void addNewReference(R r) {
+        if (this.newReferences == null) {
+            this.newReferences = new HashSet<>();
         }
         this.newReferences.add(r);
     }
-    
-    public void addExistingReference(R r){
-        if (this.existingReferences==null){
-            this.existingReferences=new HashSet<>();
+
+    public void addExistingReference(R r) {
+        if (this.existingReferences == null) {
+            this.existingReferences = new HashSet<>();
         }
         this.existingReferences.add(r);
     }
-    
-    public void addExistingReference(Set<R> rs){
-        if (this.existingReferences==null){
-            this.existingReferences=new HashSet<>();
+
+    public void addExistingReference(Set<R> rs) {
+        if (this.existingReferences == null) {
+            this.existingReferences = new HashSet<>();
         }
         this.existingReferences.addAll(rs);
     }
@@ -132,5 +131,24 @@ public class ReferenceWork<R extends Reference> extends WorkItem {
     public void setNewReferences(Set<R> newReferences) {
         this.newReferences = newReferences;
     }
-    
+
+    public void calculateRefStatus() {
+        if ("S0.REF.CREATE.MAKER".equals(getStartEventId())) {
+            for (Reference r : getNewReferences()) {
+                System.out.println("Ref id:" + r.getId());
+                r.setStatus(ReferenceStatus.CONFIRMED);
+            }
+        } else if ("S0.REF.UPDATE.MAKER".equals(getStartEventId())) {
+            for (Reference r : getNewReferences()) {
+                System.out.println("Ref id:" + r.getId());
+                r.setStatus(ReferenceStatus.CONFIRMED);
+            }
+        } else if ("S0.REF.DELETE.MAKER".equals(getStartEventId())) {
+            for (Reference r : getExistingReferences()) {
+                System.out.println("Ref id:" + r.getId());
+                r.setStatus(ReferenceStatus.RETIRED);
+            }
+        }
+    }
+
 }

@@ -27,7 +27,9 @@ import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.Query;
 import com.vaadin.flow.data.provider.QuerySortOrder;
 import com.vaadin.flow.data.provider.SortDirection;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.transaction.annotation.Transactional;
 
 //import jakarta.transaction.Transactional;
@@ -93,6 +95,17 @@ public abstract class ReferenceService<R extends Reference> {
                     );
             return count.intValue();
         }
+    }
+      
+   
+      
+    public void updateRefStatusGivenRefWork(ReferenceStatus status, Long refWorkId){
+        this.getRefRepo().updateRefStatusGivenRefWork(status, refWorkId);
+        Page<R> refs = this.getRefSearchRepo().find(refWorkId, Pageable.unpaged());
+        for (R r:refs){
+            r.setStatus(status);
+        }
+        this.getRefSearchRepo().saveAll(refs);
     }
       
      public DataProvider<R, Void> getReferenceData(
