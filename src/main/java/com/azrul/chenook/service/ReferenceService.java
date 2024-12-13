@@ -157,8 +157,125 @@ public abstract class ReferenceService<R extends Reference> {
         };
         return dp;
     }
+     
+     public DataProvider<R, Void> getConfirmedReferenceData(
+            Class<R> referenceClass,
+            SearchTermProvider searchTermProvider,
+            PageNav pageNav) {
+        // build data provider
+        var dp = new AbstractBackEndDataProvider<R, Void>() {
+            @Override
+            protected Stream<R> fetchFromBackEnd(Query<R, Void> query) {
+                // Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC :
+                // Sort.Direction.DESC;
+                // String sorted = pageNav.getSortField();
+               Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
+                String sorted = StringUtils.isEmpty(pageNav.getSortField())? "id" : pageNav.getSortField();
 
+                query.getPage();
+                if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+                    Page<R> finapps = getRefRepo().findAll(
+                            whereReferenceStatusIsConfirmed(),
+                            PageRequest.of(
+                                    pageNav.getPage() - 1,
+                                    pageNav.getMaxCountPerPage(),
+                                    Sort.by(sort, sorted)));
+
+                    return finapps.stream();
+                } else {
+                    Page<R> finapps = getRefSearchRepo().findConfirmed(
+                            searchTermProvider.getSearchTerm(),
+                            PageRequest.of(
+                                    pageNav.getPage() - 1,
+                                    pageNav.getMaxCountPerPage(),
+                                    Sort.by(sort, modifySortFieldForSearch(sorted, referenceClass))));
+                    return finapps.stream();
+                }
+            }
+
+            @Override
+            protected int sizeInBackEnd(Query<R, Void> query) {
+
+                return pageNav.getDataCountPerPage();
+            }
+
+            @Override
+            public String getId(R item) {
+                return item.getId().toString();
+            }
+
+        };
+        return dp;
+    }
     
+    public Integer countConfirmedReferenceData(
+            Class<R> referenceClass,
+            SearchTermProvider searchTermProvider
+
+    ) {
+
+        if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+            Long count = getRefRepo()
+                    .count(whereReferenceStatusIsConfirmed());
+            return count.intValue();
+        } else {
+            Long count = getRefSearchRepo()
+                    .countConfirmed(
+                            searchTermProvider.getSearchTerm()
+                    );
+            return count.intValue();
+        }
+    }
+
+    public DataProvider<R, Void> getActiveReferenceData(
+            Class<R> referenceClass,
+            SearchTermProvider searchTermProvider,
+            PageNav pageNav) {
+        // build data provider
+        var dp = new AbstractBackEndDataProvider<R, Void>() {
+            @Override
+            protected Stream<R> fetchFromBackEnd(Query<R, Void> query) {
+                // Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC :
+                // Sort.Direction.DESC;
+                // String sorted = pageNav.getSortField();
+               Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
+                String sorted = StringUtils.isEmpty(pageNav.getSortField())? "id" : pageNav.getSortField();
+
+                query.getPage();
+                if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+                    Page<R> finapps = getRefRepo().findAll(
+                            whereReferenceStatusIsActive(),
+                            PageRequest.of(
+                                    pageNav.getPage() - 1,
+                                    pageNav.getMaxCountPerPage(),
+                                    Sort.by(sort, sorted)));
+
+                    return finapps.stream();
+                } else {
+                    Page<R> finapps = getRefSearchRepo().findActive(
+                            searchTermProvider.getSearchTerm(),
+                            PageRequest.of(
+                                    pageNav.getPage() - 1,
+                                    pageNav.getMaxCountPerPage(),
+                                    Sort.by(sort, modifySortFieldForSearch(sorted, referenceClass))));
+                    return finapps.stream();
+                }
+            }
+
+            @Override
+            protected int sizeInBackEnd(Query<R, Void> query) {
+
+                return pageNav.getDataCountPerPage();
+            }
+
+            @Override
+            public String getId(R item) {
+                return item.getId().toString();
+            }
+
+        };
+        return dp;
+    }
     
     public Integer countActiveReferenceData(
             Class<R> referenceClass,
@@ -246,55 +363,7 @@ public abstract class ReferenceService<R extends Reference> {
         }
     }
 
-    public DataProvider<R, Void> getActiveReferenceData(
-            Class<R> referenceClass,
-            SearchTermProvider searchTermProvider,
-            PageNav pageNav) {
-        // build data provider
-        var dp = new AbstractBackEndDataProvider<R, Void>() {
-            @Override
-            protected Stream<R> fetchFromBackEnd(Query<R, Void> query) {
-                // Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC :
-                // Sort.Direction.DESC;
-                // String sorted = pageNav.getSortField();
-               Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
-                String sorted = StringUtils.isEmpty(pageNav.getSortField())? "id" : pageNav.getSortField();
-
-                query.getPage();
-                if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
-                    Page<R> finapps = getRefRepo().findAll(
-                            whereReferenceStatusIsActive(),
-                            PageRequest.of(
-                                    pageNav.getPage() - 1,
-                                    pageNav.getMaxCountPerPage(),
-                                    Sort.by(sort, sorted)));
-
-                    return finapps.stream();
-                } else {
-                    Page<R> finapps = getRefSearchRepo().findActive(
-                            searchTermProvider.getSearchTerm(),
-                            PageRequest.of(
-                                    pageNav.getPage() - 1,
-                                    pageNav.getMaxCountPerPage(),
-                                    Sort.by(sort, modifySortFieldForSearch(sorted, referenceClass))));
-                    return finapps.stream();
-                }
-            }
-
-            @Override
-            protected int sizeInBackEnd(Query<R, Void> query) {
-
-                return pageNav.getDataCountPerPage();
-            }
-
-            @Override
-            public String getId(R item) {
-                return item.getId().toString();
-            }
-
-        };
-        return dp;
-    }
+    
     
     public DataProvider<R, Void> getDraftReferenceData(
             Class<R> referenceClass,
@@ -479,6 +548,12 @@ public abstract class ReferenceService<R extends Reference> {
                     cb.equal(ref.get("status"), ReferenceStatus.DEPRECATED)
                     );
         };
+    }
+    
+    private Specification<R> whereReferenceStatusIsConfirmed(){
+        return (ref, cq, cb) -> 
+                    cb.equal(ref.get("status"), ReferenceStatus.CONFIRMED);
+       
     }
     
     private Specification<R> whereRefWorkEqualsAndReferenceStatusIs(Long refWork, ReferenceStatus refStatus){

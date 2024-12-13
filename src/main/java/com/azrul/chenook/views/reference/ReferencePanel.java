@@ -26,6 +26,7 @@ import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
+import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -147,6 +148,7 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
             Class<R> referenceClass,
             Consumer<Set<R>> postSelection) {
         Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Select reference(s)");
         SearchPanel searchPanel = new SearchPanel(fieldName);
         Integer count = refService.countActiveReferenceData(referenceClass, searchPanel);
         PageNav nav = new PageNav();

@@ -92,7 +92,13 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
                     if (w.getApprovals().isEmpty()) {
                         return false;
                     }
-                    if (w.getApprovals().stream().map(a -> a.getUsername()).anyMatch(u -> StringUtils.equals(u, user.getUsername()))) {
+                    if (w.getApprovals()
+                            .stream()
+                            .map(a -> a.getUsername())
+                            .anyMatch(u -> 
+                                    StringUtils.equals(u, user.getUsername())
+                            )
+                    ) {
                         return true;
                     } else {
                         return false;

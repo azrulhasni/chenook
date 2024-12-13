@@ -104,6 +104,7 @@ public class SignaturePanel<T> extends CustomField<Signature> {
         btnSign = WorkflowAwareButton.create(group);
         btnSign = new Button("Sign", e -> {
             Dialog signDialog = new Dialog();
+            signDialog.setHeaderTitle("Sign");
             signDialog.setWidth("550px");
             signDialog.setWidth("550px");
             SignatureCapture signCapture = new SignatureCapture();
@@ -189,7 +190,7 @@ public class SignaturePanel<T> extends CustomField<Signature> {
         try {
             Class<?> itemClass = binder.getBean().getClass();
             Field signField = WorkflowUtils.getField(itemClass, fieldName);
-            if (signField.get(binder.getBean())==null){
+            if (signField.get(binder.getBean()) == null) {
                 signField.set(binder.getBean(), new Signature());
             }
             return (Signature) signField.get(binder.getBean());
@@ -199,7 +200,6 @@ public class SignaturePanel<T> extends CustomField<Signature> {
         return null;
     }
 
-   
     @Override
     protected void setPresentationValue(Signature newPresentationValue) {
         setValue(newPresentationValue);

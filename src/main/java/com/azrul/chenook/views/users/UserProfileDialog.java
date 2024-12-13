@@ -7,21 +7,25 @@ package com.azrul.chenook.views.users;
 import com.azrul.chenook.domain.BizUser;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.NativeLabel;
 
 /**
  *
  * @author azrul
  */
-public class UserProfileDialog extends Dialog{
-    public UserProfileDialog(BizUser user){
-         UserProfile up = new UserProfile(user);
-                this.setWidth("50%");
-                this.setHeaderTitle("User profile");
-                //up.getStyle().set("width", "fit-content");
-                this.add(up);
-                Button btnCloseProfile = new Button("Close");
-                btnCloseProfile.addClickListener(e -> this.close());
-                this.getFooter().add(btnCloseProfile);
-                
+public class UserProfileDialog extends Dialog {
+
+    public UserProfileDialog(BizUser user) {
+        
+        UserProfile up = new UserProfile(user);
+        
+        this.setWidth("50%");
+        this.setHeaderTitle("User profile");
+        //up.getStyle().set("width", "fit-content");
+        this.add(up);
+        Button btnCloseProfile = new Button("Close");
+        btnCloseProfile.addClickListener(e -> this.close());
+        this.getFooter().add(btnCloseProfile);
+
     }
 }

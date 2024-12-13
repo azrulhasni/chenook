@@ -22,6 +22,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H4;
+import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -157,6 +158,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
             if (WorkflowUtils.isWaitingApproval(work, user)) {
                 Button btnApproval = new Button("Approval", e -> {
                     Dialog approvalDialog = new Dialog();
+                    approvalDialog.setHeaderTitle("Approval");
                     VerticalLayout approvalPanel = new VerticalLayout();
 
                     Binder<Approval> approvalBinder = new Binder<>(Approval.class);
@@ -212,6 +214,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
 
     public void createWorkflowInfoDialog(T work, BizUser user) {
         Dialog workflowDialog = new Dialog();
+        workflowDialog.setHeaderTitle("Workflow information");
         workflowDialog.setWidth("40em");
         TextField tf = new TextField();
         tf.setLabel("Current worklist");
@@ -285,6 +288,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         bizUser.setUsername(approval.getUsername());
         
         Dialog noteDialog = new Dialog();
+        noteDialog.setHeaderTitle("Notes");
         VerticalLayout notePanel = new VerticalLayout();
         noteDialog.add(notePanel);
         

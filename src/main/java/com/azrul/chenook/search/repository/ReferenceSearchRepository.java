@@ -1,4 +1,5 @@
 package com.azrul.chenook.search.repository;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.annotations.CountQuery;
@@ -6,9 +7,57 @@ import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
 import com.azrul.chenook.domain.Reference;
-import com.azrul.chenook.domain.ReferenceStatus;
 
-public interface ReferenceSearchRepository<R extends Reference> extends ElasticsearchRepository<R, Long> { 
+public interface ReferenceSearchRepository<R extends Reference> extends ElasticsearchRepository<R, Long> {
+
+    @Query(value = """
+                {
+                    "bool": {
+                        "must": [
+                            {
+                                 "simple_query_string": {
+                                   "query": "?0"
+                                 }
+                            },
+                            {
+                                "bool": {
+                                    "filter" : {
+                                        "terms" : {
+                                          "status" : ["CONFIRMED"]
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                     }
+                }       
+        """)
+    public Page<R> findConfirmed(String searchTerm, Pageable page);
+
+    @CountQuery(value = """
+            {
+                "bool": {
+                    "must": [
+                        {
+                             "simple_query_string": {
+                               "query": "?0"
+                             }
+                        },
+                        {
+                            "bool": {
+                                "filter" : {
+                                    "terms" : {
+                                      "status" : ["CONFIRMED"]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                 }
+            }       
+    """)
+    public Long countConfirmed(String searchTerm);
+
     @Query(value = """
             {
                 "bool": {
@@ -31,9 +80,8 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
                  }
             }       
     """)
-    public Page<R> findActive(String searchTerm,  Pageable page);
-    
-    
+    public Page<R> findActive(String searchTerm, Pageable page);
+
     @Query(value = """
             {
                 "bool": {
@@ -47,7 +95,7 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
                  }
             }       
     """)
-    public Page<R> findAll(String searchTerm,  Pageable page);
+    public Page<R> findAll(String searchTerm, Pageable page);
 
     @CountQuery(value = """
             {
@@ -72,7 +120,7 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
             }       
     """)
     public Long countActive(String searchTerm);
-    
+
     @CountQuery(value = """
             {
                 "bool": {
@@ -87,7 +135,7 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
             }       
     """)
     public Long countAll(String searchTerm);
-    
+
     @Query(value = """
             {
                 "bool": {
@@ -116,7 +164,7 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
             }       
     """)
     public Page<R> findDraft(String searchTerm, Long refWorkId, Pageable page);
-    
+
     @CountQuery(value = """
             {
                 "bool": {
@@ -145,7 +193,7 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
             }       
     """)
     public Long countDraft(String searchTerm, Long refWorkId);
-    
+
     @Query(value = """
             {
                 "bool": {
@@ -174,7 +222,7 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
             }       
     """)
     public Page<R> findDeprecated(String searchTerm, Long refWorkId, Pageable page);
-    
+
     @CountQuery(value = """
             {
                 "bool": {
@@ -203,8 +251,7 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
             }       
     """)
     public Long countDeprecated(String searchTerm, Long refWorkId);
-    
-    
+
     @Query(value = """
             {
                 "bool": {
@@ -224,7 +271,7 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
             }       
     """)
     public Page<R> find(String searchTerm, Long refWorkId, Pageable page);
-    
+
     @CountQuery(value = """
             {
                 "bool": {
@@ -244,8 +291,8 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
             }       
     """)
     public Long count(String searchTerm, Long refWorkId);
-    
-   @Query(value = """
+
+    @Query(value = """
 ]               {
                    "bool": {
                         "must": [
@@ -256,9 +303,8 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
     '
     """)
     public Page<R> find(Long refWorkId, Pageable page);
-     
-     
-     @CountQuery(value = """
+
+    @CountQuery(value = """
 ]               {
                    "bool": {
                         "must": [
@@ -269,6 +315,5 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
     '
     """)
     public Long count(Long refWorkId);
-    
-    
+
 }
