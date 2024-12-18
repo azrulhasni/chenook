@@ -60,6 +60,9 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -71,7 +74,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author azrul
  * @param <T>
  */
-public abstract class WorkflowService<T extends WorkItem> {
+public abstract class WorkflowService<T extends WorkItem> implements ApplicationContextAware{
 
     // setter injection
     private EntityManagerFactory emFactory;
@@ -95,6 +98,7 @@ public abstract class WorkflowService<T extends WorkItem> {
     private static final String EXPR_OPEN = "#{";
     
     private static final String EXPR_CLOSE = "}";
+    private ApplicationContext applicationContext;
 
     private Map<String, List<HumanActivity>> getRoleActivityMap(BizProcess bizProcess) {
         return getActivities(bizProcess)
@@ -164,14 +168,14 @@ public abstract class WorkflowService<T extends WorkItem> {
             if (currentActivity.getClass().equals(BaseActivity.class)) { //run post current activity script
                 BaseActivity baseActivity = (BaseActivity) currentActivity;
                 String script = baseActivity.getPreRunScript();
-                getScripting().runScript(work, bizUser, script, bizProcess);
+                getScripting().runScript(work, bizUser, script, bizProcess,applicationContext);
             }
             for (Activity nextStep : nextSteps) { //run pre next activities scripts
 
                 if (nextStep.getClass().equals(BaseActivity.class)) {
                     BaseActivity baseActivity = (BaseActivity) currentActivity;
                     String script = baseActivity.getPreRunScript();
-                    getScripting().runScript(work, bizUser, script, bizProcess);
+                    getScripting().runScript(work, bizUser, script, bizProcess,applicationContext);
                 }
             }
 
@@ -185,9 +189,9 @@ public abstract class WorkflowService<T extends WorkItem> {
         } else {
             End endActivity = (End) currentActivity;//run pre & post current activity script
             String preRunScript = endActivity.getPreRunScript();
-            getScripting().runScript(work, bizUser, preRunScript, bizProcess);
+            getScripting().runScript(work, bizUser, preRunScript, bizProcess,applicationContext);
             String postRunScript = endActivity.getPostRunScript();
-            getScripting().runScript(work, bizUser, postRunScript, bizProcess);
+            getScripting().runScript(work, bizUser, postRunScript, bizProcess,applicationContext);
 
         }
 
@@ -211,7 +215,7 @@ public abstract class WorkflowService<T extends WorkItem> {
                 return endWork;
             } else if (activity.getClass().equals(ServiceActivity.class)) {
                 String script = ((ServiceActivity) activity).getScript();
-                getScripting().runScript(work, bizUser, script, bizProcess);
+                getScripting().runScript(work, bizUser, script, bizProcess,applicationContext);
                 return runRecursive(work, bizUser, bizProcess, isError);
             } else if (activity.getClass().equals(XorActivity.class)) {
                 return runRecursive(work, bizUser, bizProcess, isError);
@@ -1287,5 +1291,10 @@ public abstract class WorkflowService<T extends WorkItem> {
     @Autowired
     public void setEmFactory(EntityManagerFactory emFactory) {
         this.emFactory = emFactory;
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 }

@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 /**
@@ -29,7 +30,8 @@ public class Scripting /*implements Scripting*/ {
             T workItem,
             BizUser user, 
             String script, 
-            BizProcess bizProcess
+            BizProcess bizProcess,
+            ApplicationContext appContext
             ) {
         if (script==null){
             return;
@@ -49,6 +51,7 @@ public class Scripting /*implements Scripting*/ {
                 scriptEngine.put("currentClass", workItem.getClass());
             }
             scriptEngine.put("user", user);
+            scriptEngine.put("appContext", appContext);
             //scriptEngine.put("dao", dao);
             scriptEngine.put("bizProcess",bizProcess);
 //            scriptEngine.put("dataQuery", SpringBeanFactory.create(DataQuery.class));

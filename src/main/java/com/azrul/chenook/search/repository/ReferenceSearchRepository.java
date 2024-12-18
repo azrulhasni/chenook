@@ -7,6 +7,7 @@ import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
 import com.azrul.chenook.domain.Reference;
+import java.util.Set;
 
 public interface ReferenceSearchRepository<R extends Reference> extends ElasticsearchRepository<R, Long> {
 
@@ -164,6 +165,21 @@ public interface ReferenceSearchRepository<R extends Reference> extends Elastics
             }       
     """)
     public Page<R> findDraft(String searchTerm, Long refWorkId, Pageable page);
+    
+    @Query(value = """
+            {
+                "bool": {
+                    "must": [
+                        { 
+                            "match": { 
+                              "refWorkId": ?0
+                            }
+                        }
+                    ]
+                 }
+            }       
+    """)
+    public Set<R> findByRefWork(Long refWorkId);
 
     @CountQuery(value = """
             {

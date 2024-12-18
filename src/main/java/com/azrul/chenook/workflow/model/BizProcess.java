@@ -16,6 +16,7 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElements;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
+import java.util.stream.Collectors;
 
 
 /**
@@ -269,6 +270,14 @@ public class BizProcess {
     
     public List<StartEvent> getStartEvents() {
         return this.workflow.getStartEvents();
+    }
+    
+     public List<DirectHumanActivity> getDirectHuman() {
+        return this.workflow.getStartEventOrServiceOrHuman()
+                .stream()
+                .filter(a->DirectHumanActivity.class.equals(a.getClass()))
+                .map(DirectHumanActivity.class::cast)
+                .collect(Collectors.toList());
     }
     
     public BizProcess withName(String name) {

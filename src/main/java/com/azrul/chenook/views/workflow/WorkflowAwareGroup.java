@@ -8,6 +8,7 @@ import com.azrul.chenook.domain.BizUser;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.vaadin.flow.component.html.Div;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -210,17 +211,60 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
             final BizUser user,
             final BizProcess bizProcess
     ){
-        return createForForm(
-                item,
-                user,
-                bizProcess, 
-                Set.of("ANY_WORKLIST"),
-                bizProcess
+        Set<String> enabled = new HashSet<>();
+        
+        //ASSUMPTION: A work must be editable at the beginning of the workflow (at creation)
+        enabled.addAll(bizProcess
                         .getStartEvents()
                         .stream()
                         .map(se->se.getId())
                         .collect(Collectors.toSet())
                 );
+        
+        
+        
+                
+        
+        return createForForm(
+                item,
+                user,
+                bizProcess, 
+                Set.of("ANY_WORKLIST"),
+                enabled);
+    }
+    
+    //in the default settings components are visible everywhere and is editable only at the start of the workflow when the WorkItem is created 
+    public static <T extends WorkItem> WorkflowAwareGroup createDefaultForFormWithExtToDirectActivities(
+            final T item,
+            final BizUser user,
+            final BizProcess bizProcess
+    ){
+        Set<String> enabled = new HashSet<>();
+        
+        //ASSUMPTION: A work must be editable at the beginning of the workflow (at creation)
+        enabled.addAll(bizProcess
+                        .getStartEvents()
+                        .stream()
+                        .map(se->se.getId())
+                        .collect(Collectors.toSet())
+                );
+        
+        //ASSUMPTION: A work must be editable if it is directly sent to a human being
+        enabled.addAll(bizProcess
+                        .getDirectHuman()
+                        .stream()
+                        .map(se->se.getId())
+                        .collect(Collectors.toSet())
+                );
+        
+                
+        
+        return createForForm(
+                item,
+                user,
+                bizProcess, 
+                Set.of("ANY_WORKLIST"),
+                enabled);
     }
 
     public static <T extends WorkItem> WorkflowAwareGroup createForForm(
