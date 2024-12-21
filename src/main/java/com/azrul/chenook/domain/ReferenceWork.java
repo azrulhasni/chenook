@@ -145,7 +145,8 @@ public class ReferenceWork<R extends Reference> extends WorkItem {
 //    }
 
     public void calculateRefStatus(ApplicationContext appContext) {
-        int i=0;
+       System.out.println(appContext.getApplicationName());
+       int i=0;
 //        if ("S0.REF.CREATE.MAKER".equals(getStartEventId())) {
 //            for (Reference r : getNewReferences()) {
 //                System.out.println("Ref id:" + r.getId());

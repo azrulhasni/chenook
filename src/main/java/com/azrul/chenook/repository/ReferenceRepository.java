@@ -30,5 +30,15 @@ public interface ReferenceRepository<R>  extends JpaRepository<R, Long>, JpaSpec
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
     @Query("update #{#entityName} r set r.status = ?1 where r.status=?2 and r.refWorkId=?3")
-    public void updateRefStats(ReferenceStatus targetStatus, ReferenceStatus conditionStatus, Long refWorkId);
+    public void updateRefStatsByRefWork(ReferenceStatus targetStatus, ReferenceStatus conditionStatus, Long refWorkId);
+    
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("update #{#entityName} r set r.status = ?1 where r.status=?2 and r.id=?3")
+    public void updateRefStatsById(ReferenceStatus targetStatus, ReferenceStatus conditionStatus, Long refId);
+          
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("delete from #{#entityName} r where r.id=?1")
+    public void removeById(Long refId);
 }
