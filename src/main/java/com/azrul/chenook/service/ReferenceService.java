@@ -14,6 +14,8 @@ import org.springframework.data.domain.Sort;
 
 import com.azrul.chenook.domain.Reference;
 import com.azrul.chenook.domain.ReferenceStatus;
+import com.azrul.chenook.domain.ReferenceWork;
+import com.azrul.chenook.domain.Status;
 //import com.azrul.chenook.domain.ReferenceMap;
 //import com.azrul.chenook.repository.ReferenceMapRepository;
 import com.azrul.chenook.repository.ReferenceRepository;
@@ -30,9 +32,17 @@ import com.vaadin.flow.data.provider.hierarchy.AbstractBackEndHierarchicalDataPr
 import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider;
 import com.vaadin.flow.data.provider.hierarchy.HierarchicalQuery;
 import com.vaadin.flow.data.provider.hierarchy.TreeDataProvider;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.hibernate.envers.AuditReader;
+import org.hibernate.envers.AuditReaderFactory;
+import org.hibernate.envers.query.AuditEntity;
+import org.hibernate.envers.query.order.AuditOrder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +55,9 @@ public abstract class ReferenceService<R extends Reference> {
     protected abstract ReferenceSearchRepository<R> getRefSearchRepo();
 
     public abstract R copy(R ref, ReferenceStatus newStatus, Long replacementOf);
+
+    //setter injection
+    private EntityManagerFactory emFactory;
 
     @Transactional
     public R save(R entity) {
@@ -114,19 +127,31 @@ public abstract class ReferenceService<R extends Reference> {
         }
         this.getRefSearchRepo().saveAll(refs);
     }
-    
+
     public void updateRefStatusByRefId(ReferenceStatus targetStatus, ReferenceStatus conditionStatus, Long refId) {
         this.getRefRepo().updateRefStatsById(targetStatus, conditionStatus, refId);
         Optional<R> or = this.getRefSearchRepo().findById(refId);
-        or.ifPresent(r->{
+        or.ifPresent(r -> {
             if (r.getStatus().equals(conditionStatus)) {
                 r.setStatus(targetStatus);
             }
             this.getRefSearchRepo().save(r);
         });
     }
-    
-     public void removeByRefId(Long refId) {
+
+    public void updateRefStatusByRefId(ReferenceStatus targetStatus, ReferenceStatus conditionStatus, Long refId, Long replacementOf) {
+        this.getRefRepo().updateRefStatsById(targetStatus, conditionStatus, refId, replacementOf);
+        Optional<R> or = this.getRefSearchRepo().findById(refId);
+        or.ifPresent(r -> {
+            if (r.getStatus().equals(conditionStatus)) {
+                r.setStatus(targetStatus);
+                r.setReplacementOf(null);
+            }
+            this.getRefSearchRepo().save(r);
+        });
+    }
+
+    public void removeByRefId(Long refId) {
         this.getRefRepo().removeById(refId);
         this.getRefSearchRepo().deleteById(refId);
     }
@@ -525,7 +550,7 @@ public abstract class ReferenceService<R extends Reference> {
 
     public DataProvider<R, Void> getUpdateCandidateReferenceData(
             Class<R> referenceClass,
-            Long refWorkId,
+            ReferenceWork refWork,
             SearchTermProvider searchTermProvider,
             PageNav pageNav) {
         var dp = new AbstractBackEndDataProvider<R, Void>() {
@@ -537,9 +562,29 @@ public abstract class ReferenceService<R extends Reference> {
                 String sorted = so == null ? "id" : so.getSorted();
 
                 query.getPage();
+//                if (Status.DONE.equals(refWork.getStatus())) {
+//                    if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+//                        Page<R> finapps = getRefRepo().findAll(
+//                                whereRefWorkEqualsAndReferenceStatusIs(refWork.getId(), ReferenceStatus.CONFIRMED),
+//                                PageRequest.of(
+//                                        pageNav.getPage() - 1,
+//                                        pageNav.getMaxCountPerPage(),
+//                                        Sort.by(sort, sorted)));
+//
+//                        return finapps.stream();
+//                    } else {
+//                        Page<R> finapps = getRefSearchRepo().findConfirmed(searchTermProvider.getSearchTerm(),
+//                                refWork.getId(),
+//                                PageRequest.of(
+//                                        pageNav.getPage() - 1,
+//                                        pageNav.getMaxCountPerPage(),
+//                                        Sort.by(sort, modifySortFieldForSearch(sorted, referenceClass))));
+//                        return finapps.stream();
+//                    }
+//                } else {
                 if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
                     Page<R> finapps = getRefRepo().findAll(
-                            whereRefWorkEqualsAndReferenceStatusIs(refWorkId, ReferenceStatus.DRAFT),
+                            whereRefWorkEqualsAndReferenceStatusIs(refWork.getId(), ReferenceStatus.DRAFT),
                             PageRequest.of(
                                     pageNav.getPage() - 1,
                                     pageNav.getMaxCountPerPage(),
@@ -548,14 +593,14 @@ public abstract class ReferenceService<R extends Reference> {
                     return finapps.stream();
                 } else {
                     Page<R> finapps = getRefSearchRepo().findDraft(searchTermProvider.getSearchTerm(),
-                            refWorkId,
+                            refWork.getId(),
                             PageRequest.of(
                                     pageNav.getPage() - 1,
                                     pageNav.getMaxCountPerPage(),
                                     Sort.by(sort, modifySortFieldForSearch(sorted, referenceClass))));
                     return finapps.stream();
                 }
-
+//                }
             }
 
             @Override
@@ -573,109 +618,47 @@ public abstract class ReferenceService<R extends Reference> {
     }
 
     public Integer countUpdateCandidateReferenceData(Class<R> referenceClass,
-            Long refWorkId,
+            ReferenceWork refWork,
             SearchTermProvider searchTermProvider) {
-         if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
-            Long count= getRefRepo().count(
-                    whereRefWorkEqualsAndReferenceStatusIs(refWorkId, ReferenceStatus.DRAFT));
-            if (count!=null){
+//        if (Status.DONE.equals(refWork.getStatus())) {
+//             if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+//                Long count = getRefRepo().count(
+//                        whereRefWorkEqualsAndReferenceStatusIs(refWork.getId(), ReferenceStatus.CONFIRMED));
+//                if (count != null) {
+//                    return count.intValue();
+//                } else {
+//                    return 0;
+//                }
+//            } else {
+//                Long count = getRefSearchRepo().countConfirmed(searchTermProvider.getSearchTerm(),
+//                        refWork.getId());
+//                if (count != null) {
+//                    return count.intValue();
+//                } else {
+//                    return 0;
+//                }
+//            }
+//        } else {
+        if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
+            Long count = getRefRepo().count(
+                    whereRefWorkEqualsAndReferenceStatusIs(refWork.getId(), ReferenceStatus.DRAFT));
+            if (count != null) {
                 return count.intValue();
-            }else{
+            } else {
                 return 0;
             }
         } else {
-            Long count=  getRefSearchRepo().countDraft(searchTermProvider.getSearchTerm(),
-                    refWorkId);
-             if (count!=null){
+            Long count = getRefSearchRepo().countDraft(searchTermProvider.getSearchTerm(),
+                    refWork.getId());
+            if (count != null) {
                 return count.intValue();
-            }else{
+            } else {
                 return 0;
             }
         }
+//        }
     }
 
-//    public Long countUpdateCandidateReferenceData(Class<R> referenceClass,
-//            Long refWorkId,
-//            SearchTermProvider searchTermProvider) {
-//        if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
-//            return getRefRepo().count(
-//                    whereRefWorkEqualsAndReferenceStatusIs(refWorkId, ReferenceStatus.DRAFT));
-//        } else {
-//            return getRefSearchRepo().countDraft(searchTermProvider.getSearchTerm(),
-//                    refWorkId);
-//        }
-//
-//    }
-//
-//    public HierarchicalDataProvider<R, Void> getUpdateCandidateReferenceData(
-//            Class<R> referenceClass,
-//            Long refWorkId,
-//            SearchTermProvider searchTermProvider,
-//            PageNav pageNav) {
-//        // build data provider
-//        var dp = new AbstractBackEndHierarchicalDataProvider<R, Void>() {
-//
-//            @Override
-//            public String getId(R item) {
-//                return item.getId().toString();
-//            }
-//
-//            @Override
-//            protected Stream<R> fetchChildrenFromBackEnd(HierarchicalQuery<R, Void> query) {
-//                Sort.Direction sort = pageNav.getAsc() ? Sort.Direction.ASC : Sort.Direction.DESC;
-//                String sorted = StringUtils.isEmpty(pageNav.getSortField()) ? "id" : pageNav.getSortField();
-//
-//                query.getPage();
-//                return query.getParentOptional().map(r -> {
-//                    Optional<R> finapps = getRefRepo().findById(r.getRefWorkId());
-//                    return finapps.stream();
-//                }).orElseGet(() -> {
-//                    if (searchTermProvider == null || StringUtils.isEmpty(searchTermProvider.getSearchTerm())) {
-//                        Page<R> finapps = getRefRepo().findAll(
-//                                whereRefWorkEqualsAndReferenceStatusIs(refWorkId, ReferenceStatus.DRAFT),
-//                                PageRequest.of(
-//                                        pageNav.getPage() - 1,
-//                                        pageNav.getMaxCountPerPage(),
-//                                        Sort.by(sort, sorted)));
-//
-//                        return finapps.stream();
-//                    } else {
-//                        Page<R> finapps = getRefSearchRepo().findDraft(searchTermProvider.getSearchTerm(),
-//                                refWorkId,
-//                                PageRequest.of(
-//                                        pageNav.getPage() - 1,
-//                                        pageNav.getMaxCountPerPage(),
-//                                        Sort.by(sort, modifySortFieldForSearch(sorted, referenceClass))));
-//                        return finapps.stream();
-//                    }
-//
-//                });
-//            }
-//
-//            @Override
-//            public int getChildCount(HierarchicalQuery<R, Void> query) {
-//                return pageNav.getCountPerPage();
-////                query.getPage();
-////                int count = pageNav.getDataCountPerPage();
-////                if (count > 0) {
-////                    return query.getParentOptional().map(r -> {
-////                        return 0;
-////                    }).orElseGet(() -> {
-////                        return 1;
-////                    });
-////                } else {
-////                    return count;
-////                }
-//            }
-//
-//            @Override
-//            public boolean hasChildren(R t) {
-//                return t.getReplacementOf() == null ? false : true;
-//            }
-//
-//        };
-//        return dp;
-//    }
     private String modifySortFieldForSearch(String sortField, Class<R> workItemClass) {
         Field field = WorkflowUtils.getField(workItemClass, sortField);
         if (Number.class.isAssignableFrom(field.getType())
@@ -732,6 +715,74 @@ public abstract class ReferenceService<R extends Reference> {
                     cb.equal(ref.get("refWorkId"), refWork)
             );
         };
+    }
+
+    /**
+     * @return the emFactory
+     */
+    public EntityManagerFactory getEmFactory() {
+        return emFactory;
+    }
+
+    /**
+     * @param emFactory the emFactory to set
+     */
+    @Autowired
+    public void setEmFactory(EntityManagerFactory emFactory) {
+        this.emFactory = emFactory;
+    }
+
+    public AuditReader getAuditReader() {
+        return AuditReaderFactory.get(emFactory.createEntityManager());
+    }
+
+    public DataProvider<R, Void> getRevisionsByRefWork(
+            Long refWorkId,
+            Class<R> refClass,
+            PageNav pageNav
+    ) {
+        var dp = new AbstractBackEndDataProvider<R, Void>() {
+            @Override
+            protected Stream<R> fetchFromBackEnd(Query<R, Void> query) {
+                query.getPage();
+                List<R> res= getAuditReader()
+                        .createQuery()
+                        .forRevisionsOfEntity(refClass, true, true)
+                        .add(AuditEntity.property("refWorkId").eq(refWorkId))
+                        .setFirstResult((pageNav.getPage() - 1) * pageNav.getCountPerPage())
+                        .setMaxResults(pageNav.getCountPerPage())
+                        .addOrder(pageNav.getAsc() == true ? AuditEntity.property(pageNav.getSortField()).asc() : AuditEntity.property(pageNav.getSortField()).desc())
+                        .getResultList();
+                return res.stream();
+            }
+
+            @Override
+            protected int sizeInBackEnd(Query<R, Void> query) {
+                return pageNav.getDataCountPerPage();
+            }
+
+            @Override
+            public String getId(R item) {
+                return item.getId().toString();
+            }
+
+        };
+        return dp;
+
+    }
+
+    public Integer countRevisionsByRefWork(
+            Long refWorkId,
+            Class<R> refClass
+    ) {
+        Long res = (Long) getAuditReader()
+                .createQuery()
+                .forRevisionsOfEntity(refClass, true, true)
+                .add(AuditEntity.property("refWorkId").eq(refWorkId))
+                .addProjection(AuditEntity.id().count())
+                .getSingleResult();
+        return res.intValue();
+
     }
 
 }

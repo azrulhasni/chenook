@@ -5,6 +5,7 @@
 package com.azrul.chenook.domain;
 
 import com.azrul.chenook.annotation.WorkField;
+import com.azrul.chenook.service.ReferenceService;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -145,15 +146,18 @@ public class ReferenceWork<R extends Reference> extends WorkItem {
 //    }
 
     public void calculateRefStatus(ApplicationContext appContext) {
-       System.out.println(appContext.getApplicationName());
-       int i=0;
-//        if ("S0.REF.CREATE.MAKER".equals(getStartEventId())) {
+     
+       ReferenceService refService = appContext.getBean(ReferenceService.class);
+        if ("S0.REF.CREATE.MAKER".equals(getStartEventId())) {
+            refService.updateRefStatusByRefWork(ReferenceStatus.CONFIRMED, ReferenceStatus.DRAFT, id);
 //            for (Reference r : getNewReferences()) {
 //                System.out.println("Ref id:" + r.getId());
 //
 //                r.setStatus(ReferenceStatus.CONFIRMED);
 //            }
-//        } else if ("S0.REF.UPDATE.MAKER".equals(getStartEventId())) {
+        } else if ("S0.REF.UPDATE.MAKER".equals(getStartEventId())) {
+             refService.updateRefStatusByRefWork(ReferenceStatus.CONFIRMED, ReferenceStatus.DRAFT, id);
+              refService.updateRefStatusByRefWork(ReferenceStatus.RETIRED, ReferenceStatus.DEPRECATED, id);
 //            for (Reference r : getNewReferences()) {
 //                System.out.println("Ref id:" + r.getId());
 //                r.setStatus(ReferenceStatus.CONFIRMED);
@@ -162,13 +166,14 @@ public class ReferenceWork<R extends Reference> extends WorkItem {
 //                System.out.println("Ref id:" + r.getId());
 //                r.setStatus(ReferenceStatus.RETIRED);
 //            }
-//        } else if ("S0.REF.DELETE.MAKER".equals(getStartEventId())) {
+        } else if ("S0.REF.DELETE.MAKER".equals(getStartEventId())) {
+             refService.updateRefStatusByRefWork(ReferenceStatus.RETIRED, ReferenceStatus.DEPRECATED, id);
 //            for (Reference r : getExistingReferences()) {
 //                System.out.println("Ref id:" + r.getId());
 //                r.setStatus(ReferenceStatus.RETIRED);
 //            }
-//        }
-//        this.setStatus(Status.DONE);
+        }
+        this.setStatus(Status.DONE);
     }
 
 }
