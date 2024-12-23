@@ -15,6 +15,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
@@ -22,7 +29,6 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @Document(indexName = "reference")
 @Audited
-@EntityListeners(AuditingEntityListener.class)
 public abstract class Reference  implements Serializable {
     @org.springframework.data.annotation.Id
     @Id
@@ -38,6 +44,27 @@ public abstract class Reference  implements Serializable {
     private Long refWorkId;
     
     private Long replacementOf;
+    
+    @Audited(withModifiedFlag = true)
+    private Integer version;
+
+ 
+    @CreatedBy
+    private String createdBy;
+
+
+    @CreatedDate
+    @Field(type = FieldType.Date, format = DateFormat.basic_date_time)
+    private LocalDateTime creationDate;
+
+
+    @LastModifiedBy
+    private String lastModifiedBy;
+
+
+    @LastModifiedDate
+    @Field(type = FieldType.Date, format = DateFormat.basic_date_time)
+    private LocalDateTime lastModifiedDate;
 
 
     public Long getId() {
@@ -115,6 +142,76 @@ public abstract class Reference  implements Serializable {
      */
     public void setReplacementOf(Long replacementOf) {
         this.replacementOf = replacementOf;
+    }
+
+    /**
+     * @return the version
+     */
+    public Integer getVersion() {
+        return version;
+    }
+
+    /**
+     * @param version the version to set
+     */
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+
+    /**
+     * @return the createdBy
+     */
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    /**
+     * @param createdBy the createdBy to set
+     */
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    /**
+     * @return the creationDate
+     */
+    public LocalDateTime getCreationDate() {
+        return creationDate;
+    }
+
+    /**
+     * @param creationDate the creationDate to set
+     */
+    public void setCreationDate(LocalDateTime creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    /**
+     * @return the lastModifiedBy
+     */
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    /**
+     * @param lastModifiedBy the lastModifiedBy to set
+     */
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
+    }
+
+    /**
+     * @return the lastModifiedDate
+     */
+    public LocalDateTime getLastModifiedDate() {
+        return lastModifiedDate;
+    }
+
+    /**
+     * @param lastModifiedDate the lastModifiedDate to set
+     */
+    public void setLastModifiedDate(LocalDateTime lastModifiedDate) {
+        this.lastModifiedDate = lastModifiedDate;
     }
 
    

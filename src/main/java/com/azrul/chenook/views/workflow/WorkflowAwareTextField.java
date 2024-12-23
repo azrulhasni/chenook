@@ -83,7 +83,7 @@ public class WorkflowAwareTextField<T> extends TextField {
                 bindingBuilder.bind(fieldName);
             }
         }
-
+        field.setId(fieldName);
         return field;
     }
 
