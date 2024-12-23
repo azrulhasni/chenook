@@ -16,4 +16,5 @@ public @interface WorkField {
     String displayName();
     String[] prefix() default {};
     boolean sortable() default false;
+    boolean showAtAudit() default false;
 }

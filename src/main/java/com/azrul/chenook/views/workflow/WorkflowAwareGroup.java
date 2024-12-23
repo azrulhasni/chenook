@@ -221,10 +221,6 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
                         .collect(Collectors.toSet())
                 );
         
-        
-        
-                
-        
         return createForForm(
                 item,
                 user,

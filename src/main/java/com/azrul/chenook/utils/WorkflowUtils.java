@@ -233,12 +233,24 @@ public class WorkflowUtils {
                                 })
                 );
     }
-
+    
     public static <T> Map<String, String> getFieldNameDisplayNameMap(Class<T> itemClass) {
+        return getFieldNameDisplayNameMap(itemClass, false);
+    }
+
+    public static <T> Map<String, String> getFieldNameDisplayNameMap(Class<T> itemClass, Boolean isAudit) {
         Map<Field, Map<String, Object>> fieldAnnoMap = getAnnotations(WorkField.class, itemClass);
 
         return fieldAnnoMap.entrySet()
                 .stream()
+                .filter(e->{
+                            if (Boolean.TRUE.equals(isAudit)){
+                                return true;
+                            }else{
+                                return Boolean.compare((Boolean) e.getValue().get("showAtAudit"),isAudit)==0;
+                            }
+                        
+                        })
                 .collect(
                         Collectors.toMap(
                                 e -> {

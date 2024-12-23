@@ -35,11 +35,15 @@ import com.vaadin.flow.data.provider.hierarchy.TreeDataProvider;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PersistenceContextType;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
+import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.order.AuditOrder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +62,9 @@ public abstract class ReferenceService<R extends Reference> {
 
     //setter injection
     private EntityManagerFactory emFactory;
+    
+     //setter injection
+    private EntityManager entityManager;
 
     @Transactional
     public R save(R entity) {
@@ -731,11 +738,24 @@ public abstract class ReferenceService<R extends Reference> {
     public void setEmFactory(EntityManagerFactory emFactory) {
         this.emFactory = emFactory;
     }
-
-    public AuditReader getAuditReader() {
-        return AuditReaderFactory.get(emFactory.createEntityManager());
+    
+    /**
+     * @return the entityManager
+     */
+    public EntityManager getEntityManager() {
+        return entityManager;
     }
 
+    /**
+     * @param entityManager the entityManager to set
+     */
+    @PersistenceContext(type = PersistenceContextType.EXTENDED)
+    public void setEntityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
+
+    @Transactional
     public DataProvider<R, Void> getRevisionsByRefWork(
             Long refWorkId,
             Class<R> refClass,
@@ -745,14 +765,20 @@ public abstract class ReferenceService<R extends Reference> {
             @Override
             protected Stream<R> fetchFromBackEnd(Query<R, Void> query) {
                 query.getPage();
-                List<R> res= getAuditReader()
+                List<Object[]> auditData= AuditReaderFactory.get(entityManager)
                         .createQuery()
-                        .forRevisionsOfEntity(refClass, true, true)
+                        .forRevisionsOfEntityWithChanges(refClass, true)
                         .add(AuditEntity.property("refWorkId").eq(refWorkId))
                         .setFirstResult((pageNav.getPage() - 1) * pageNav.getCountPerPage())
                         .setMaxResults(pageNav.getCountPerPage())
                         .addOrder(pageNav.getAsc() == true ? AuditEntity.property(pageNav.getSortField()).asc() : AuditEntity.property(pageNav.getSortField()).desc())
                         .getResultList();
+                List<R> res = new ArrayList<>();
+                for (Object[] o:auditData){
+                    R r = (R) o[0];
+                    r.setOperation(((RevisionType)o[2]).toString());
+                    res.add(r);
+                }
                 return res.stream();
             }
 
@@ -771,18 +797,21 @@ public abstract class ReferenceService<R extends Reference> {
 
     }
 
+    @Transactional
     public Integer countRevisionsByRefWork(
             Long refWorkId,
             Class<R> refClass
     ) {
-        Long res = (Long) getAuditReader()
+        Long res = (Long)  AuditReaderFactory.get(entityManager)
                 .createQuery()
-                .forRevisionsOfEntity(refClass, true, true)
+                .forRevisionsOfEntityWithChanges(refClass, true)
                 .add(AuditEntity.property("refWorkId").eq(refWorkId))
                 .addProjection(AuditEntity.id().count())
                 .getSingleResult();
         return res.intValue();
 
     }
+
+    
 
 }

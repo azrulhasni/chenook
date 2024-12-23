@@ -1,6 +1,7 @@
 package com.azrul.chenook.domain;
 
 
+import com.azrul.chenook.annotation.DateTimeFormat;
 import org.hibernate.envers.Audited;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -15,7 +16,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import java.io.Serializable;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -28,12 +31,13 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 @Entity
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @Document(indexName = "reference")
+@EntityListeners(AuditingEntityListener.class)
 @Audited
 public abstract class Reference  implements Serializable {
     @org.springframework.data.annotation.Id
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @WorkField(displayName = "Id", sortable = true)
+    //@WorkField(displayName = "Id", sortable = true)
     private Long id;
 
     
@@ -55,7 +59,7 @@ public abstract class Reference  implements Serializable {
 
     @CreatedDate
     @Field(type = FieldType.Date, format = DateFormat.basic_date_time)
-    private LocalDateTime creationDate;
+    private Instant  creationDate;
 
 
     @LastModifiedBy
@@ -63,8 +67,14 @@ public abstract class Reference  implements Serializable {
 
 
     @LastModifiedDate
+    @WorkField(displayName = "Last update", sortable = true,showAtAudit=true)
+    @DateTimeFormat(format = "${finapp.datetime.format}")
     @Field(type = FieldType.Date, format = DateFormat.basic_date_time)
-    private LocalDateTime lastModifiedDate;
+    private Instant  lastModifiedDate;
+    
+    @Transient
+    @WorkField(displayName = "Oper", sortable = true, showAtAudit=true)
+    private String operation;
 
 
     public Long getId() {
@@ -175,14 +185,14 @@ public abstract class Reference  implements Serializable {
     /**
      * @return the creationDate
      */
-    public LocalDateTime getCreationDate() {
+    public Instant  getCreationDate() {
         return creationDate;
     }
 
     /**
      * @param creationDate the creationDate to set
      */
-    public void setCreationDate(LocalDateTime creationDate) {
+    public void setCreationDate(Instant  creationDate) {
         this.creationDate = creationDate;
     }
 
@@ -203,15 +213,29 @@ public abstract class Reference  implements Serializable {
     /**
      * @return the lastModifiedDate
      */
-    public LocalDateTime getLastModifiedDate() {
+    public Instant  getLastModifiedDate() {
         return lastModifiedDate;
     }
 
     /**
      * @param lastModifiedDate the lastModifiedDate to set
      */
-    public void setLastModifiedDate(LocalDateTime lastModifiedDate) {
+    public void setLastModifiedDate(Instant  lastModifiedDate) {
         this.lastModifiedDate = lastModifiedDate;
+    }
+
+    /**
+     * @return the operation
+     */
+    public String getOperation() {
+        return operation;
+    }
+
+    /**
+     * @param operation the operation to set
+     */
+    public void setOperation(String operation) {
+        this.operation = operation;
     }
 
    
