@@ -780,6 +780,8 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
     private Boolean isStartEvent(String activityId, BizProcess bizProcess) {
         return bizProcess.getStartEvents().stream().anyMatch(se -> se.getId().equals(activityId));
     }
+    
+    
 
     private Boolean isActivityAccessibleByRoles(String activityid, Set<String> inroles, BizProcess bizProcess) {
         Map<String, Activity> activities = getActivities(bizProcess);

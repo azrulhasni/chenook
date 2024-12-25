@@ -32,7 +32,13 @@ public class WorkflowAwareTextField<T> extends TextField {
     }
     
   
-    public static <T> WorkflowAwareTextField create(String fieldName, Boolean readOnly, Binder<T> binder, Converter converter, WorkflowAwareGroup group) {
+    public static <T> WorkflowAwareTextField create(
+            String fieldName, 
+            Boolean readOnly, 
+            Binder<T> binder, 
+            Converter converter, 
+            WorkflowAwareGroup group
+    ) {
         T workItem = binder.getBean();
         var field = new WorkflowAwareTextField(group);
         List<Validator> validators = new ArrayList<>();
@@ -87,12 +93,33 @@ public class WorkflowAwareTextField<T> extends TextField {
         return field;
     }
 
-    public static <T> WorkflowAwareTextField create(String fieldName, Boolean readOnly, Binder<T> binder, WorkflowAwareGroup group) {
-        return create(fieldName, readOnly, binder, null, group);
+    public static <T> WorkflowAwareTextField create(
+            String fieldName, 
+            Boolean readOnly, 
+            Binder<T> binder, 
+            WorkflowAwareGroup group
+    ) {
+        return create(
+                fieldName, 
+                readOnly, 
+                binder, 
+                null, 
+                group
+        );
     }
     
-    public static <T> WorkflowAwareTextField create(String fieldName, Boolean readOnly, Binder<T> binder) {
-        return create(fieldName, readOnly, binder, null, null);
+    public static <T> WorkflowAwareTextField create(
+            String fieldName, 
+            Boolean readOnly, 
+            Binder<T> binder
+    ) {
+        return create(
+                fieldName, 
+                readOnly, 
+                binder, 
+                null, 
+                null
+        );
     }
     
     
