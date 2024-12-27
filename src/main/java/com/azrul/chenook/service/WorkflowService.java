@@ -74,7 +74,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author azrul
  * @param <T>
  */
-public abstract class WorkflowService<T extends WorkItem> implements ApplicationContextAware{
+public abstract class WorkflowService<T extends WorkItem> implements ApplicationContextAware {
 
     // setter injection
     private EntityManagerFactory emFactory;
@@ -94,9 +94,9 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
 
     // Setter injection
     private FunctionExpression<T> functionExpression;
-    
+
     private static final String EXPR_OPEN = "#{";
-    
+
     private static final String EXPR_CLOSE = "}";
     private ApplicationContext applicationContext;
 
@@ -168,14 +168,14 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
             if (currentActivity.getClass().equals(BaseActivity.class)) { //run post current activity script
                 BaseActivity baseActivity = (BaseActivity) currentActivity;
                 String script = baseActivity.getPreRunScript();
-                getScripting().runScript(work, bizUser, script, bizProcess,applicationContext);
+                getScripting().runScript(work, bizUser, script, bizProcess, applicationContext);
             }
             for (Activity nextStep : nextSteps) { //run pre next activities scripts
 
                 if (nextStep.getClass().equals(BaseActivity.class)) {
                     BaseActivity baseActivity = (BaseActivity) currentActivity;
                     String script = baseActivity.getPreRunScript();
-                    getScripting().runScript(work, bizUser, script, bizProcess,applicationContext);
+                    getScripting().runScript(work, bizUser, script, bizProcess, applicationContext);
                 }
             }
 
@@ -189,9 +189,9 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
         } else {
             End endActivity = (End) currentActivity;//run pre & post current activity script
             String preRunScript = endActivity.getPreRunScript();
-            getScripting().runScript(work, bizUser, preRunScript, bizProcess,applicationContext);
+            getScripting().runScript(work, bizUser, preRunScript, bizProcess, applicationContext);
             String postRunScript = endActivity.getPostRunScript();
-            getScripting().runScript(work, bizUser, postRunScript, bizProcess,applicationContext);
+            getScripting().runScript(work, bizUser, postRunScript, bizProcess, applicationContext);
 
         }
 
@@ -215,7 +215,7 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
                 return endWork;
             } else if (activity.getClass().equals(ServiceActivity.class)) {
                 String script = ((ServiceActivity) activity).getScript();
-                getScripting().runScript(work, bizUser, script, bizProcess,applicationContext);
+                getScripting().runScript(work, bizUser, script, bizProcess, applicationContext);
                 return runRecursive(work, bizUser, bizProcess, isError);
             } else if (activity.getClass().equals(XorActivity.class)) {
                 return runRecursive(work, bizUser, bizProcess, isError);
@@ -310,12 +310,12 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
         } else if (activity.getClass().equals(DirectHumanActivity.class)) {
             DirectHumanActivity directHumanActivity = (DirectHumanActivity) activity;
             dealWithNextStep(work,
-                        tenant,
-                         user,
-                        bizProcess,
-                        (Activity) directHumanActivity.getNext(),
-                        nextSteps);
-            
+                    tenant,
+                    user,
+                    bizProcess,
+                    (Activity) directHumanActivity.getNext(),
+                    nextSteps);
+
         } else if (activity.getClass().equals(ServiceActivity.class)) {
             ServiceActivity serviceActivity = (ServiceActivity) activity;
             dealWithNextStep(work,
@@ -368,7 +368,7 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
                 // go to approved branch
                 dealWithNextStep(work,
                         tenant,
-                         user,
+                        user,
                         bizProcess,
                         this.evaluateBranchesForNextActivty(
                                 xorUnanimousApprovalActivity::getOnApproved,
@@ -382,7 +382,7 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
                 // go to branch
                 dealWithNextStep(work,
                         tenant,
-                         user,
+                        user,
                         bizProcess,
                         this.evaluateBranchesForNextActivty(
                                 xorUnanimousApprovalActivity::getOnRejected,
@@ -429,7 +429,7 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
                 // go to branch
                 dealWithNextStep(work,
                         tenant,
-                         user,
+                        user,
                         bizProcess,
                         this.evaluateBranchesForNextActivty(
                                 xorAtleastOneApprovalActivity::getOnRejected,
@@ -443,7 +443,7 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
                 // go to approved branch
                 dealWithNextStep(work,
                         tenant,
-                         user,
+                        user,
                         bizProcess,
                         this.evaluateBranchesForNextActivty(
                                 xorAtleastOneApprovalActivity::getOnApproved,
@@ -479,7 +479,7 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
                 // go to approved branch
                 dealWithNextStep(work,
                         tenant,
-                         user,
+                        user,
                         bizProcess,
                         this.evaluateBranchesForNextActivty(
                                 xorMajorityApprovalActivity::getOnApproved,
@@ -493,7 +493,7 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
                 // go to branch
                 dealWithNextStep(work,
                         tenant,
-                         user,
+                        user,
                         bizProcess,
                         this.evaluateBranchesForNextActivty(
                                 xorMajorityApprovalActivity::getOnRejected,
@@ -508,7 +508,7 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
                 // go to branch
                 dealWithNextStep(work,
                         tenant,
-                         user,
+                        user,
                         bizProcess,
                         (Activity) xorMajorityApprovalActivity.getOnTieBreaker().getNext(),
                         nextSteps);
@@ -543,7 +543,7 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
                     root.setSupervisorApprovalSeeker(null);
                     root.setSupervisorApprovalLevel(null);
                     archiveApprovals(root);
-                    dealWithNextStep(root, tenant,user,bizProcess, next, nextSteps);
+                    dealWithNextStep(root, tenant, user, bizProcess, next, nextSteps);
                 } else {// if we are still not at the end
                     // find next role
                     String nextRole = supervisorHierarchy.get(indexOfNextApprLevel);
@@ -611,12 +611,6 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
                     approverLookup.lookupApprover((T) root, user.getUsername()).ifPresent(approver -> {
                         root.clearOwners();
                         root.addOwner(approver);
-                        // root.getOwners().add(approver);
-                        // if (approver.getUsername() != null) {
-                        // root.getOwners().add(approver.getUsername());
-                        // } else {
-                        // root.getOwners().add(approver.getLoginName());
-                        // }
                         root.setSupervisorApprovalLevel(nextRole);
 
                         // archive first
@@ -686,38 +680,36 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
         } else if (nextActivity.getClass().equals(DirectHumanActivity.class)) {
             DirectHumanActivity directHumanActivity = (DirectHumanActivity) nextActivity;
             String targetWorklist = directHumanActivity.getHandledBy();
-            
+
             BizUser bizUser = getTargetDirectlySentTo(directHumanActivity, work, user, bizProcess);
             if (bizUser.getClientRoles().contains(targetWorklist)) {
                 work.setOwners(Set.of(bizUser));
             }
             nextSteps.add(directHumanActivity);
-            
+
         } else { // service
             nextSteps.add(nextActivity);
         }
     }
 
     private BizUser getTargetDirectlySentTo(
-            DirectHumanActivity directHumanActivity, 
-            T work, 
-            BizUser currentUser, 
+            DirectHumanActivity directHumanActivity,
+            T work,
+            BizUser currentUser,
             BizProcess bizProcess) {
-        
+
         String expr = directHumanActivity.getDirectlySentTo();
-        if (StringUtils.startsWith(expr, EXPR_OPEN) && StringUtils.endsWith(expr, EXPR_CLOSE)){
-            String targetUserName = StringUtils.substringBetween(expr, EXPR_OPEN,EXPR_CLOSE);
+        if (StringUtils.startsWith(expr, EXPR_OPEN) && StringUtils.endsWith(expr, EXPR_CLOSE)) {
+            String targetUserName = StringUtils.substringBetween(expr, EXPR_OPEN, EXPR_CLOSE);
             String targetUser = (String) getFunctionExpression().evaluate(targetUserName, work, currentUser, bizProcess);
             BizUser targetBizUser = bizUserService.getUser(targetUser);
             return targetBizUser;
-        }else{
+        } else {
             BizUser targetBizUser = bizUserService.getUser(expr);
             return targetBizUser;
         }
-        
-        
+
     }
- 
 
     private void loadUserIntoApprovalList(
             String loginName,
@@ -780,8 +772,6 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
     private Boolean isStartEvent(String activityId, BizProcess bizProcess) {
         return bizProcess.getStartEvents().stream().anyMatch(se -> se.getId().equals(activityId));
     }
-    
-    
 
     private Boolean isActivityAccessibleByRoles(String activityid, Set<String> inroles, BizProcess bizProcess) {
         Map<String, Activity> activities = getActivities(bizProcess);
@@ -882,18 +872,16 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
             return Boolean.FALSE;
         }
     }
-    
-    private String getCondition(ConditionalBranch branch){
-        if (branch==null){
+
+    private String getCondition(ConditionalBranch branch) {
+        if (branch == null) {
             return "";
         }
-        if (branch.getCondition()==null){
+        if (branch.getCondition() == null) {
             return "";
         }
-        return StringUtils.substringBetween(branch.getCondition(),EXPR_OPEN, EXPR_CLOSE);
+        return StringUtils.substringBetween(branch.getCondition(), EXPR_OPEN, EXPR_CLOSE);
     }
-    
-   
 
     private Activity evaluateBranchesForNextActivty(
             final Supplier<List<? extends ConditionalBranch>> getBranches,
@@ -946,7 +934,6 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
         newwork.setPriority(Priority.NONE);
         newwork.setStatus(Status.NEWLY_CREATED);
         BizUser bu = bizUserService.save(bizUser);
-                
 
         Set<BizUser> owners = new HashSet<>();
         owners.add(bu);
@@ -1299,4 +1286,28 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
+
+    //admin stuff
+    @Transactional
+    public T moveWorkItemToNewCreatorOwner(T workItem, BizUser newOwnerCreator) {
+        String creator = workItem.getCreator();
+        if (workItem.getOwners().stream().anyMatch(o -> !StringUtils.equals(creator, o.getUsername()))) {
+            workItem.addOwner(newOwnerCreator);
+            workItem.setCreator(newOwnerCreator.getUsername());
+            var w = this.save(workItem);
+            return w;
+        } else {
+            return null;
+        }
+    }
+
+    @Transactional
+    public T moveWorkItemOwnerToNewCreator(T workItem) {
+        String creator = workItem.getCreator();
+        BizUser buCreator = bizUserService.getUser(creator);
+        workItem.addOwner(buCreator);
+        var w = this.save(workItem);
+        return w;
+    }
+
 }

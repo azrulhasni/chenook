@@ -12,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import org.hibernate.envers.Audited;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -23,6 +24,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 public class BizUser {
+
+
 
     /**
      * @return the enabled
@@ -199,6 +202,30 @@ public class BizUser {
     public void setId(Long id) {
         this.id = id;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 97 * hash + Objects.hashCode(this.username);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final BizUser other = (BizUser) obj;
+        return Objects.equals(this.username, other.username);
+    }
+    
+    
 
     /**
      * @return the work

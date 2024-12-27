@@ -14,6 +14,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import java.util.HashSet;
 import java.util.Set;
 import org.hibernate.annotations.OnDelete;
@@ -34,18 +35,11 @@ public class ReferenceWork<R extends Reference> extends WorkItem {
     private String className;
 
     private ReferenceWorkType referenceWorkType;
-
-//    @WorkField(displayName = "Existing References")
-//    //@OnDelete(action = OnDeleteAction.CASCADE) These are existing reference. Don't delete them
-//    @ManyToMany(fetch = FetchType.EAGER, targetEntity = Reference.class)
-//    @JoinTable(name = "refwork_refs_exi", joinColumns = @JoinColumn(name = "refwork_id"), inverseJoinColumns = @JoinColumn(name = "ref_id"))
-//    private Set<R> existingReferences;
-//
-//    @WorkField(displayName = "New References")
-//    @OnDelete(action = OnDeleteAction.CASCADE)
-//    @ManyToMany(fetch = FetchType.EAGER, targetEntity = Reference.class, cascade = CascadeType.ALL)
-//    @JoinTable(name = "refwork_refs_new", joinColumns = @JoinColumn(name = "refwork_id"), inverseJoinColumns = @JoinColumn(name = "ref_id"))
-//    private Set<R> newReferences;
+    
+    @WorkField(displayName = "Attachments")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinColumn(name = "finapp_id")
+    private Set<Attachment> attachments = new HashSet<>();
 
     public static <R> Class<R> getClazz() {
         return (Class<R>) ReferenceWork.class;
@@ -71,37 +65,7 @@ public class ReferenceWork<R extends Reference> extends WorkItem {
         this.className = className;
     }
 
-//    public void addNewReference(R r) {
-//        if (this.newReferences == null) {
-//            this.newReferences = new HashSet<>();
-//        }
-//        if (newReferences.contains(r)) {
-//            newReferences.remove(r);
-//        }
-//        this.newReferences.add(r);
-//    }
-//
-//    public void addExistingReference(R r) {
-//        if (this.existingReferences == null) {
-//            this.existingReferences = new HashSet<>();
-//        }
-//        if (existingReferences.contains(r)) {
-//            existingReferences.remove(r);
-//        }
-//        this.existingReferences.add(r);
-//    }
-//
-//    public void addExistingReference(Set<R> rs) {
-//        if (this.existingReferences == null) {
-//            this.existingReferences = new HashSet<>();
-//        }
-//        for (R r : rs) {
-//            if (existingReferences.contains(r)) {
-//                existingReferences.remove(r);
-//            }
-//        }
-//        this.existingReferences.addAll(rs);
-//    }
+
 
     /**
      * @return the referenceWorkType
@@ -117,63 +81,34 @@ public class ReferenceWork<R extends Reference> extends WorkItem {
         this.referenceWorkType = referenceWorkType;
     }
 
-//    /**
-//     * @return the existingReferences
-//     */
-//    public Set<R> getExistingReferences() {
-//        return existingReferences;
-//    }
-//
-//    /**
-//     * @param existingReferences the existingReferences to set
-//     */
-//    public void setExistingReferences(Set<R> existingReferences) {
-//        this.existingReferences = existingReferences;
-//    }
-//
-//    /**
-//     * @return the newReferences
-//     */
-//    public Set<R> getNewReferences() {
-//        return newReferences;
-//    }
-//
-//    /**
-//     * @param newReferences the newReferences to set
-//     */
-//    public void setNewReferences(Set<R> newReferences) {
-//        this.newReferences = newReferences;
-//    }
+
 
     public void calculateRefStatus(ApplicationContext appContext) {
      
        ReferenceService refService = appContext.getBean(ReferenceService.class);
         if ("S0.REF.CREATE.MAKER".equals(getStartEventId())) {
             refService.updateRefStatusByRefWork(ReferenceStatus.CONFIRMED, ReferenceStatus.DRAFT, id);
-//            for (Reference r : getNewReferences()) {
-//                System.out.println("Ref id:" + r.getId());
-//
-//                r.setStatus(ReferenceStatus.CONFIRMED);
-//            }
         } else if ("S0.REF.UPDATE.MAKER".equals(getStartEventId())) {
              refService.updateRefStatusByRefWork(ReferenceStatus.CONFIRMED, ReferenceStatus.DRAFT, id);
               refService.updateRefStatusByRefWork(ReferenceStatus.RETIRED, ReferenceStatus.DEPRECATED, id);
-//            for (Reference r : getNewReferences()) {
-//                System.out.println("Ref id:" + r.getId());
-//                r.setStatus(ReferenceStatus.CONFIRMED);
-//            }
-//            for (Reference r : getExistingReferences()) {
-//                System.out.println("Ref id:" + r.getId());
-//                r.setStatus(ReferenceStatus.RETIRED);
-//            }
         } else if ("S0.REF.DELETE.MAKER".equals(getStartEventId())) {
              refService.updateRefStatusByRefWork(ReferenceStatus.RETIRED, ReferenceStatus.DEPRECATED, id);
-//            for (Reference r : getExistingReferences()) {
-//                System.out.println("Ref id:" + r.getId());
-//                r.setStatus(ReferenceStatus.RETIRED);
-//            }
         }
         this.setStatus(Status.DONE);
+    }
+
+    /**
+     * @return the attachments
+     */
+    public Set<Attachment> getAttachments() {
+        return attachments;
+    }
+
+    /**
+     * @param attachments the attachments to set
+     */
+    public void setAttachments(Set<Attachment> attachments) {
+        this.attachments = attachments;
     }
 
 }
