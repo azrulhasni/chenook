@@ -7,23 +7,38 @@ package com.azrul.chenook.views.workflow;
 import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.views.common.components.SearchPanel;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.data.provider.DataProvider;
+import java.util.function.Function;
 
 /**
  *
  * @author azrulhasnimadisa
  */
 public class GridMemento<T> {
+
     private Class<T> clazz = null;
     private Grid<T> grid = null;
     private PageNav pageNav = null;
     private SearchPanel searchPanel = null;
-    
-    public static <T> GridMemento<T> build(Class<T> clazz, SearchPanel searchPanel,PageNav pageNav,Grid<T> grid){
+
+    private Function<GridMemento<T>, Integer> counter;
+    private Function<GridMemento<T>, DataProvider<T, Void>> provider;
+
+    public static <T> GridMemento<T> build(
+            Class<T> clazz,
+            SearchPanel searchPanel,
+            PageNav pageNav, Grid<T> grid,
+            Function<GridMemento<T>, Integer> counter,
+            Function<GridMemento<T>, DataProvider<T, Void>> provider
+    ) {
         GridMemento<T> memento = new GridMemento<>();
         memento.setClazz(clazz);
         memento.setGrid(grid);
         memento.setPageNav(pageNav);
         memento.setSearchPanel(searchPanel);
+        memento.setCounter(counter);
+        memento.setProvider(provider);
         return memento;
     }
 
@@ -82,6 +97,45 @@ public class GridMemento<T> {
     public void setClazz(Class<T> clazz) {
         this.clazz = clazz;
     }
-    
-    
+
+    public VerticalLayout getPanel() {
+        VerticalLayout panel = new VerticalLayout();
+        panel.add(searchPanel, pageNav, grid);
+        return panel;
+    }
+
+    /**
+     * @return the counter
+     */
+    public Function<GridMemento<T>, Integer> getCounter() {
+        return counter;
+    }
+
+    /**
+     * @param counter the counter to set
+     */
+    public void setCounter(Function<GridMemento<T>, Integer> counter) {
+        this.counter = counter;
+    }
+
+    /**
+     * @return the provider
+     */
+    public Function<GridMemento<T>, DataProvider<T, Void>> getProvider() {
+        return provider;
+    }
+
+    /**
+     * @param provider the provider to set
+     */
+    public void setProvider(Function<GridMemento<T>, DataProvider<T, Void>> provider) {
+        this.provider = provider;
+    }
+
+    public void refresh() {
+        Integer countMyCreatedWork = counter.apply(this);
+        pageNav.refresh(countMyCreatedWork);
+        grid.getDataProvider().refreshAll();
+    }
+
 }

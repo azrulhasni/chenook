@@ -14,6 +14,7 @@ import com.azrul.chenook.views.common.components.Card;
 import com.azrul.chenook.views.common.components.PageNav;
 import com.azrul.chenook.workflow.model.BizProcess;
 import com.azrul.chenook.workflow.model.StartEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -25,6 +26,7 @@ import com.vaadin.flow.spring.annotation.SpringComponent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -42,11 +44,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
 
     private final int COUNT_PER_PAGE = 3;
-    private final List<Triple<Grid<T>, PageNav,String>> myWorklists = new ArrayList<>();
+//    private final List<Triple<Grid<T>, PageNav,String>> myWorklists = new ArrayList<>();
+    private List<GridMemento<T>> myWorklists = new ArrayList<>();
     private       WorkflowService<T> workflowService;
-    private final WorkflowConfig workflowConfig;
-    private       Function<String, Integer> counter;
-    private       BiFunction<String, PageNav, DataProvider<T,Void>> dataProviderCreator;
+//    private final WorkflowConfig workflowConfig;
+//    private       Function<String, Integer> counter;
+//    private       BiFunction<String, PageNav, DataProvider<T,Void>> dataProviderCreator;
     
     public static <T extends WorkItem> WorklistPanel create(
             final WorkflowService<T> workflowService,
@@ -62,7 +65,7 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
 
     public WorklistPanel(
             @Autowired  WorkflowConfig workflowConfig){
-        this.workflowConfig=workflowConfig;
+        //this.workflowConfig=workflowConfig;
     }
         
     public void init(
@@ -76,10 +79,12 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
 
         //this.user = oidcUser;
         this.workflowService = workflowService;
-        this.counter = (w) -> workflowService.countWorkByWorklist(w);
-        this.dataProviderCreator = (w, nav) -> workflowService.getWorkByWorklist(workItemClass,w, nav);
-        
-        Map<String,String> sortableFields = WorkflowUtils.getSortableFields(workItemClass);
+        Function<String, Integer> counter = (w) -> workflowService.countWorkByWorklist(w);
+        BiFunction<String, PageNav, DataProvider<T,Void>> dataProviderCreator = (w, nav) -> workflowService.getWorkByWorklist(workItemClass,w, nav);
+//        this.counter = (w) -> workflowService.countWorkByWorklist(w);
+//        this.dataProviderCreator = (w, nav) -> workflowService.getWorkByWorklist(workItemClass,w, nav);
+//        
+//        Map<String,String> sortableFields = WorkflowUtils.getSortableFields(workItemClass);
             
         this.setWidth("-webkit-fill-available");
 
@@ -88,62 +93,81 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
         Map<String,String> worklists = workflowService.findWorklistsByRoles(roles, bizProcess);
 
         for (Map.Entry<String,String> worklist : worklists.entrySet()) {
-            Triple<Grid<T>, PageNav, String> panel = buildDataPanel(
-                    "Worklist:" + worklist.getValue(),
-                    worklist.getKey(),
-                    user,
-                    showUpdateDialog,
-                    cardBuilder,
-                    sortableFields
+            GridMemento<T> memento = WorkflowAwareGridBuilder.build(
+                    "btnMyWork",
+                    workItemClass,
+                    m->counter.apply(worklist.getKey()),
+                    m->dataProviderCreator.apply(worklist.getKey(), m.getPageNav()),
+                    Optional.of(()->createGrid( workItemClass, "Worklist:" + worklist.getValue(), user, showUpdateDialog, cardBuilder))
             );
-            myWorklists.add(panel);
-            add(panel);
+//            Triple<Grid<T>, PageNav, String> panel = buildDataPanel(
+//                    "Worklist:" + worklist.getValue(),
+//                    worklist.getKey(),
+//                    user,
+//                    showUpdateDialog,
+//                    cardBuilder,
+//                    sortableFields
+//            );
+            myWorklists.add(memento);
+            add(memento);
         }
 
     }
 
-    private void add(Triple<Grid<T>, PageNav, String> pair) {
+     private void add(GridMemento<T> memento) {
         VerticalLayout layout = new VerticalLayout();
-        //layout.setWidth("30%");
         layout.setMaxWidth("40em");
-        layout.getStyle().set("border","1px solid lightgrey");
-        layout.getStyle().set("border-radius","25px");
-        layout.add(pair.getMiddle());
-        layout.add(pair.getLeft());
+        layout.getStyle().set("border", "1px solid lightgrey");
+        layout.getStyle().set("border-radius", "25px");
+        layout.add(memento.getSearchPanel());
+        layout.add(memento.getPageNav());
+        layout.add(memento.getGrid());
         this.add(layout);
     }
+     
+//    private void add(Triple<Grid<T>, PageNav, String> pair) {
+//        VerticalLayout layout = new VerticalLayout();
+//        //layout.setWidth("30%");
+//        layout.setMaxWidth("40em");
+//        layout.getStyle().set("border","1px solid lightgrey");
+//        layout.getStyle().set("border-radius","25px");
+//        layout.add(pair.getMiddle());
+//        layout.add(pair.getLeft());
+//        this.add(layout);
+//    }
 
-    private Triple<Grid<T>, PageNav, String> buildDataPanel(
-            final String title,
-            final String w,
-            final BizUser user,
-            final BiConsumer<WorklistPanel<T>, T> showUpdateDialog,
-            final Function<T, Card> cardBuilder,
-            final Map<String, String> sortableFields1) {
-        PageNav nav = new PageNav();
-        Integer count = counter.apply(w);
-        DataProvider dataProvider = dataProviderCreator.apply(w, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
-        Grid<T> grid = createGrid(title, user, dataProvider, showUpdateDialog, cardBuilder);
-        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields1, false);
-        Triple<Grid<T>, PageNav, String> triple = Triple.of(grid, nav,w);
-        return triple;
-    }
+//    private Triple<Grid<T>, PageNav, String> buildDataPanel(
+//            final String title,
+//            final String w,
+//            final BizUser user,
+//            final BiConsumer<WorklistPanel<T>, T> showUpdateDialog,
+//            final Function<T, Card> cardBuilder,
+//            final Map<String, String> sortableFields1) {
+//        PageNav nav = new PageNav();
+//        Integer count = counter.apply(w);
+//        DataProvider dataProvider = dataProviderCreator.apply(w, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
+//        Grid<T> grid = createGrid(title, user, dataProvider, showUpdateDialog, cardBuilder);
+//        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields1, false);
+//        Triple<Grid<T>, PageNav, String> triple = Triple.of(grid, nav,w);
+//        return triple;
+//    }
 
     public void refresh() {
-        for (var triple : myWorklists) {
-            triple.getLeft().getDataProvider().refreshAll();
-            Integer countWorkByCreator = workflowService.countWorkByWorklist(triple.getRight());
-            triple.getMiddle().refresh(countWorkByCreator);
+        for (var memento : myWorklists) {
+//            triple.getLeft().getDataProvider().refreshAll();
+//            Integer countWorkByCreator = workflowService.countWorkByWorklist(triple.getRight());
+//            triple.getMiddle().refresh(countWorkByCreator);
+            memento.refresh();
         }
     }
 
     private Grid<T> createGrid(
+            final Class<T> workItemClass,
             final String panelTitle,
             final BizUser user,
-            final DataProvider<T,Void> dataProvider,
             final BiConsumer<WorklistPanel<T>,  T> showUpdateDialog,
             final Function<T, Card> cardBuilder) {
-        Grid<T> grid = new Grid<>();
+        Grid<T> grid = new Grid<>(workItemClass,false);
         H4 title = new H4(panelTitle);
         this.add(title);
         grid.setAllRowsVisible(true);
@@ -164,7 +188,6 @@ public class WorklistPanel<T extends WorkItem> extends VerticalLayout {
         });
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
 
-        grid.setItems(dataProvider);
         return grid;
     }
 

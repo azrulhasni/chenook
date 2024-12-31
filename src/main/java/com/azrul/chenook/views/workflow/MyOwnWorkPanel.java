@@ -29,6 +29,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import com.azrul.chenook.views.common.function.TriFunction;
 import com.vaadin.flow.component.Component;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import org.apache.commons.lang3.function.TriConsumer;
 import org.apache.commons.lang3.tuple.Triple;
@@ -42,10 +43,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 @SpringComponent
 public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
 
-    private Triple<SearchTermProvider, PageNav, Grid<T>> myOwnWork;
+    //private Triple<SearchTermProvider, PageNav, Grid<T>> myOwnWork;
+    private GridMemento<T> myOwnWork;
     private BizUser user;
-    private BiFunction<String, SearchTermProvider, Integer> counter;
-    private TriFunction<String, SearchTermProvider, PageNav, DataProvider<T, Void>> dataProviderCreator;
+    
 
     private       WorkflowService<T> workflowService;
     private final int COUNT_PER_PAGE = 3;
@@ -87,77 +88,48 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
 
         this.user = user;
         this.workflowService=workflowService;
-        this.counter = (username, searchTermProvider) -> workflowService.countWorkByOwner(workItemClass, username, searchTermProvider);
-        this.dataProviderCreator = (username, searchTermProvider, nav) -> workflowService.getWorkByOwner(workItemClass, username, searchTermProvider, nav);
+        BiFunction<String, SearchTermProvider, Integer> counter = (username, searchTermProvider) -> workflowService.countWorkByOwner(workItemClass, username, searchTermProvider);
+        
+        TriFunction<String, SearchTermProvider, PageNav, DataProvider<T, Void>> dataProviderCreator = (username, searchTermProvider, nav) -> workflowService.getWorkByOwner(workItemClass, username, searchTermProvider, nav);
 
         Map<String, String> sortableFields = WorkflowUtils.getSortableFields(workItemClass);
 
         this.setWidth("-webkit-fill-available");
 
-        myOwnWork = buildDataPanel(
-                "My work items",
-                "btnMyWork",
-                "mywork",
-                user,
-                bizProcess,
-                //workflowConfig.rootBizProcess(),
-                showUpdateDialog,
-                cardBuilder,
-                sortableFields
+        myOwnWork = WorkflowAwareGridBuilder.build(
+                    "mywork",
+                    workItemClass,
+                    m->counter.apply(user.getUsername(), m.getSearchPanel()),
+                    m->dataProviderCreator.apply(user.getUsername(), m.getSearchPanel(), m.getPageNav()),
+                    Optional.of(()->createGrid(workItemClass, "My work items", "btnMyWork", showUpdateDialog, cardBuilder))
         );
         add(myOwnWork);
 
     }
 
-    private void add(Triple<SearchTermProvider, PageNav, Grid<T>> triple) {
+
+    private void add(GridMemento<T> memento) {
         VerticalLayout layout = new VerticalLayout();
         layout.setMaxWidth("40em");
         layout.getStyle().set("border", "1px solid lightgrey");
         layout.getStyle().set("border-radius", "25px");
-        layout.add((Component) triple.getLeft());
-        layout.add(triple.getMiddle());
-        layout.add(triple.getRight());
+        layout.add(memento.getSearchPanel());
+        layout.add(memento.getPageNav());
+        layout.add(memento.getGrid());
         this.add(layout);
     }
 
-    private Triple<SearchTermProvider, PageNav, Grid<T>> buildDataPanel(
-            final String title,
-            final String btnIdDiscriminator,
-            final String panelIdDiscriminator,
-            final BizUser user,
-            final BizProcess bizProcess,
-            final BiConsumer<MyOwnWorkPanel<T>, T> showUpdateDialog,
-            final Function<T, Card> cardBuilder,
-            final Map<String, String> sortableFields
-    ) {
-        SearchPanel searchPanel = new SearchPanel(panelIdDiscriminator);
-        searchPanel.searchRunner(s->refresh());
-        PageNav nav = new PageNav();
-        Integer count = counter.apply(user.getUsername(), searchPanel);//finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
-        DataProvider<T, Void> dataProvider = dataProviderCreator.apply(user.getUsername(), searchPanel, nav);//finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(), nav);
-        Grid<T> grid = createGrid(title, btnIdDiscriminator, user, bizProcess, dataProvider, showUpdateDialog, cardBuilder);
-        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
-
-        Triple<SearchTermProvider, PageNav, Grid<T>> triple = Triple.of(searchPanel, nav, grid);
-        return triple;
-    }
 
     public void refresh() {
-
         if (myOwnWork != null) {
-            Integer countMyOwnedWork = counter.apply(user.getUsername(), myOwnWork.getLeft());
-            myOwnWork.getMiddle().refresh(countMyOwnedWork);
-            myOwnWork.getRight().getDataProvider().refreshAll();
-            
+            myOwnWork.refresh();
         }
     }
 
     private Grid<T> createGrid(
+            final Class<T> workItemClass,
             final String panelTitle,
             final String btnIdDiscriminator,
-            final BizUser user,
-            final BizProcess bizProcess,
-            final DataProvider<T, Void> dataProvider,
             final BiConsumer<MyOwnWorkPanel<T>,  T> showUpdateDialog,
             final Function<T, Card> cardBuilder) {
         Grid<T> grid = new Grid<>();
@@ -178,8 +150,6 @@ public class MyOwnWorkPanel<T extends WorkItem> extends VerticalLayout {
             return card;
         });
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
-
-        grid.setItems(dataProvider);
         return grid;
     }
 

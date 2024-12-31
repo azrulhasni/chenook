@@ -56,10 +56,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
     private       WorkflowService<T> workflowService;
     private final Integer COUNT_PER_PAGE = 3;
     private Binder<T> binder;
-    private String fieldName;
     private WorkflowAwareGroup<T> group;
-    private BizUser user;
-    // private T work;
 
     public static <T extends WorkItem> WorkflowPanel<T> create(
             final WorkflowService<T> workflowService,
@@ -72,7 +69,7 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         T workItem = binder.getBean();
         
         var field = ApplicationContextHolder.getBean(WorkflowPanel.class);
-        field.init(workflowService,fieldName, binder, user, group,workflowDisplay);
+        field.init(fieldName, binder, user, group,workflowDisplay);
         field.setId(fieldName);
 
          List<Validator> validators = new ArrayList<>();
@@ -117,10 +114,12 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
 
     private WorkflowPanel(
             @Autowired ApprovalService approvalService,
-            @Autowired BizUserService<T> bizUserService
+            @Autowired BizUserService<T> bizUserService,
+            @Autowired WorkflowService<T> workflowService
             ) {
         this.approvalService = approvalService;
         this.bizUserService = bizUserService;
+        this.workflowService = workflowService;
     }
 
     public void applyGroup() {
@@ -131,17 +130,13 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
     }
 
     private void init(
-            final WorkflowService<T> workflowService,
             final String fieldName,
             final Binder<T> binder,
             final BizUser user,
             final WorkflowAwareGroup<T> group,
             final Function<T,Component> workflowDisplay) {
         T work = binder.getBean();
-        this.user = user;
         this.binder = binder;
-        this.fieldName = fieldName;
-        this.workflowService=workflowService;
         if (work.getApprovals() == null) {
             return;
         }
@@ -194,7 +189,6 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
                 });
                 btnApproval.setId("btnApproval");
                 btnApproval.getStyle().set("align-self", "center");
-                //btnApproval.setHeight(cWorkflowDisplay.getStyle().get("height"));
                 btnApproval.addThemeVariants(ButtonVariant.LUMO_SMALL);
 
                 workflowField.add(btnApproval);
@@ -202,17 +196,16 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
             }
             
         });
-        Button btnWorkflow = new Button("Workflow Info.", e -> createWorkflowInfoDialog(work, user));
+        Button btnWorkflow = new Button("Workflow Info.", e -> createWorkflowInfoDialog(work, user, fieldName));
         btnWorkflow.setId("btnWorkflowInfo");
         btnWorkflow.addThemeVariants(ButtonVariant.LUMO_SMALL);
         btnWorkflow.getStyle().set("align-self", "center");
         workflowField.add(btnWorkflow);
         this.add(workflowField);
-        //btnWorkflow.setHeight(cWorkflowDisplay.getStyle().get("height"));
 
     }
 
-    public void createWorkflowInfoDialog(T work, BizUser user) {
+    public void createWorkflowInfoDialog(T work, BizUser user, String fieldName) {
         Dialog workflowDialog = new Dialog();
         workflowDialog.setHeaderTitle("Workflow information");
         workflowDialog.setWidth("40em");
@@ -223,9 +216,10 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         Div content = new Div();
         content.add(tf);
         workflowDialog.add(content);
-        VerticalLayout approvalPanel = buildApprovalPanel(work);
+        
+        VerticalLayout approvalPanel = buildApprovalPanel(work, fieldName);
         workflowDialog.add(approvalPanel);
-        VerticalLayout histApprovalPanel = buildHistoricalApprovalPanel(work);
+        VerticalLayout histApprovalPanel = buildHistoricalApprovalPanel(work, fieldName);
         workflowDialog.add(histApprovalPanel);
         VerticalLayout ownerPanel = buildOwnerPanel(work, workflowDialog);
         workflowDialog.add(ownerPanel);
@@ -235,48 +229,59 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
         workflowDialog.open();
     }
 
-    private VerticalLayout buildApprovalPanel(T work) {
+    private VerticalLayout buildApprovalPanel(T work, String fieldName) {
         VerticalLayout approvalPanel = new VerticalLayout();
-        PageNav nav = new PageNav();
-        WorkflowUtils.getSortableFields(Approval.class);
-        Integer count = approvalService.countApprovalsByWork(work);// finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
-        DataProvider dataProvider = approvalService.getApprovalsByWork(work, nav);// finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(),
-        // nav);
-        Grid<Approval> grid = new Grid<>();
-        grid.setItems(dataProvider);
-        grid.addComponentColumn(approval -> {
-            return buildApprovalRow(approval);
-        });
-        Map<String, String> sortableFields = WorkflowUtils.getSortableFields(Approval.class);
-        grid.setMaxHeight("calc(" + (COUNT_PER_PAGE + 1.5) + " * var(--lumo-size-m))");
-        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
+//        PageNav nav = new PageNav();
+//        WorkflowUtils.getSortableFields(Approval.class);
+//        Integer count = approvalService.countApprovalsByWork(work);// finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
+//        DataProvider dataProvider = approvalService.getApprovalsByWork(work, nav);// finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(),
+//        // nav);
+//        Grid<Approval> grid = new Grid<>();
+//        grid.setItems(dataProvider);
+//        grid.addComponentColumn(approval -> {
+//            return buildApprovalRow(approval);
+//        });
+//        Map<String, String> sortableFields = WorkflowUtils.getSortableFields(Approval.class);
+//        grid.setMaxHeight("calc(" + (COUNT_PER_PAGE + 1.5) + " * var(--lumo-size-m))");
+//        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
         H4 approvalTitle = new H4("Approvals");
         approvalPanel.add(approvalTitle);
-        approvalPanel.add(nav);
-        approvalPanel.add(grid);
+        GridMemento<Approval> approvalMemento =  WorkflowAwareGridBuilder.build(
+                    fieldName,
+                    Approval.class,
+                    m-> approvalService.countApprovalsByWork(work),
+                    m-> approvalService.getApprovalsByWork(work,m.getPageNav()),
+                    Optional.of(()->createApprovalGrid()));
+        approvalPanel.add(approvalMemento.getPanel());
         return approvalPanel;
     }
 
-    private VerticalLayout buildHistoricalApprovalPanel(T work) {
+    private VerticalLayout buildHistoricalApprovalPanel(T work, String fieldName) {
         
         VerticalLayout approvalPanel = new VerticalLayout();
         PageNav nav = new PageNav();
-        var sortableFields = WorkflowUtils.getSortableFields(Approval.class);
-        Integer count = approvalService.countHistoricalApprovalsByWork(work);// finappService1.countWorkByCreator(oidcUser1.getPreferredUsername());
-        DataProvider<Approval, Void> dataProvider = approvalService.getHistoricalApprovalsByWork(work, nav);// finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(),
+     
+        H4 approvalTitle = new H4("Past Approvals");
+        approvalPanel.add(approvalTitle);
+       
         
-        Grid<Approval> grid = new Grid<>();
-        grid.setItems(dataProvider);
+        GridMemento<Approval> approvalMemento =  WorkflowAwareGridBuilder.build(
+                    fieldName,
+                    Approval.class,
+                    m-> approvalService.countHistoricalApprovalsByWork(work),
+                    m-> approvalService.getHistoricalApprovalsByWork(work,m.getPageNav()),
+                    Optional.of(()->createApprovalGrid()));
+        approvalPanel.add(approvalMemento.getPanel());
+        return approvalPanel;
+    }
+
+    private Grid<Approval> createApprovalGrid() {
+        Grid<Approval> grid = new Grid<>(Approval.class, false);
         grid.addComponentColumn(approval -> {
             return buildApprovalRow(approval);
         });
         grid.setMaxHeight("calc(" + (COUNT_PER_PAGE + 1.5) + " * var(--lumo-size-m))");
-        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
-        H4 approvalTitle = new H4("Past Approvals");
-        approvalPanel.add(approvalTitle);
-        approvalPanel.add(nav);
-        approvalPanel.add(grid);
-        return approvalPanel;
+        return grid;
     }
 
     private HorizontalLayout buildApprovalRow(Approval approval) {
@@ -360,12 +365,23 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
 
     private VerticalLayout buildOwnerPanel(T work, Dialog approvalDialog) {
         VerticalLayout ownerPanel = new VerticalLayout();
-        PageNav nav = new PageNav();
-        Integer count = bizUserService.countWorkByOwner(work);
-        DataProvider<BizUser, Void> dataProvider = bizUserService.getOwnersByWork(work, nav);// finappService1.getWorkByCreator(oidcUser1.getPreferredUsername(),
-        // nav);
-        Grid<BizUser> grid = new Grid<>();
-        grid.setItems(dataProvider);
+        
+         GridMemento<BizUser> bizUserMemento =  WorkflowAwareGridBuilder.build(
+                    "btnMyBizUser",
+                    BizUser.class,
+                    m-> bizUserService.countWorkByOwner(work),
+                    m-> bizUserService.getOwnersByWork(work, m.getPageNav()),
+                    Optional.of(()->createBizUserGrid()));
+
+        H4 approvalTitle = new H4("Owners");
+        ownerPanel.add(approvalTitle);
+        ownerPanel.add(bizUserMemento.getPanel());
+
+        return ownerPanel;
+    }
+
+    private Grid<BizUser> createBizUserGrid() {
+        Grid<BizUser> grid = new Grid<>(BizUser.class, false);
         grid.setMaxHeight("calc(" + COUNT_PER_PAGE + " * var(--lumo-size-m))");
         grid.addComponentColumn(owner -> {
             BizUser ouser = new BizUser();
@@ -378,16 +394,9 @@ public class WorkflowPanel<T extends WorkItem> extends CustomField<Set<Approval>
             panel.add(userField);
             return panel;
         });
-
-        Map<String, String> sortableFields = WorkflowUtils.getSortableFields(BizUser.class);
+        //Map<String, String> sortableFields = WorkflowUtils.getSortableFields(BizUser.class);
         grid.setPageSize(COUNT_PER_PAGE);
-        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
-        H4 approvalTitle = new H4("Owners");
-        ownerPanel.add(approvalTitle);
-        ownerPanel.add(nav);
-        ownerPanel.add(grid);
-
-        return ownerPanel;
+        return grid;
     }
 
 

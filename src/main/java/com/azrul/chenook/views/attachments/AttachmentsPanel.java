@@ -138,7 +138,7 @@ public class AttachmentsPanel<T> extends CustomField<Set<Attachment>> {
         
         this.add(upload);
 
-        Grid<Attachment> gridFiles = new Grid<>();
+        Grid<Attachment> gridFiles = new Grid<>(Attachment.class, false);
         gridFiles.getStyle().set("max-width","285px");
 
         gridFiles.setItems(attachments);

@@ -32,6 +32,15 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
         this.visibleCondition = null;
         this.enableCondition = null;
     }
+    
+    private WorkflowAwareGroup(
+            Predicate<T> visibleCondition,
+            Predicate<T> enableCondition
+     ){
+        this.workItem = null;
+        this.visibleCondition = visibleCondition;
+        this.enableCondition = enableCondition;
+    }
 
     private WorkflowAwareGroup(
             Predicate<T> visibleCondition,
@@ -291,6 +300,20 @@ public class WorkflowAwareGroup<T extends WorkItem> extends Div {
         };
 
         WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enabledPred, item);
+        return group;
+    }
+    
+    public static <T extends WorkItem> WorkflowAwareGroup createNoConstraintsGroup() {
+
+        Predicate<T> visiblePred = w -> {
+            return true;
+        };
+
+        Predicate<T> enabledPred = w -> {
+            return true;
+        };
+
+        WorkflowAwareGroup group = new WorkflowAwareGroup(visiblePred, enabledPred);
         return group;
     }
 

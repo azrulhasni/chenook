@@ -102,7 +102,7 @@ public class MessageButton extends Button {
         
         editor.add(tfMsg, btnAddMsg);
         // VirtualList<Message> vlMsgs = new VirtualList<Message>();
-        Grid<Message> gMsgs = new Grid<>();        
+        Grid<Message> gMsgs = new Grid<>(Message.class, false);        
         gMsgs.setItems(msgService.findMessagesByParentAndContext(parentId, context));
         gMsgs.addComponentColumn(msg -> buildCard(msg, user, gMsgs, msgService));
         messagesPanel.add(editor);

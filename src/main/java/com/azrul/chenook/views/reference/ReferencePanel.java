@@ -5,7 +5,6 @@ import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -18,27 +17,25 @@ import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.service.BadgeUtils;
 import com.azrul.chenook.service.ReferenceService;
 import com.azrul.chenook.utils.WorkflowUtils;
-import com.azrul.chenook.views.common.components.PageNav;
-import com.azrul.chenook.views.common.components.SearchPanel;
+import com.azrul.chenook.views.workflow.GridMemento;
+import com.azrul.chenook.views.workflow.WorkflowAwareGridBuilder;
 import com.azrul.chenook.views.workflow.WorkflowAwareGroup;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.Grid.SelectionMode;
-import com.vaadin.flow.component.html.NativeLabel;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.binder.Validator;
-import com.vaadin.flow.data.provider.DataProvider;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends ReferenceService<R>>
         extends CustomField<Set<R>> {
-    private final int COUNT_PER_PAGE = 3;
     private int maxSelection = 0;
 
     private ReferenceService<R> refService;
@@ -95,10 +92,9 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
                 } catch (IllegalArgumentException | IllegalAccessException e1) {
                     Logger.getLogger(ReferencePanel.class.getName()).log(Level.SEVERE, null, e1);
                 }
-             });
-             btnDelete.setId("btnDelete-"+fieldName);
+            });
+            btnDelete.setId("btnDelete-"+fieldName);
 
-            // textField.setReadOnly(true);
             btnSelectDialog = new Button("Select", e -> {
                 Dialog dialog = buildDialog(fieldName,referenceClass, (selections) -> {
                     try {
@@ -149,22 +145,33 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
             Consumer<Set<R>> postSelection) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle("Select reference(s)");
-        SearchPanel searchPanel = new SearchPanel(fieldName);
-        Integer count = refService.countActiveReferenceData(referenceClass, searchPanel);
-        PageNav nav = new PageNav();
-       Grid<R> grid = new Grid<>(referenceClass, false);
-        Map<String, String> sortableFields = WorkflowUtils.getSortableFields(referenceClass);
-        nav.init(grid, count, COUNT_PER_PAGE, "id", sortableFields, false);
-        DataProvider<R, Void> dataProvider = refService.getActiveReferenceData(referenceClass, searchPanel,  nav);
-        
-        grid.setItems(dataProvider);
        
+        GridMemento<R> memento = WorkflowAwareGridBuilder.<R>build(
+                fieldName,
+                referenceClass, 
+                m->refService.countActiveReferenceData(referenceClass,m.getSearchPanel()), 
+                m->refService.getActiveReferenceData(referenceClass, m.getSearchPanel(), m.getPageNav()),
+                Optional.of(()->createGrid(referenceClass))
+        );
+     
+        dialog.add(memento.getPanel());
+        Button btnClose = new Button("Close", e -> dialog.close());
+        Button btnSelect = new Button("Select", e -> {
+            Set<R> selectedItems = memento.getGrid().getSelectedItems();
+            postSelection.accept(selectedItems);
+            dialog.close();
+        });
+        btnSelect.setId("btnSelect-"+fieldName);
+        dialog.getFooter().add(btnSelect, btnClose);
+        return dialog;
+    }
 
+    private Grid<R> createGrid(Class<R> referenceClass) {
+        Grid<R> grid = new Grid<>(referenceClass,false);
         var fieldMap = WorkflowUtils.getFieldNameDisplayNameMap(referenceClass);
         for (var fieldEntry : fieldMap.entrySet()) {
             if (!StringUtils.equals(fieldEntry.getKey(),"status")){
                 grid.addColumn(fieldEntry.getKey())
-                        //.setSortable(sortableFields.containsKey(fieldEntry.getKey()))
                         .setHeader(fieldEntry.getValue());
                 grid.setAllRowsVisible(true);
             }
@@ -173,11 +180,9 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
         grid.addComponentColumn(r->{
             Span badge = badgeUtils.createRefStatusBadge(r.getStatus());
             return badge;
-        })
-        //.setSortable(sortableFields.containsKey("status"))
-        .setHeader("Status");
-
-        grid.setDataProvider(dataProvider);
+        }).setHeader("Status");
+        
+        //grid.setDataProvider(dataProvider);
         if (maxSelection == 1) {
             grid.setSelectionMode(SelectionMode.SINGLE);
             if (!refList.isEmpty()) {
@@ -190,24 +195,7 @@ public class ReferencePanel<T extends WorkItem, R extends Reference, RS extends 
                 grid.asMultiSelect().select(refList.getListDataView().getItems().toList());
             }
         }
-
-
-        searchPanel.searchRunner(s -> {
-            Integer count2 = refService.countActiveReferenceData(referenceClass, searchPanel);
-            nav.refresh(count2);
-            dataProvider.refreshAll();
-        });
-     
-        dialog.add(searchPanel, nav, grid);
-        Button btnClose = new Button("Close", e -> dialog.close());
-        Button btnSelect = new Button("Select", e -> {
-            Set<R> selectedItems = grid.getSelectedItems();
-            postSelection.accept(selectedItems);
-            dialog.close();
-        });
-        btnSelect.setId("btnSelect-"+fieldName);
-        dialog.getFooter().add(btnSelect, btnClose);
-        return dialog;
+        return grid;
     }
 
     public static <T extends WorkItem, R extends Reference, RS extends ReferenceService<R>> ReferencePanel<T, R, RS> create(

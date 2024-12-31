@@ -13,7 +13,6 @@ import com.azrul.chenook.domain.Status;
 import com.azrul.chenook.domain.WorkItem;
 import com.azrul.chenook.repository.WorkItemRepository;
 import com.azrul.chenook.search.repository.WorkItemSearchRepository;
-import com.azrul.chenook.script.Expression;
 import com.azrul.chenook.script.FunctionExpression;
 import com.azrul.chenook.script.PredicateExpression;
 import com.azrul.chenook.script.Scripting;
@@ -232,9 +231,7 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
             final T work,
             final BizUser user,
             final BizProcess bizProcess) {
-        final String tenant = "";// (String) VaadinSession.getCurrent().getSession().getAttribute("TENANT");
-        // final String userIdentifier = user.getUsername(); //(String)
-        // VaadinSession.getCurrent().getSession().getAttribute("USER_IDENTIFIER");
+        final String tenant = "";
         List<Activity> nextSteps = new ArrayList<>();
 
         String worklist = work.getWorklist();
@@ -242,7 +239,7 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
         if (isStartEvent(worklist, bizProcess)) {// just being created
             StartEvent start = (StartEvent) getActivities(bizProcess).get(work.getStartEventId());
             work.setStartDate(ZonedDateTime.now()); //record start time
-            if (start.getSupervisoryApprovalHierarchy().size() != 0) {// if need supervisor, stay in the same activity
+            if (!start.getSupervisoryApprovalHierarchy().isEmpty()){
                 // first
                 handleSupervisorApproval(work,
                         tenant,
@@ -287,7 +284,6 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
             final List<Activity> nextSteps,
             final BizProcess bizProcess
     ) {
-        // String userIdentifier = user.getUsername();
         if (activity.getClass().equals(HumanActivity.class)) {
             HumanActivity humanActivity = (HumanActivity) activity;
             if (!humanActivity.getSupervisoryApprovalHierarchy().isEmpty()) {
@@ -559,12 +555,6 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
                                     .ifPresent(approver -> {
                                         root.clearOwners();
                                         root.addOwner(approver);
-                                        // root.getOwners().add(approver);
-                                        // if (approver.getUsername() != null) {
-                                        // root.getOwners().add(approver.getUsername());
-                                        // } else {
-                                        // root.getOwners().add(approver.getLoginName());
-                                        // }
                                         root.setSupervisorApprovalLevel(nextRole);
 
                                         // archive first
@@ -1309,5 +1299,27 @@ public abstract class WorkflowService<T extends WorkItem> implements Application
         var w = this.save(workItem);
         return w;
     }
+    
+    @Transactional
+    public T cancelWorkItemEscalation(T workItem) {
+        
+        String seeker= workItem.getSupervisorApprovalSeeker();
+        BizUser buSeeker = bizUserService.getUser(seeker);
+        workItem.clearApprrovals();
+        workItem.clearOwners();
+        workItem.addOwner(buSeeker);
+        var w = this.save(workItem);
+        return w;
+    }
+    
+    @Transactional
+    public T sendWorkItemBackToWorklist(T workItem) {
+        workItem.clearApprrovals();
+        workItem.clearOwners();
+        var w = this.save(workItem);
+        return w;
+    }
+    
+    
 
 }
